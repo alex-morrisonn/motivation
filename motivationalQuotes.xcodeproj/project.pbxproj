@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1EB90A072D91070E004C0A32 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
+		1EB90A082D9107C6004C0A32 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
+		1EB90A092D9107C6004C0A32 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
+		1EB90A0A2D9107C6004C0A32 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
 		1ECDCF812D8ECF3700123E99 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */; };
 		1ECDCF832D8ECF3700123E99 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */; };
 		1ECDCF942D8ECF3A00123E99 /* wdigetExtensionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1ECDCF7E2D8ECF3600123E99 /* wdigetExtensionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -54,6 +58,7 @@
 		1E4183402D8EC71100AAEC12 /* motivationalQuotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = motivationalQuotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E4183502D8EC71300AAEC12 /* motivationalQuotesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = motivationalQuotesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E41835A2D8EC71300AAEC12 /* motivationalQuotesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = motivationalQuotesUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1EB90A062D910709004C0A32 /* SharedQuotes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedQuotes.swift; sourceTree = "<group>"; };
 		1ECDCF7E2D8ECF3600123E99 /* wdigetExtensionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = wdigetExtensionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -132,6 +137,7 @@
 		1E4183372D8EC71100AAEC12 = {
 			isa = PBXGroup;
 			children = (
+				1EB90A062D910709004C0A32 /* SharedQuotes.swift */,
 				1E4183422D8EC71100AAEC12 /* motivationalQuotes */,
 				1E4183532D8EC71300AAEC12 /* motivationalQuotesTests */,
 				1E41835D2D8EC71300AAEC12 /* motivationalQuotesUITests */,
@@ -340,6 +346,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1EB90A072D91070E004C0A32 /* SharedQuotes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -347,6 +354,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1EB90A082D9107C6004C0A32 /* SharedQuotes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -354,6 +362,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1EB90A092D9107C6004C0A32 /* SharedQuotes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -361,6 +370,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1EB90A0A2D9107C6004C0A32 /* SharedQuotes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

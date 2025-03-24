@@ -1,9 +1,458 @@
+import SwiftUI
+import UIKit
+
+// Event model for calendar entries
+struct Event: Identifiable, Codable, Equatable {
+    var id = UUID()
+    var title: String
+    var date: Date
+    var notes: String
+    var isCompleted: Bool = false
+    
+    static func == (lhs: Event, rhs: Event) -> Bool {
+        return lhs.id == rhs.id
+    }
+}
+
+// Event service to manage events
+class EventService: ObservableObject {
+    static let shared = EventService()
+    
+    @Published var events: [Event] = []
+    
+    init() {
+        loadEvents()
+    }
+    
+    // Save events to UserDefaults
+    private func saveEvents() {
+        if let encoded = try? JSONEncoder().encode(events) {
+            UserDefaults.standard.set(encoded, forKey: "savedEvents")
+        }
+    }
+    
+    // Load events from UserDefaults
+    private func loadEvents() {
+        if let savedEvents = UserDefaults.standard.data(forKey: "savedEvents") {
+            if let decodedEvents = try? JSONDecoder().decode([Event].self, from: savedEvents) {
+                events = decodedEvents
+                return
+            }
+        }
+        events = [] // Default to empty array if no events found
+    }
+    
+    // Add a new event
+    func addEvent(_ event: Event) {
+        events.append(event)
+        saveEvents()
+    }
+    
+    // Update an existing event
+    func updateEvent(_ event: Event) {
+        if let index = events.firstIndex(where: { $0.id == event.id }) {
+            events[index] = event
+            saveEvents()
+        }
+    }
+    
+    // Delete an event
+    func deleteEvent(_ event: Event) {
+        events.removeAll(where: { $0.id == event.id })
+        saveEvents()
+    }
+    
+    // Toggle completion status
+    func toggleCompletionStatus(_ event: Event) {
+        if let index = events.firstIndex(where: { $0.id == event.id }) {
+            events[index].isCompleted.toggle()
+            saveEvents()
+        }
+    }
+    
+    // Get events for a specific date
+    func getEvents(for date: Date) -> [Event] {
+        let calendar = Calendar.current
+        return events.filter { event in
+            calendar.isDate(event.date, inSameDayAs: date)
+        }
+    }
+    
+    // Get upcoming events (next 7 days)
+    func getUpcomingEvents() -> [Event] {
+        let today = Date()
+        let calendar = Calendar.current
+        let nextWeek = calendar.date(byAdding: .day, value: 7, to: today)!
+        
+        return events.filter { event in
+            let eventDate = event.date
+            return (eventDate >= today && eventDate <= nextWeek)
+        }.sorted { $0.date < $1.date }
+    }
+}
+
+// Calendar day cell
+struct CalendarDayView: View {
+    let date: Date
+    let hasEvents: Bool
+    let isSelected: Bool
+    let isToday: Bool
+    
+    var body: some View {
+        VStack {
+            Text(dayFormatter.string(from: date))
+                .font(.caption)
+                .foregroundColor(isToday ? .white : .gray)
+            
+            ZStack {
+                Circle()
+                    .fill(isSelected ? Color.white : Color.clear)
+                    .frame(width: 30, height: 30)
+                
+                Text(dateFormatter.string(from: date))
+                    .font(.system(size: 14, weight: isToday ? .bold : .regular))
+                    .foregroundColor(isSelected ? .black : (isToday ? .white : .white))
+            }
+            
+            // Indicator for events
+            if hasEvents {
+                Circle()
+                    .fill(Color.white.opacity(0.7))
+                    .frame(width: 5, height: 5)
+            }
+        }
+        .frame(height: 60)
+        .contentShape(Rectangle())
+    }
+    
+    // Date formatters
+    private var dayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "E"
+        return formatter
+    }()
+    
+    private var dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d"
+        return formatter
+    }()
+}
+
+// Calendar week view
+struct CalendarWeekView: View {
+    @ObservedObject var eventService = EventService.shared
+    @Binding var selectedDate: Date
+    
+    private let calendar = Calendar.current
+    private let daysInWeek = 7
+    
+    var body: some View {
+        HStack(spacing: 5) {
+            ForEach(0..<daysInWeek, id: \.self) { index in
+                let date = getDateForIndex(index)
+                let hasEvents = !eventService.getEvents(for: date).isEmpty
+                let isSelected = calendar.isDate(date, inSameDayAs: selectedDate)
+                let isToday = calendar.isDateInToday(date)
+                
+                CalendarDayView(
+                    date: date,
+                    hasEvents: hasEvents,
+                    isSelected: isSelected,
+                    isToday: isToday
+                )
+                .onTapGesture {
+                    selectedDate = date
+                }
+            }
+        }
+        .padding(.horizontal)
+    }
+    
+    // Get date for the index in the week view
+    private func getDateForIndex(_ index: Int) -> Date {
+        let today = calendar.startOfDay(for: Date())
+        let firstDayOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedDate))!
+        return calendar.date(byAdding: .day, value: index, to: firstDayOfWeek)!
+    }
+}
+
+// Event list item for a specific date
+struct EventListItem: View {
+    let event: Event
+    var onComplete: () -> Void
+    var onDelete: () -> Void
+    var onEdit: () -> Void
+    
+    private let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        return formatter
+    }()
+    
+    var body: some View {
+        HStack {
+            // Completion checkbox
+            Button(action: onComplete) {
+                Image(systemName: event.isCompleted ? "checkmark.circle.fill" : "circle")
+                    .foregroundColor(event.isCompleted ? .green : .white)
+                    .font(.system(size: 20))
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            // Event details
+            VStack(alignment: .leading, spacing: 4) {
+                Text(event.title)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .strikethrough(event.isCompleted)
+                
+                HStack {
+                    Text(timeFormatter.string(from: event.date))
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                    
+                    if !event.notes.isEmpty {
+                        Text("•")
+                            .foregroundColor(.gray)
+                        
+                        Text(event.notes)
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .lineLimit(1)
+                    }
+                }
+            }
+            .padding(.horizontal, 5)
+            
+            Spacer()
+            
+            // Edit button
+            Button(action: onEdit) {
+                Image(systemName: "pencil")
+                    .foregroundColor(.white)
+                    .font(.system(size: 16))
+                    .padding(5)
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            // Delete button
+            Button(action: onDelete) {
+                Image(systemName: "trash")
+                    .foregroundColor(.white)
+                    .font(.system(size: 16))
+                    .padding(5)
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding(.vertical, 10)
+        .padding(.horizontal)
+        .background(Color.black.opacity(0.3))
+        .cornerRadius(10)
+        .padding(.horizontal)
+    }
+}
+
+// Event Editor View
+struct EventEditorView: View {
+    @Environment(\.presentationMode) var presentationMode
+    @ObservedObject var eventService = EventService.shared
+    
+    @State private var title: String
+    @State private var date: Date
+    @State private var notes: String
+    @State private var isCompleted: Bool
+    
+    private let isNew: Bool
+    private var event: Event?
+    
+    // For new event
+    init() {
+        _title = State(initialValue: "")
+        _date = State(initialValue: Date())
+        _notes = State(initialValue: "")
+        _isCompleted = State(initialValue: false)
+        isNew = true
+        event = nil
+    }
+    
+    // For editing existing event
+    init(event: Event) {
+        _title = State(initialValue: event.title)
+        _date = State(initialValue: event.date)
+        _notes = State(initialValue: event.notes)
+        _isCompleted = State(initialValue: event.isCompleted)
+        isNew = false
+        self.event = event
+    }
+    
+    var body: some View {
+        ZStack {
+            Color.black.edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 20) {
+                Text(isNew ? "Add New Event" : "Edit Event")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .padding(.top, 20)
+                
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Event Title")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    TextField("Enter title", text: $title)
+                        .padding()
+                        .background(Color(UIColor.systemGray6).opacity(0.2))
+                        .cornerRadius(10)
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal)
+                
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Date & Time")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    DatePicker("", selection: $date)
+                        .datePickerStyle(GraphicalDatePickerStyle())
+                        .background(Color(UIColor.systemGray6).opacity(0.2))
+                        .cornerRadius(10)
+                        .colorScheme(.dark)
+                }
+                .padding(.horizontal)
+                
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Notes")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    TextEditor(text: $notes)
+                        .frame(height: 100)
+                        .padding(5)
+                        .background(Color(UIColor.systemGray6).opacity(0.2))
+                        .cornerRadius(10)
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal)
+                
+                Toggle(isOn: $isCompleted) {
+                    Text("Completed")
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal)
+                
+                HStack {
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Text("Cancel")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.gray.opacity(0.3))
+                            .cornerRadius(10)
+                    }
+                    
+                    Button(action: {
+                        saveEvent()
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Text("Save")
+                            .font(.headline)
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(10)
+                    }
+                    .disabled(title.isEmpty)
+                    .opacity(title.isEmpty ? 0.5 : 1)
+                }
+                .padding(.horizontal)
+                
+                Spacer()
+            }
+        }
+    }
+    
+    private func saveEvent() {
+        let newEvent = Event(
+            id: event?.id ?? UUID(),
+            title: title,
+            date: date,
+            notes: notes,
+            isCompleted: isCompleted
+        )
+        
+        if isNew {
+            eventService.addEvent(newEvent)
+        } else {
+            eventService.updateEvent(newEvent)
+        }
+    }
+}
+
 // Categories View
 struct CategoriesView: View {
     @ObservedObject private var quoteService = QuoteService.shared
     @State private var selectedCategory: String?
     @State private var showingShareSheet = false
     @State private var quoteToShare: Quote?
+    
+    // Color mapping for category backgrounds
+    private func colorForCategory(_ category: String) -> Color {
+        switch category {
+        case "Success & Achievement":
+            return Color.blue.opacity(0.7)
+        case "Life & Perspective":
+            return Color.purple.opacity(0.7)
+        case "Dreams & Goals":
+            return Color.green.opacity(0.7)
+        case "Courage & Confidence":
+            return Color.orange.opacity(0.7)
+        case "Perseverance & Resilience":
+            return Color.red.opacity(0.7)
+        case "Growth & Change":
+            return Color.teal.opacity(0.7)
+        case "Action & Determination":
+            return Color.indigo.opacity(0.7)
+        case "Mindset & Attitude":
+            return Color.pink.opacity(0.7)
+        case "Focus & Discipline":
+            return Color.yellow.opacity(0.7)
+        default:
+            return Color.gray.opacity(0.7)
+        }
+    }
+    
+    // Icon mapping for categories
+    private func iconForCategory(_ category: String) -> String {
+        switch category {
+        case "Success & Achievement":
+            return "trophy"
+        case "Life & Perspective":
+            return "scope"
+        case "Dreams & Goals":
+            return "sparkles"
+        case "Courage & Confidence":
+            return "bolt.heart"
+        case "Perseverance & Resilience":
+            return "figure.walk"
+        case "Growth & Change":
+            return "leaf"
+        case "Action & Determination":
+            return "flag"
+        case "Mindset & Attitude":
+            return "brain"
+        case "Focus & Discipline":
+            return "target"
+        default:
+            return "quote.bubble"
+        }
+    }
     
     var body: some View {
         ZStack {
@@ -22,7 +471,7 @@ struct CategoriesView: View {
                     
                     // Quotes list
                     ScrollView {
-                        LazyVStack(spacing: 60) {
+                        LazyVStack(spacing: 30) {
                             let categoryQuotes = quoteService.getQuotes(forCategory: category)
                             
                             ForEach(categoryQuotes) { quote in
@@ -66,6 +515,9 @@ struct CategoriesView: View {
                                         Spacer()
                                     }
                                 }
+                                .padding()
+                                .background(Color.black.opacity(0.3))
+                                .cornerRadius(15)
                                 .padding(.horizontal)
                             }
                         }
@@ -91,38 +543,53 @@ struct CategoriesView: View {
                     }
                 )
             } else {
-                // Show categories list
+                // Show categories list with improved UI
                 VStack {
                     Text("Categories")
-                        .font(.title)
+                        .font(.largeTitle)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .padding(.top, 20)
+                        .padding(.bottom, 10)
+                    
+                    Text("Select a category to explore quotes")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .padding(.bottom, 20)
                     
                     ScrollView {
-                        LazyVStack(spacing: 16) {
+                        LazyVGrid(columns: [GridItem(.flexible())], spacing: 16) {
                             ForEach(quoteService.getAllCategories(), id: \.self) { category in
                                 Button(action: {
                                     selectedCategory = category
                                 }) {
                                     HStack {
-                                        Text(category)
-                                            .font(.headline)
+                                        // Category icon
+                                        Image(systemName: iconForCategory(category))
+                                            .font(.system(size: 24))
                                             .foregroundColor(.white)
+                                            .frame(width: 40, height: 40)
+                                            .background(colorForCategory(category))
+                                            .clipShape(Circle())
+                                        
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(category)
+                                                .font(.headline)
+                                                .foregroundColor(.white)
+                                            
+                                            Text("\(quoteService.getQuotes(forCategory: category).count) quotes")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                        }
                                         
                                         Spacer()
                                         
-                                        Text("\(quoteService.getQuotes(forCategory: category).count)")
-                                            .font(.subheadline)
-                                            .foregroundColor(.gray)
-                                        
                                         Image(systemName: "chevron.right")
-                                            .font(.caption)
                                             .foregroundColor(.gray)
                                     }
                                     .padding()
-                                    .background(Color.black.opacity(0.3))
-                                    .cornerRadius(10)
+                                    .background(Color(UIColor.systemGray6).opacity(0.2))
+                                    .cornerRadius(15)
                                     .padding(.horizontal)
                                 }
                             }
@@ -140,9 +607,6 @@ struct CategoriesView: View {
     }
 }
 
-import SwiftUI
-import UIKit
-
 // Quote Model
 struct Quote: Identifiable, Codable, Equatable {
     var id = UUID()
@@ -153,41 +617,29 @@ struct Quote: Identifiable, Codable, Equatable {
     static func == (lhs: Quote, rhs: Quote) -> Bool {
         return lhs.id == rhs.id
     }
+    
+    // Constructor to create from SharedQuote
+    init(from sharedQuote: SharedQuote) {
+        self.id = sharedQuote.id
+        self.text = sharedQuote.text
+        self.author = sharedQuote.author
+        self.category = sharedQuote.category
+    }
+    
+    // For creating quotes directly
+    init(text: String, author: String, category: String) {
+        self.text = text
+        self.author = author
+        self.category = category
+    }
 }
 
 // Quote Service
 class QuoteService: ObservableObject {
     static let shared = QuoteService()
     
-    // Local quotes data source
-    private let quotes: [Quote] = [
-        Quote(text: "The only way to do great work is to love what you do.", author: "Steve Jobs", category: "Success"),
-        Quote(text: "Life is what happens when you're busy making other plans.", author: "John Lennon", category: "Life"),
-        Quote(text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt", category: "Dreams"),
-        Quote(text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt", category: "Confidence"),
-        Quote(text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius", category: "Perseverance"),
-        Quote(text: "Your time is limited, don't waste it living someone else's life.", author: "Steve Jobs", category: "Life"),
-        Quote(text: "The best way to predict the future is to create it.", author: "Peter Drucker", category: "Ambition"),
-        Quote(text: "Success is not final, failure is not fatal: It is the courage to continue that counts.", author: "Winston Churchill", category: "Perseverance"),
-        Quote(text: "In the middle of difficulty lies opportunity.", author: "Albert Einstein", category: "Perspective"),
-        Quote(text: "The only limit to our realization of tomorrow will be our doubts of today.", author: "Franklin D. Roosevelt", category: "Confidence"),
-        Quote(text: "The purpose of our lives is to be happy.", author: "Dalai Lama", category: "Happiness"),
-        Quote(text: "Don't count the days, make the days count.", author: "Muhammad Ali", category: "Life"),
-        Quote(text: "The way to get started is to quit talking and begin doing.", author: "Walt Disney", category: "Action"),
-        Quote(text: "You are never too old to set another goal or to dream a new dream.", author: "C.S. Lewis", category: "Dreams"),
-        Quote(text: "Be the change that you wish to see in the world.", author: "Mahatma Gandhi", category: "Change"),
-        Quote(text: "What you get by achieving your goals is not as important as what you become by achieving your goals.", author: "Zig Ziglar", category: "Growth"),
-        Quote(text: "If you want to live a happy life, tie it to a goal, not to people or things.", author: "Albert Einstein", category: "Happiness"),
-        Quote(text: "The only person you are destined to become is the person you decide to be.", author: "Ralph Waldo Emerson", category: "Self-Awareness"),
-        Quote(text: "The greatest glory in living lies not in never falling, but in rising every time we fall.", author: "Nelson Mandela", category: "Resilience"),
-        Quote(text: "Life is 10% what happens to us and 90% how we react to it.", author: "Charles R. Swindoll", category: "Perspective"),
-        Quote(text: "You miss 100% of the shots you don't take.", author: "Wayne Gretzky", category: "Risk"),
-        Quote(text: "Whether you think you can or you think you can't, you're right.", author: "Henry Ford", category: "Mindset"),
-        Quote(text: "I have not failed. I've just found 10,000 ways that won't work.", author: "Thomas Edison", category: "Failure"),
-        Quote(text: "The journey of a thousand miles begins with one step.", author: "Lao Tzu", category: "Action"),
-        Quote(text: "Every moment is a fresh beginning.", author: "T.S. Eliot", category: "New Beginnings"),
-        Quote(text: "Start each day with a positive thought and a grateful heart.", author: "Roy T. Bennett", category: "Gratitude")
-    ]
+    // Local quotes data source - now using the shared quotes
+    private let quotes: [Quote] = SharedQuotes.all.map { Quote(from: $0) }
     
     // Favorites storage
     @Published var favorites: [Quote] = []
@@ -416,11 +868,15 @@ struct FavoritesView: View {
     }
 }
 
-// Home Quote View
+// Home Quote View with Calendar
 struct HomeQuoteView: View {
     @ObservedObject private var quoteService = QuoteService.shared
+    @ObservedObject private var eventService = EventService.shared
     @State private var quote: Quote
     @State private var showingShareSheet = false
+    @State private var showingEventEditor = false
+    @State private var editingEvent: Event?
+    @State private var selectedDate = Date()
     
     init() {
         // Initialize with today's quote
@@ -432,33 +888,183 @@ struct HomeQuoteView: View {
             // Background
             Color.black.edgesIgnoringSafeArea(.all)
             
-            VStack {
-                Spacer()
-                
-                QuoteCardView(
-                    quote: quote,
-                    isFavorite: quoteService.isFavorite(quote),
-                    onFavoriteToggle: {
-                        if quoteService.isFavorite(quote) {
-                            quoteService.removeFromFavorites(quote)
-                        } else {
-                            quoteService.addToFavorites(quote)
-                        }
-                    },
-                    onShare: {
-                        showingShareSheet = true
-                    },
-                    onRefresh: {
-                        // Get a random quote instead of today's quote for more variety
-                        quote = quoteService.getRandomQuote()
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Quote of the day section
+                    VStack {
+                        Text("QUOTE OF THE DAY")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .tracking(2)
+                            .padding(.top, 20)
+                        
+                        QuoteCardView(
+                            quote: quote,
+                            isFavorite: quoteService.isFavorite(quote),
+                            onFavoriteToggle: {
+                                if quoteService.isFavorite(quote) {
+                                    quoteService.removeFromFavorites(quote)
+                                } else {
+                                    quoteService.addToFavorites(quote)
+                                }
+                            },
+                            onShare: {
+                                showingShareSheet = true
+                            },
+                            onRefresh: {
+                                // Get a random quote instead of today's quote for more variety
+                                quote = quoteService.getRandomQuote()
+                            }
+                        )
                     }
-                )
-                
-                Spacer()
+                    .padding(.bottom, 10)
+                    
+                    Divider()
+                        .background(Color.white.opacity(0.3))
+                        .padding(.horizontal, 40)
+                    
+                    // Calendar section
+                    VStack(spacing: 15) {
+                        // Calendar title with add button
+                        HStack {
+                            Text("IMPORTANT DATES")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                                .tracking(2)
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                editingEvent = nil
+                                showingEventEditor = true
+                            }) {
+                                Image(systemName: "plus.circle")
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 20))
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        
+                        // Week calendar
+                        CalendarWeekView(selectedDate: $selectedDate)
+                            .padding(.vertical, 10)
+                        
+                        // Selected date title
+                        HStack {
+                            let dateFormatter = DateFormatter()
+                            dateFormatter.dateFormat = "EEEE, MMMM d"
+                            
+                            Text(dateFormatter.string(from: selectedDate))
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 5)
+                        
+                        // Events for selected date
+                        VStack(spacing: 10) {
+                            let eventsForDay = eventService.getEvents(for: selectedDate)
+                            
+                            if eventsForDay.isEmpty {
+                                VStack(spacing: 10) {
+                                    Image(systemName: "calendar")
+                                        .font(.system(size: 40))
+                                        .foregroundColor(.gray)
+                                        .padding(.top, 20)
+                                    
+                                    Text("No events for this day")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                    
+                                    Button(action: {
+                                        editingEvent = nil
+                                        showingEventEditor = true
+                                    }) {
+                                        Text("Add Event")
+                                            .font(.headline)
+                                            .foregroundColor(.black)
+                                            .padding(.horizontal, 20)
+                                            .padding(.vertical, 10)
+                                            .background(Color.white)
+                                            .cornerRadius(20)
+                                    }
+                                    .padding(.top, 10)
+                                    .padding(.bottom, 20)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .background(Color.black.opacity(0.3))
+                                .cornerRadius(10)
+                                .padding(.horizontal)
+                            } else {
+                                ForEach(eventsForDay) { event in
+                                    EventListItem(
+                                        event: event,
+                                        onComplete: {
+                                            eventService.toggleCompletionStatus(event)
+                                        },
+                                        onDelete: {
+                                            eventService.deleteEvent(event)
+                                        },
+                                        onEdit: {
+                                            editingEvent = event
+                                            showingEventEditor = true
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                        
+                        // Upcoming events section
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("UPCOMING EVENTS")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                                .tracking(2)
+                                .padding(.top, 10)
+                                .padding(.horizontal, 20)
+                            
+                            let upcomingEvents = eventService.getUpcomingEvents()
+                            
+                            if upcomingEvents.isEmpty {
+                                Text("No upcoming events for the next 7 days")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                                    .padding()
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                            } else {
+                                ForEach(upcomingEvents) { event in
+                                    EventListItem(
+                                        event: event,
+                                        onComplete: {
+                                            eventService.toggleCompletionStatus(event)
+                                        },
+                                        onDelete: {
+                                            eventService.deleteEvent(event)
+                                        },
+                                        onEdit: {
+                                            editingEvent = event
+                                            showingEventEditor = true
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    .padding(.bottom, 50) // Extra padding at bottom for better scrolling
+                }
             }
         }
         .sheet(isPresented: $showingShareSheet) {
             ShareSheet(activityItems: ["\(quote.text) — \(quote.author)"])
+        }
+        .sheet(isPresented: $showingEventEditor) {
+            if let event = editingEvent {
+                EventEditorView(event: event)
+            } else {
+                EventEditorView()
+            }
         }
     }
 }
