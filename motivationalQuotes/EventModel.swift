@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // Event model for calendar entries
 struct Event: Identifiable, Codable, Equatable {

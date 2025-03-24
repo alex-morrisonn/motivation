@@ -7,6 +7,13 @@ struct CalendarDayView: View {
     let isSelected: Bool
     let isToday: Bool
     
+    init(date: Date, hasEvents: Bool, isSelected: Bool, isToday: Bool) {
+        self.date = date
+        self.hasEvents = hasEvents
+        self.isSelected = isSelected
+        self.isToday = isToday
+    }
+    
     var body: some View {
         VStack {
             Text(dayFormatter.string(from: date))
@@ -35,26 +42,31 @@ struct CalendarDayView: View {
     }
     
     // Date formatters
-    private var dayFormatter: DateFormatter = {
+    var dayFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.dateFormat = "E"
         return formatter
-    }()
+    }
     
-    private var dateFormatter: DateFormatter = {
+    var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.dateFormat = "d"
         return formatter
-    }()
+    }
 }
 
 // Calendar week view
 struct CalendarWeekView: View {
-    @ObservedObject var eventService = EventService.shared
+    @ObservedObject var eventService: EventService
     @Binding var selectedDate: Date
     
-    private let calendar = Calendar.current
-    private let daysInWeek = 7
+    let calendar = Calendar.current
+    let daysInWeek = 7
+    
+    init(eventService: EventService = EventService.shared, selectedDate: Binding<Date>) {
+        self.eventService = eventService
+        self._selectedDate = selectedDate
+    }
     
     var body: some View {
         HStack(spacing: 5) {
@@ -79,7 +91,7 @@ struct CalendarWeekView: View {
     }
     
     // Get date for the index in the week view
-    private func getDateForIndex(_ index: Int) -> Date {
+    func getDateForIndex(_ index: Int) -> Date {
         let today = calendar.startOfDay(for: Date())
         let firstDayOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedDate))!
         return calendar.date(byAdding: .day, value: index, to: firstDayOfWeek)!
@@ -93,11 +105,18 @@ struct EventListItem: View {
     var onDelete: () -> Void
     var onEdit: () -> Void
     
-    private let timeFormatter: DateFormatter = {
+    init(event: Event, onComplete: @escaping () -> Void, onDelete: @escaping () -> Void, onEdit: @escaping () -> Void) {
+        self.event = event
+        self.onComplete = onComplete
+        self.onDelete = onDelete
+        self.onEdit = onEdit
+    }
+    
+    var timeFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
         return formatter
-    }()
+    }
     
     var body: some View {
         HStack {
@@ -165,7 +184,7 @@ struct EventListItem: View {
 // Event Editor View
 struct EventEditorView: View {
     @Environment(\.presentationMode) var presentationMode
-    @ObservedObject var eventService = EventService.shared
+    @ObservedObject var eventService: EventService
     
     @State private var title: String
     @State private var date: Date
@@ -176,7 +195,8 @@ struct EventEditorView: View {
     private var event: Event?
     
     // For new event
-    init() {
+    init(eventService: EventService = EventService.shared) {
+        self.eventService = eventService
         _title = State(initialValue: "")
         _date = State(initialValue: Date())
         _notes = State(initialValue: "")
@@ -186,7 +206,8 @@ struct EventEditorView: View {
     }
     
     // For editing existing event
-    init(event: Event) {
+    init(event: Event, eventService: EventService = EventService.shared) {
+        self.eventService = eventService
         _title = State(initialValue: event.title)
         _date = State(initialValue: event.date)
         _notes = State(initialValue: event.notes)

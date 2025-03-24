@@ -1,397 +1,205 @@
 import SwiftUI
 import UIKit
 
-// Event model for calendar entries
-struct Event: Identifiable, Codable, Equatable {
+// Quote Model
+struct Quote: Identifiable, Codable, Equatable {
     var id = UUID()
-    var title: String
-    var date: Date
-    var notes: String
-    var isCompleted: Bool = false
+    let text: String
+    let author: String
+    let category: String
     
-    static func == (lhs: Event, rhs: Event) -> Bool {
+    static func == (lhs: Quote, rhs: Quote) -> Bool {
         return lhs.id == rhs.id
+    }
+    
+    // Constructor to create from SharedQuote
+    init(from sharedQuote: SharedQuote) {
+        self.id = sharedQuote.id
+        self.text = sharedQuote.text
+        self.author = sharedQuote.author
+        self.category = sharedQuote.category
+    }
+    
+    // For creating quotes directly
+    init(text: String, author: String, category: String) {
+        self.text = text
+        self.author = author
+        self.category = category
     }
 }
 
-// Event service to manage events
-class EventService: ObservableObject {
-    static let shared = EventService()
+// Quote Service
+class QuoteService: ObservableObject {
+    static let shared = QuoteService()
     
-    @Published var events: [Event] = []
+    // Local quotes data source - now using the shared quotes
+    private let quotes: [Quote] = SharedQuotes.all.map { Quote(from: $0) }
+    
+    // Favorites storage
+    @Published var favorites: [Quote] = []
     
     init() {
-        loadEvents()
+        loadFavorites()
     }
     
-    // Save events to UserDefaults
-    private func saveEvents() {
-        if let encoded = try? JSONEncoder().encode(events) {
-            UserDefaults.standard.set(encoded, forKey: "savedEvents")
+    // Get all unique categories
+    func getAllCategories() -> [String] {
+        let categories = Set(quotes.map { $0.category })
+        return Array(categories).sorted()
+    }
+    
+    // Get quotes by category
+    func getQuotes(forCategory category: String) -> [Quote] {
+        return quotes.filter { $0.category == category }
+    }
+    
+    // Save favorites to UserDefaults
+    private func saveFavorites() {
+        if let encoded = try? JSONEncoder().encode(favorites) {
+            UserDefaults.standard.set(encoded, forKey: "savedFavorites")
         }
     }
     
-    // Load events from UserDefaults
-    private func loadEvents() {
-        if let savedEvents = UserDefaults.standard.data(forKey: "savedEvents") {
-            if let decodedEvents = try? JSONDecoder().decode([Event].self, from: savedEvents) {
-                events = decodedEvents
+    // Load favorites from UserDefaults
+    private func loadFavorites() {
+        if let savedFavorites = UserDefaults.standard.data(forKey: "savedFavorites") {
+            if let decodedFavorites = try? JSONDecoder().decode([Quote].self, from: savedFavorites) {
+                favorites = decodedFavorites
                 return
             }
         }
-        events = [] // Default to empty array if no events found
+        favorites = [] // Default to empty array if no favorites found
     }
     
-    // Add a new event
-    func addEvent(_ event: Event) {
-        events.append(event)
-        saveEvents()
-    }
-    
-    // Update an existing event
-    func updateEvent(_ event: Event) {
-        if let index = events.firstIndex(where: { $0.id == event.id }) {
-            events[index] = event
-            saveEvents()
+    // Add quote to favorites
+    func addToFavorites(_ quote: Quote) {
+        // Only add if not already in favorites
+        if !favorites.contains(where: { $0.text == quote.text && $0.author == quote.author }) {
+            favorites.append(quote)
+            saveFavorites()
         }
     }
     
-    // Delete an event
-    func deleteEvent(_ event: Event) {
-        events.removeAll(where: { $0.id == event.id })
-        saveEvents()
+    // Remove quote from favorites
+    func removeFromFavorites(_ quote: Quote) {
+        favorites.removeAll(where: { $0.text == quote.text && $0.author == quote.author })
+        saveFavorites()
     }
     
-    // Toggle completion status
-    func toggleCompletionStatus(_ event: Event) {
-        if let index = events.firstIndex(where: { $0.id == event.id }) {
-            events[index].isCompleted.toggle()
-            saveEvents()
-        }
+    // Check if a quote is in favorites
+    func isFavorite(_ quote: Quote) -> Bool {
+        return favorites.contains(where: { $0.text == quote.text && $0.author == quote.author })
     }
     
-    // Get events for a specific date
-    func getEvents(for date: Date) -> [Event] {
+    // Function to get today's quote
+    func getTodaysQuote() -> Quote {
         let calendar = Calendar.current
-        return events.filter { event in
-            calendar.isDate(event.date, inSameDayAs: date)
-        }
-    }
-    
-    // Get upcoming events (next 7 days)
-    func getUpcomingEvents() -> [Event] {
-        let today = Date()
-        let calendar = Calendar.current
-        let nextWeek = calendar.date(byAdding: .day, value: 7, to: today)!
+        let today = calendar.startOfDay(for: Date())
         
-        return events.filter { event in
-            let eventDate = event.date
-            return (eventDate >= today && eventDate <= nextWeek)
-        }.sorted { $0.date < $1.date }
+        // Use the day of the year to pick a quote
+        guard let dayOfYear = calendar.ordinality(of: .day, in: .year, for: today) else {
+            return quotes[0] // Fallback to first quote
+        }
+        
+        // Use modulo to ensure we always get a valid index
+        let index = (dayOfYear - 1) % quotes.count
+        return quotes[index]
+    }
+    
+    // Function to get a random quote
+    func getRandomQuote() -> Quote {
+        let randomIndex = Int.random(in: 0..<quotes.count)
+        return quotes[randomIndex]
+    }
+    
+    // Function to get all quotes
+    func getAllQuotes() -> [Quote] {
+        return quotes
+    }
+    
+    // Fallback quote in case of errors
+    func getFallbackQuote() -> Quote {
+        Quote(text: "There seems to be a problem loading today's quote.", author: "Try again later", category: "Error")
     }
 }
 
-// Calendar day cell
-struct CalendarDayView: View {
-    let date: Date
-    let hasEvents: Bool
-    let isSelected: Bool
-    let isToday: Bool
+// ShareSheet for sharing functionality
+struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
+        // Nothing to update
+    }
+}
+
+// Quote Card View (reusable component)
+struct QuoteCardView: View {
+    let quote: Quote
+    let isFavorite: Bool
+    var onFavoriteToggle: () -> Void
+    var onShare: () -> Void
+    var onRefresh: (() -> Void)?
     
     var body: some View {
         VStack {
-            Text(dayFormatter.string(from: date))
-                .font(.caption)
-                .foregroundColor(isToday ? .white : .gray)
+            Text(quote.text)
+                .font(.system(size: 24, weight: .medium))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
             
-            ZStack {
-                Circle()
-                    .fill(isSelected ? Color.white : Color.clear)
-                    .frame(width: 30, height: 30)
-                
-                Text(dateFormatter.string(from: date))
-                    .font(.system(size: 14, weight: isToday ? .bold : .regular))
-                    .foregroundColor(isSelected ? .black : (isToday ? .white : .white))
-            }
+            Text("— \(quote.author)")
+                .font(.system(size: 16, weight: .regular))
+                .foregroundColor(.gray)
+                .padding(.top, 16)
+                .padding(.bottom, 30)
             
-            // Indicator for events
-            if hasEvents {
-                Circle()
-                    .fill(Color.white.opacity(0.7))
-                    .frame(width: 5, height: 5)
-            }
-        }
-        .frame(height: 60)
-        .contentShape(Rectangle())
-    }
-    
-    // Date formatters
-    private var dayFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "E"
-        return formatter
-    }()
-    
-    private var dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d"
-        return formatter
-    }()
-}
-
-// Calendar week view
-struct CalendarWeekView: View {
-    @ObservedObject var eventService = EventService.shared
-    @Binding var selectedDate: Date
-    
-    private let calendar = Calendar.current
-    private let daysInWeek = 7
-    
-    var body: some View {
-        HStack(spacing: 5) {
-            ForEach(0..<daysInWeek, id: \.self) { index in
-                let date = getDateForIndex(index)
-                let hasEvents = !eventService.getEvents(for: date).isEmpty
-                let isSelected = calendar.isDate(date, inSameDayAs: selectedDate)
-                let isToday = calendar.isDateInToday(date)
+            // Action Buttons - All on one line with equal spacing
+            HStack {
+                Spacer()
                 
-                CalendarDayView(
-                    date: date,
-                    hasEvents: hasEvents,
-                    isSelected: isSelected,
-                    isToday: isToday
-                )
-                .onTapGesture {
-                    selectedDate = date
+                // Favorite Button
+                Button(action: {
+                    onFavoriteToggle()
+                }) {
+                    Image(systemName: isFavorite ? "heart.fill" : "heart")
+                        .font(.system(size: 22))
+                        .foregroundColor(isFavorite ? .red : .white)
                 }
-            }
-        }
-        .padding(.horizontal)
-    }
-    
-    // Get date for the index in the week view
-    private func getDateForIndex(_ index: Int) -> Date {
-        let today = calendar.startOfDay(for: Date())
-        let firstDayOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedDate))!
-        return calendar.date(byAdding: .day, value: index, to: firstDayOfWeek)!
-    }
-}
-
-// Event list item for a specific date
-struct EventListItem: View {
-    let event: Event
-    var onComplete: () -> Void
-    var onDelete: () -> Void
-    var onEdit: () -> Void
-    
-    private let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        return formatter
-    }()
-    
-    var body: some View {
-        HStack {
-            // Completion checkbox
-            Button(action: onComplete) {
-                Image(systemName: event.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(event.isCompleted ? .green : .white)
-                    .font(.system(size: 20))
-            }
-            .buttonStyle(PlainButtonStyle())
-            
-            // Event details
-            VStack(alignment: .leading, spacing: 4) {
-                Text(event.title)
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .strikethrough(event.isCompleted)
                 
-                HStack {
-                    Text(timeFormatter.string(from: event.date))
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                    
-                    if !event.notes.isEmpty {
-                        Text("•")
-                            .foregroundColor(.gray)
-                        
-                        Text(event.notes)
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                            .lineLimit(1)
-                    }
-                }
-            }
-            .padding(.horizontal, 5)
-            
-            Spacer()
-            
-            // Edit button
-            Button(action: onEdit) {
-                Image(systemName: "pencil")
-                    .foregroundColor(.white)
-                    .font(.system(size: 16))
-                    .padding(5)
-            }
-            .buttonStyle(PlainButtonStyle())
-            
-            // Delete button
-            Button(action: onDelete) {
-                Image(systemName: "trash")
-                    .foregroundColor(.white)
-                    .font(.system(size: 16))
-                    .padding(5)
-            }
-            .buttonStyle(PlainButtonStyle())
-        }
-        .padding(.vertical, 10)
-        .padding(.horizontal)
-        .background(Color.black.opacity(0.3))
-        .cornerRadius(10)
-        .padding(.horizontal)
-    }
-}
-
-// Event Editor View
-struct EventEditorView: View {
-    @Environment(\.presentationMode) var presentationMode
-    @ObservedObject var eventService = EventService.shared
-    
-    @State private var title: String
-    @State private var date: Date
-    @State private var notes: String
-    @State private var isCompleted: Bool
-    
-    private let isNew: Bool
-    private var event: Event?
-    
-    // For new event
-    init() {
-        _title = State(initialValue: "")
-        _date = State(initialValue: Date())
-        _notes = State(initialValue: "")
-        _isCompleted = State(initialValue: false)
-        isNew = true
-        event = nil
-    }
-    
-    // For editing existing event
-    init(event: Event) {
-        _title = State(initialValue: event.title)
-        _date = State(initialValue: event.date)
-        _notes = State(initialValue: event.notes)
-        _isCompleted = State(initialValue: event.isCompleted)
-        isNew = false
-        self.event = event
-    }
-    
-    var body: some View {
-        ZStack {
-            Color.black.edgesIgnoringSafeArea(.all)
-            
-            VStack(spacing: 20) {
-                Text(isNew ? "Add New Event" : "Edit Event")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .padding(.top, 20)
+                Spacer()
                 
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Event Title")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    TextField("Enter title", text: $title)
-                        .padding()
-                        .background(Color(UIColor.systemGray6).opacity(0.2))
-                        .cornerRadius(10)
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal)
-                
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Date & Time")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    DatePicker("", selection: $date)
-                        .datePickerStyle(GraphicalDatePickerStyle())
-                        .background(Color(UIColor.systemGray6).opacity(0.2))
-                        .cornerRadius(10)
-                        .colorScheme(.dark)
-                }
-                .padding(.horizontal)
-                
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Notes")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    TextEditor(text: $notes)
-                        .frame(height: 100)
-                        .padding(5)
-                        .background(Color(UIColor.systemGray6).opacity(0.2))
-                        .cornerRadius(10)
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal)
-                
-                Toggle(isOn: $isCompleted) {
-                    Text("Completed")
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal)
-                
-                HStack {
+                // Refresh Button (only if provided)
+                if let refreshAction = onRefresh {
                     Button(action: {
-                        presentationMode.wrappedValue.dismiss()
+                        refreshAction()
                     }) {
-                        Text("Cancel")
-                            .font(.headline)
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 22))
                             .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.gray.opacity(0.3))
-                            .cornerRadius(10)
                     }
                     
-                    Button(action: {
-                        saveEvent()
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Text("Save")
-                            .font(.headline)
-                            .foregroundColor(.black)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.white)
-                            .cornerRadius(10)
-                    }
-                    .disabled(title.isEmpty)
-                    .opacity(title.isEmpty ? 0.5 : 1)
+                    Spacer()
                 }
-                .padding(.horizontal)
+                
+                // Share Button
+                Button(action: {
+                    onShare()
+                }) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 22))
+                        .foregroundColor(.white)
+                }
                 
                 Spacer()
             }
         }
-    }
-    
-    private func saveEvent() {
-        let newEvent = Event(
-            id: event?.id ?? UUID(),
-            title: title,
-            date: date,
-            notes: notes,
-            isCompleted: isCompleted
-        )
-        
-        if isNew {
-            eventService.addEvent(newEvent)
-        } else {
-            eventService.updateEvent(newEvent)
-        }
+        .padding(.horizontal)
     }
 }
 
@@ -607,208 +415,6 @@ struct CategoriesView: View {
     }
 }
 
-// Quote Model
-struct Quote: Identifiable, Codable, Equatable {
-    var id = UUID()
-    let text: String
-    let author: String
-    let category: String
-    
-    static func == (lhs: Quote, rhs: Quote) -> Bool {
-        return lhs.id == rhs.id
-    }
-    
-    // Constructor to create from SharedQuote
-    init(from sharedQuote: SharedQuote) {
-        self.id = sharedQuote.id
-        self.text = sharedQuote.text
-        self.author = sharedQuote.author
-        self.category = sharedQuote.category
-    }
-    
-    // For creating quotes directly
-    init(text: String, author: String, category: String) {
-        self.text = text
-        self.author = author
-        self.category = category
-    }
-}
-
-// Quote Service
-class QuoteService: ObservableObject {
-    static let shared = QuoteService()
-    
-    // Local quotes data source - now using the shared quotes
-    private let quotes: [Quote] = SharedQuotes.all.map { Quote(from: $0) }
-    
-    // Favorites storage
-    @Published var favorites: [Quote] = []
-    
-    init() {
-        loadFavorites()
-    }
-    
-    // Get all unique categories
-    func getAllCategories() -> [String] {
-        let categories = Set(quotes.map { $0.category })
-        return Array(categories).sorted()
-    }
-    
-    // Get quotes by category
-    func getQuotes(forCategory category: String) -> [Quote] {
-        return quotes.filter { $0.category == category }
-    }
-    
-    // Save favorites to UserDefaults
-    private func saveFavorites() {
-        if let encoded = try? JSONEncoder().encode(favorites) {
-            UserDefaults.standard.set(encoded, forKey: "savedFavorites")
-        }
-    }
-    
-    // Load favorites from UserDefaults
-    private func loadFavorites() {
-        if let savedFavorites = UserDefaults.standard.data(forKey: "savedFavorites") {
-            if let decodedFavorites = try? JSONDecoder().decode([Quote].self, from: savedFavorites) {
-                favorites = decodedFavorites
-                return
-            }
-        }
-        favorites = [] // Default to empty array if no favorites found
-    }
-    
-    // Add quote to favorites
-    func addToFavorites(_ quote: Quote) {
-        // Only add if not already in favorites
-        if !favorites.contains(where: { $0.text == quote.text && $0.author == quote.author }) {
-            favorites.append(quote)
-            saveFavorites()
-        }
-    }
-    
-    // Remove quote from favorites
-    func removeFromFavorites(_ quote: Quote) {
-        favorites.removeAll(where: { $0.text == quote.text && $0.author == quote.author })
-        saveFavorites()
-    }
-    
-    // Check if a quote is in favorites
-    func isFavorite(_ quote: Quote) -> Bool {
-        return favorites.contains(where: { $0.text == quote.text && $0.author == quote.author })
-    }
-    
-    // Function to get today's quote
-    func getTodaysQuote() -> Quote {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        
-        // Use the day of the year to pick a quote
-        guard let dayOfYear = calendar.ordinality(of: .day, in: .year, for: today) else {
-            return quotes[0] // Fallback to first quote
-        }
-        
-        // Use modulo to ensure we always get a valid index
-        let index = (dayOfYear - 1) % quotes.count
-        return quotes[index]
-    }
-    
-    // Function to get a random quote
-    func getRandomQuote() -> Quote {
-        let randomIndex = Int.random(in: 0..<quotes.count)
-        return quotes[randomIndex]
-    }
-    
-    // Function to get all quotes
-    func getAllQuotes() -> [Quote] {
-        return quotes
-    }
-    
-    // Fallback quote in case of errors
-    func getFallbackQuote() -> Quote {
-        Quote(text: "There seems to be a problem loading today's quote.", author: "Try again later", category: "Error")
-    }
-}
-
-// ShareSheet for sharing functionality
-struct ShareSheet: UIViewControllerRepresentable {
-    let activityItems: [Any]
-    
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
-        return controller
-    }
-    
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
-        // Nothing to update
-    }
-}
-
-// Quote Card View (reusable component)
-struct QuoteCardView: View {
-    let quote: Quote
-    let isFavorite: Bool
-    var onFavoriteToggle: () -> Void
-    var onShare: () -> Void
-    var onRefresh: (() -> Void)?
-    
-    var body: some View {
-        VStack {
-            Text(quote.text)
-                .font(.system(size: 24, weight: .medium))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 20)
-            
-            Text("— \(quote.author)")
-                .font(.system(size: 16, weight: .regular))
-                .foregroundColor(.gray)
-                .padding(.top, 16)
-                .padding(.bottom, 30)
-            
-            // Action Buttons - All on one line with equal spacing
-            HStack {
-                Spacer()
-                
-                // Favorite Button
-                Button(action: {
-                    onFavoriteToggle()
-                }) {
-                    Image(systemName: isFavorite ? "heart.fill" : "heart")
-                        .font(.system(size: 22))
-                        .foregroundColor(isFavorite ? .red : .white)
-                }
-                
-                Spacer()
-                
-                // Refresh Button (only if provided)
-                if let refreshAction = onRefresh {
-                    Button(action: {
-                        refreshAction()
-                    }) {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 22))
-                            .foregroundColor(.white)
-                    }
-                    
-                    Spacer()
-                }
-                
-                // Share Button
-                Button(action: {
-                    onShare()
-                }) {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 22))
-                        .foregroundColor(.white)
-                }
-                
-                Spacer()
-            }
-        }
-        .padding(.horizontal)
-    }
-}
-
 // Favorites View
 struct FavoritesView: View {
     @ObservedObject private var quoteService = QuoteService.shared
@@ -951,10 +557,13 @@ struct HomeQuoteView: View {
                         
                         // Selected date title
                         HStack {
-                            let dateFormatter = DateFormatter()
-                            dateFormatter.dateFormat = "EEEE, MMMM d"
+                            let formatter: DateFormatter = {
+                                let formatter = DateFormatter()
+                                formatter.dateFormat = "EEEE, MMMM d"
+                                return formatter
+                            }()
                             
-                            Text(dateFormatter.string(from: selectedDate))
+                            Text(formatter.string(from: selectedDate))
                                 .font(.headline)
                                 .foregroundColor(.white)
                             
