@@ -4,6 +4,16 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>Moti.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>0</integer>
+		</dict>
+		<key>MotiWidgetExtension.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
 		<key>motivationalQuotes.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
@@ -12,7 +22,30 @@
 		<key>wdigetExtensionExtension.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>0</integer>
+			<integer>1</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>1E21CDED2D93715B000F7451</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>1E41833F2D8EC71100AAEC12</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>1E41834F2D8EC71300AAEC12</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>1E4183592D8EC71300AAEC12</key>
+		<dict>
+			<key>primary</key>
+			<true/>
 		</dict>
 	</dict>
 </dict>

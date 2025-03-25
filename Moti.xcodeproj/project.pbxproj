@@ -7,16 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1E21CDEF2D93715B000F7451 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */; };
+		1E21CDF02D93715B000F7451 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */; };
+		1E21CE012D93715C000F7451 /* MotiWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E21CDEE2D93715B000F7451 /* MotiWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		1E21CE072D9374A0000F7451 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
 		1EB90A072D91070E004C0A32 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
 		1EB90A082D9107C6004C0A32 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
 		1EB90A092D9107C6004C0A32 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
-		1EB90A0A2D9107C6004C0A32 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
-		1ECDCF812D8ECF3700123E99 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */; };
-		1ECDCF832D8ECF3700123E99 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */; };
-		1ECDCF942D8ECF3A00123E99 /* wdigetExtensionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1ECDCF7E2D8ECF3600123E99 /* wdigetExtensionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		1E21CDFF2D93715C000F7451 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1E4183382D8EC71100AAEC12 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1E21CDED2D93715B000F7451;
+			remoteInfo = MotiWidgetExtension;
+		};
 		1E4183512D8EC71300AAEC12 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 1E4183382D8EC71100AAEC12 /* Project object */;
@@ -31,13 +38,6 @@
 			remoteGlobalIDString = 1E41833F2D8EC71100AAEC12;
 			remoteInfo = motivationalQuotes;
 		};
-		1ECDCF922D8ECF3A00123E99 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 1E4183382D8EC71100AAEC12 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 1ECDCF7D2D8ECF3600123E99;
-			remoteInfo = wdigetExtensionExtension;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -47,7 +47,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				1ECDCF942D8ECF3A00123E99 /* wdigetExtensionExtension.appex in Embed Foundation Extensions */,
+				1E21CE012D93715C000F7451 /* MotiWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -55,28 +55,36 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1E21CDEE2D93715B000F7451 /* MotiWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MotiWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		1E21CE062D937197000F7451 /* MotiWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MotiWidgetExtension.entitlements; sourceTree = "<group>"; };
 		1E4183402D8EC71100AAEC12 /* Moti.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Moti.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E4183502D8EC71300AAEC12 /* MotiTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MotiTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E41835A2D8EC71300AAEC12 /* MotiUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MotiUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		1E61DA2E2D928393006A63EA /* wdigetExtensionExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = wdigetExtensionExtension.entitlements; sourceTree = "<group>"; };
 		1E61DA2F2D92870E006A63EA /* Moti.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = Moti.entitlements; path = Moti/Moti.entitlements; sourceTree = "<group>"; };
 		1EB90A062D910709004C0A32 /* SharedQuotes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedQuotes.swift; sourceTree = "<group>"; };
-		1ECDCF7E2D8ECF3600123E99 /* wdigetExtensionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = wdigetExtensionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		1ECDCF982D8ECF3A00123E99 /* Exceptions for "wdigetExtension" folder in "wdigetExtensionExtension" target */ = {
+		1E21CE042D93715C000F7451 /* Exceptions for "MotiWidget" folder in "MotiWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 1ECDCF7D2D8ECF3600123E99 /* wdigetExtensionExtension */;
+			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		1E21CDF12D93715B000F7451 /* MotiWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				1E21CE042D93715C000F7451 /* Exceptions for "MotiWidget" folder in "MotiWidgetExtension" target */,
+			);
+			path = MotiWidget;
+			sourceTree = "<group>";
+		};
 		1E4183422D8EC71100AAEC12 /* motivationalQuotes */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = motivationalQuotes;
@@ -92,17 +100,18 @@
 			path = motivationalQuotesUITests;
 			sourceTree = "<group>";
 		};
-		1ECDCF842D8ECF3700123E99 /* wdigetExtension */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				1ECDCF982D8ECF3A00123E99 /* Exceptions for "wdigetExtension" folder in "wdigetExtensionExtension" target */,
-			);
-			path = wdigetExtension;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		1E21CDEB2D93715B000F7451 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1E21CDF02D93715B000F7451 /* SwiftUI.framework in Frameworks */,
+				1E21CDEF2D93715B000F7451 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		1E41833D2D8EC71100AAEC12 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -124,28 +133,19 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1ECDCF7B2D8ECF3600123E99 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				1ECDCF832D8ECF3700123E99 /* SwiftUI.framework in Frameworks */,
-				1ECDCF812D8ECF3700123E99 /* WidgetKit.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		1E4183372D8EC71100AAEC12 = {
 			isa = PBXGroup;
 			children = (
+				1E21CE062D937197000F7451 /* MotiWidgetExtension.entitlements */,
 				1E61DA2F2D92870E006A63EA /* Moti.entitlements */,
-				1E61DA2E2D928393006A63EA /* wdigetExtensionExtension.entitlements */,
 				1EB90A062D910709004C0A32 /* SharedQuotes.swift */,
 				1E4183422D8EC71100AAEC12 /* motivationalQuotes */,
 				1E4183532D8EC71300AAEC12 /* motivationalQuotesTests */,
 				1E41835D2D8EC71300AAEC12 /* motivationalQuotesUITests */,
-				1ECDCF842D8ECF3700123E99 /* wdigetExtension */,
+				1E21CDF12D93715B000F7451 /* MotiWidget */,
 				1ECDCF7F2D8ECF3600123E99 /* Frameworks */,
 				1E4183412D8EC71100AAEC12 /* Products */,
 			);
@@ -157,7 +157,7 @@
 				1E4183402D8EC71100AAEC12 /* Moti.app */,
 				1E4183502D8EC71300AAEC12 /* MotiTests.xctest */,
 				1E41835A2D8EC71300AAEC12 /* MotiUITests.xctest */,
-				1ECDCF7E2D8ECF3600123E99 /* wdigetExtensionExtension.appex */,
+				1E21CDEE2D93715B000F7451 /* MotiWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -174,6 +174,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		1E21CDED2D93715B000F7451 /* MotiWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1E21CE052D93715C000F7451 /* Build configuration list for PBXNativeTarget "MotiWidgetExtension" */;
+			buildPhases = (
+				1E21CDEA2D93715B000F7451 /* Sources */,
+				1E21CDEB2D93715B000F7451 /* Frameworks */,
+				1E21CDEC2D93715B000F7451 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				1E21CDF12D93715B000F7451 /* MotiWidget */,
+			);
+			name = MotiWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = MotiWidgetExtension;
+			productReference = 1E21CDEE2D93715B000F7451 /* MotiWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		1E41833F2D8EC71100AAEC12 /* Moti */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1E4183642D8EC71300AAEC12 /* Build configuration list for PBXNativeTarget "Moti" */;
@@ -186,7 +208,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				1ECDCF932D8ECF3A00123E99 /* PBXTargetDependency */,
+				1E21CE002D93715C000F7451 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				1E4183422D8EC71100AAEC12 /* motivationalQuotes */,
@@ -244,28 +266,6 @@
 			productReference = 1E41835A2D8EC71300AAEC12 /* MotiUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
-		1ECDCF7D2D8ECF3600123E99 /* wdigetExtensionExtension */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 1ECDCF992D8ECF3A00123E99 /* Build configuration list for PBXNativeTarget "wdigetExtensionExtension" */;
-			buildPhases = (
-				1ECDCF7A2D8ECF3600123E99 /* Sources */,
-				1ECDCF7B2D8ECF3600123E99 /* Frameworks */,
-				1ECDCF7C2D8ECF3600123E99 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				1ECDCF842D8ECF3700123E99 /* wdigetExtension */,
-			);
-			name = wdigetExtensionExtension;
-			packageProductDependencies = (
-			);
-			productName = wdigetExtensionExtension;
-			productReference = 1ECDCF7E2D8ECF3600123E99 /* wdigetExtensionExtension.appex */;
-			productType = "com.apple.product-type.app-extension";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -276,6 +276,9 @@
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
+					1E21CDED2D93715B000F7451 = {
+						CreatedOnToolsVersion = 16.2;
+					};
 					1E41833F2D8EC71100AAEC12 = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -286,9 +289,6 @@
 					1E4183592D8EC71300AAEC12 = {
 						CreatedOnToolsVersion = 16.2;
 						TestTargetID = 1E41833F2D8EC71100AAEC12;
-					};
-					1ECDCF7D2D8ECF3600123E99 = {
-						CreatedOnToolsVersion = 16.2;
 					};
 				};
 			};
@@ -309,12 +309,19 @@
 				1E41833F2D8EC71100AAEC12 /* Moti */,
 				1E41834F2D8EC71300AAEC12 /* MotiTests */,
 				1E4183592D8EC71300AAEC12 /* MotiUITests */,
-				1ECDCF7D2D8ECF3600123E99 /* wdigetExtensionExtension */,
+				1E21CDED2D93715B000F7451 /* MotiWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		1E21CDEC2D93715B000F7451 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		1E41833E2D8EC71100AAEC12 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -336,16 +343,17 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1ECDCF7C2D8ECF3600123E99 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		1E21CDEA2D93715B000F7451 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1E21CE072D9374A0000F7451 /* SharedQuotes.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		1E41833C2D8EC71100AAEC12 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -370,17 +378,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1ECDCF7A2D8ECF3600123E99 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				1EB90A0A2D9107C6004C0A32 /* SharedQuotes.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		1E21CE002D93715C000F7451 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
+			targetProxy = 1E21CDFF2D93715C000F7451 /* PBXContainerItemProxy */;
+		};
 		1E4183522D8EC71300AAEC12 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 1E41833F2D8EC71100AAEC12 /* Moti */;
@@ -391,14 +396,65 @@
 			target = 1E41833F2D8EC71100AAEC12 /* Moti */;
 			targetProxy = 1E41835B2D8EC71300AAEC12 /* PBXContainerItemProxy */;
 		};
-		1ECDCF932D8ECF3A00123E99 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 1ECDCF7D2D8ECF3600123E99 /* wdigetExtensionExtension */;
-			targetProxy = 1ECDCF922D8ECF3A00123E99 /* PBXContainerItemProxy */;
-		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		1E21CE022D93715C000F7451 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = MotiWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MotiWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = MotiWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.motivationalQuotes.MotiWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		1E21CE032D93715C000F7451 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = MotiWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MotiWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = MotiWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.motivationalQuotes.MotiWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		1E4183622D8EC71300AAEC12 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -646,65 +702,18 @@
 			};
 			name = Release;
 		};
-		1ECDCF962D8ECF3A00123E99 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CODE_SIGN_ENTITLEMENTS = wdigetExtensionExtension.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = wdigetExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = wdigetExtension;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.motivationalQuotes.wdigetExtension;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		1ECDCF972D8ECF3A00123E99 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CODE_SIGN_ENTITLEMENTS = wdigetExtensionExtension.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = wdigetExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = wdigetExtension;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.motivationalQuotes.wdigetExtension;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		1E21CE052D93715C000F7451 /* Build configuration list for PBXNativeTarget "MotiWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1E21CE022D93715C000F7451 /* Debug */,
+				1E21CE032D93715C000F7451 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		1E41833B2D8EC71100AAEC12 /* Build configuration list for PBXProject "Moti" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -737,15 +746,6 @@
 			buildConfigurations = (
 				1E41836B2D8EC71300AAEC12 /* Debug */,
 				1E41836C2D8EC71300AAEC12 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		1ECDCF992D8ECF3A00123E99 /* Build configuration list for PBXNativeTarget "wdigetExtensionExtension" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				1ECDCF962D8ECF3A00123E99 /* Debug */,
-				1ECDCF972D8ECF3A00123E99 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
