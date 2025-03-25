@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import UserNotifications
 
 // Quote Model
 struct Quote: Identifiable, Codable, Equatable {
@@ -681,6 +682,7 @@ struct HomeQuoteView: View {
 // Main ContentView
 struct ContentView: View {
     @State private var selectedTab = 0
+    @EnvironmentObject var notificationManager: NotificationManager
     
     init() {
         // Set up the dark mode appearance
@@ -765,6 +767,10 @@ struct ContentView: View {
                     self.selectedTab = 1
                 }
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenQuotesTab"))) { _ in
+            // When a notification is tapped, navigate to the quotes tab
+            self.selectedTab = 1 // Index of the Categories tab
         }
     }
 }

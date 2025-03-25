@@ -5,21 +5,14 @@ import WidgetKit
 struct MoreView: View {
     @ObservedObject var quoteService = QuoteService.shared
     @ObservedObject var eventService = EventService.shared
+    @ObservedObject var notificationManager = NotificationManager.shared
     
     @State private var showingAbout = false
     @State private var showingFeedback = false
     @State private var showingShare = false
-    @State private var notificationsEnabled = true
+    @State private var showingPermissionAlert = false
     @State private var showingCacheAlert = false
     @State private var showingCacheConfirmation = false
-    
-    // Set default reminder time to 9:00 AM
-    @State private var selectedReminderTime: Date = {
-        var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
-        components.hour = 9
-        components.minute = 0
-        return Calendar.current.date(from: components) ?? Date()
-    }()
     
     @State private var selectedCategories: Set<String> = []
     
@@ -71,27 +64,33 @@ struct MoreView: View {
                                 
                                 Spacer()
                                 
-                                // Custom dimmer toggle
+                                // Custom dimmer toggle connected to notification manager
                                 ZStack {
                                     Capsule()
-                                        .fill(notificationsEnabled ? Color.gray.opacity(0.3) : Color.gray.opacity(0.2))
+                                        .fill(notificationManager.isNotificationsEnabled ? Color.gray.opacity(0.3) : Color.gray.opacity(0.2))
                                         .frame(width: 50, height: 30)
                                     
                                     Circle()
-                                        .fill(notificationsEnabled ? Color.white.opacity(0.7) : Color.gray.opacity(0.5))
+                                        .fill(notificationManager.isNotificationsEnabled ? Color.white.opacity(0.7) : Color.gray.opacity(0.5))
                                         .frame(width: 26, height: 26)
-                                        .offset(x: notificationsEnabled ? 10 : -10)
-                                        .animation(.spring(response: 0.2), value: notificationsEnabled)
+                                        .offset(x: notificationManager.isNotificationsEnabled ? 10 : -10)
+                                        .animation(.spring(response: 0.2), value: notificationManager.isNotificationsEnabled)
                                 }
                                 .onTapGesture {
-                                    notificationsEnabled.toggle()
+                                    if !notificationManager.isNotificationsEnabled {
+                                        // When enabling, check/request permission first
+                                        checkAndRequestNotificationPermission()
+                                    } else {
+                                        // When disabling, just update the manager
+                                        notificationManager.toggleNotifications(false)
+                                    }
                                 }
                             }
                             .padding(.vertical, 16)
                             .padding(.horizontal, 16)
                             
                             // Show time picker only when notifications are enabled
-                            if notificationsEnabled {
+                            if notificationManager.isNotificationsEnabled {
                                 Divider()
                                     .background(Color.white.opacity(0.1))
                                 
@@ -107,16 +106,17 @@ struct MoreView: View {
                                     
                                     Spacer()
                                     
-                                    DatePicker("", selection: $selectedReminderTime, displayedComponents: .hourAndMinute)
+                                    DatePicker("", selection: $notificationManager.reminderTime, displayedComponents: .hourAndMinute)
                                         .labelsHidden()
                                         .frame(width: 100)
                                         .colorScheme(.dark)
+                                        .onChange(of: notificationManager.reminderTime) { newValue in
+                                            notificationManager.updateReminderTime(newValue)
+                                        }
                                 }
                                 .padding(.vertical, 16)
                                 .padding(.horizontal, 16)
                             }
-                            
-                            // Removed the Clear Cache button from here
                         }
                         .background(Color.white.opacity(0.05))
                         .cornerRadius(12)
@@ -249,6 +249,20 @@ struct MoreView: View {
         .sheet(isPresented: $showingShare) {
             ShareSheet(activityItems: ["Check out Moti, my favorite motivational quotes app!"])
         }
+        .alert("Notification Permission", isPresented: $showingPermissionAlert) {
+            Button("Cancel", role: .cancel) {
+                // User canceled, make sure toggle reflects permission state
+                notificationManager.checkNotificationStatus()
+            }
+            Button("Settings", role: .none) {
+                // Open app settings
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+        } message: {
+            Text("To receive daily quote reminders, you need to allow notifications in Settings.")
+        }
         .alert("Clear Cache", isPresented: $showingCacheAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Clear", role: .destructive) {
@@ -262,6 +276,37 @@ struct MoreView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text("All cached data has been cleared successfully.")
+        }
+        .onAppear {
+            // Make sure notification state is updated when view appears
+            notificationManager.checkNotificationStatus()
+        }
+    }
+    
+    // Check and request notification permissions if needed
+    func checkAndRequestNotificationPermission() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            DispatchQueue.main.async {
+                switch settings.authorizationStatus {
+                case .notDetermined:
+                    // Request permission
+                    notificationManager.requestNotificationPermission { granted in
+                        if !granted {
+                            // If permission denied, show alert
+                            showingPermissionAlert = true
+                        }
+                    }
+                case .denied:
+                    // Show alert to direct to settings
+                    showingPermissionAlert = true
+                case .authorized, .provisional, .ephemeral:
+                    // Permission already granted, just toggle
+                    notificationManager.toggleNotifications(true)
+                @unknown default:
+                    // For future authorizationStatus values
+                    showingPermissionAlert = true
+                }
+            }
         }
     }
     
@@ -283,7 +328,7 @@ struct MoreView: View {
             if let bundleID = Bundle.main.bundleIdentifier {
                 defaults.dictionaryRepresentation().keys.forEach { key in
                     // Skip specific keys we want to preserve
-                    let keysToPreserve = ["savedFavorites", "savedEvents"]
+                    let keysToPreserve = ["savedFavorites", "savedEvents", "notificationsEnabled", "reminderTime"]
                     if !keysToPreserve.contains(key) && key.hasPrefix(bundleID) {
                         defaults.removeObject(forKey: key)
                     }
@@ -298,8 +343,6 @@ struct MoreView: View {
         }
     }
 }
-
-// MARK: - Component Views
 
 // Section header with minimalist design
 struct SectionHeader: View {
@@ -683,12 +726,5 @@ struct FeedbackView: View {
             }
         }
         .preferredColorScheme(.dark)
-    }
-}
-
-// Preview
-struct MoreView_Previews: PreviewProvider {
-    static var previews: some View {
-        MoreView()
     }
 }
