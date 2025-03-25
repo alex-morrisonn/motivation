@@ -1,6 +1,6 @@
 import SwiftUI
 
-// More view with additional app features
+// Minimalistic More View with clean black and white theme
 struct MoreView: View {
     @ObservedObject var quoteService = QuoteService.shared
     @ObservedObject var eventService = EventService.shared
@@ -9,61 +9,142 @@ struct MoreView: View {
     @State private var showingSettings = false
     @State private var showingFeedback = false
     @State private var showingShare = false
-    @State private var isDarkModeEnabled = true
     @State private var notificationsEnabled = true
     @State private var selectedReminderTime = Date()
     @State private var selectedCategories: Set<String> = []
     
-    // Main components for the More view
     var body: some View {
         ZStack {
-            // Background
+            // Black background
             Color.black.edgesIgnoringSafeArea(.all)
             
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Header
-                    Text("More")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal)
-                        .padding(.top, 20)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 30) {
+                    // Stats cards with colors
+                    HStack(spacing: 15) {
+                        StatCard(
+                            number: "\(quoteService.favorites.count)",
+                            label: "Favorites",
+                            icon: "heart"
+                        )
+                        
+                        StatCard(
+                            number: "\(eventService.events.count)",
+                            label: "Events",
+                            icon: "calendar"
+                        )
+                        
+                        StatCard(
+                            number: "7",
+                            label: "Day Streak",
+                            icon: "flame"
+                        )
+                    }
+                    .padding(.top, 16)
                     
-                    // User profile section
-                    UserProfileSection()
-                    
-                    // Stats section
-                    StatsSection(
-                        favoriteCount: quoteService.favorites.count,
-                        eventCount: eventService.events.count,
-                        streakCount: 7 // This would ideally be tracked elsewhere
-                    )
-                    
-                    // Features section
-                    MoreFeaturesSection(
-                        onSettingsTapped: { showingSettings.toggle() },
-                        onAboutTapped: { showingAbout.toggle() },
-                        onFeedbackTapped: { showingFeedback.toggle() },
-                        onShareTapped: { showingShare.toggle() }
-                    )
+                    // Feature options section
+                    VStack(spacing: 0) {
+                        SectionHeader(title: "OPTIONS")
+                        
+                        // Section background
+                        VStack(spacing: 0) {
+                            OptionRow(
+                                icon: "gear",
+                                title: "Settings",
+                                action: { showingSettings.toggle() }
+                            )
+                            
+                            Divider()
+                                .background(Color.white.opacity(0.1))
+                            
+                            OptionRow(
+                                icon: "info.circle",
+                                title: "About",
+                                action: { showingAbout.toggle() }
+                            )
+                            
+                            Divider()
+                                .background(Color.white.opacity(0.1))
+                            
+                            OptionRow(
+                                icon: "envelope",
+                                title: "Send Feedback",
+                                action: { showingFeedback.toggle() }
+                            )
+                            
+                            Divider()
+                                .background(Color.white.opacity(0.1))
+                            
+                            OptionRow(
+                                icon: "square.and.arrow.up",
+                                title: "Share App",
+                                action: { showingShare.toggle() }
+                            )
+                        }
+                        .background(Color.white.opacity(0.05))
+                        .cornerRadius(12)
+                    }
                     
                     // Categories section
-                    CategoriesSection(
-                        categories: quoteService.getAllCategories(),
-                        selectedCategories: $selectedCategories
-                    )
+                    VStack(spacing: 0) {
+                        SectionHeader(title: "CATEGORIES")
+                        
+                        Text("Select your favorite categories for personalized content")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 4)
+                            .padding(.bottom, 12)
+                        
+                        // Categories list
+                        VStack(spacing: 0) {
+                            ForEach(quoteService.getAllCategories(), id: \.self) { category in
+                                if category != quoteService.getAllCategories().first {
+                                    Divider()
+                                        .background(Color.white.opacity(0.1))
+                                }
+                                
+                                CategoryRow(
+                                    category: category,
+                                    isSelected: selectedCategories.contains(category),
+                                    onToggle: {
+                                        if selectedCategories.contains(category) {
+                                            selectedCategories.remove(category)
+                                        } else {
+                                            selectedCategories.insert(category)
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                        .background(Color.white.opacity(0.05))
+                        .cornerRadius(12)
+                    }
                     
                     // App info
-                    AppInfoSection()
+                    VStack(spacing: 8) {
+                        Text("Moti")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        Text("Version 1.0")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.5))
+                        
+                        Text("© 2025 Moti Team")
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.3))
+                            .padding(.top, 4)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
                 }
+                .padding(.horizontal, 20)
                 .padding(.bottom, 30)
             }
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView(
-                isDarkModeEnabled: $isDarkModeEnabled,
                 notificationsEnabled: $notificationsEnabled,
                 selectedReminderTime: $selectedReminderTime
             )
@@ -80,360 +161,168 @@ struct MoreView: View {
     }
 }
 
-// User profile section
-struct UserProfileSection: View {
-    var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "person.circle.fill")
-                .font(.system(size: 70))
-                .foregroundColor(.white)
-            
-            Text("Daily Inspiration")
-                .font(.headline)
-                .foregroundColor(.white)
-            
-            Text("Personalize your experience")
-                .font(.subheadline)
-                .foregroundColor(.gray)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color(UIColor.systemGray6).opacity(0.2))
-        .cornerRadius(16)
-        .padding(.horizontal)
-    }
-}
+// MARK: - Component Views
 
-// Stats section
-struct StatsSection: View {
-    let favoriteCount: Int
-    let eventCount: Int
-    let streakCount: Int
+// Section header with minimalist design
+struct SectionHeader: View {
+    let title: String
     
     var body: some View {
-        HStack(spacing: 12) {
-            // Favorites stat
-            StatItemView(
-                icon: "heart.fill",
-                color: .red,
-                value: "\(favoriteCount)",
-                label: "Favorites"
-            )
-            
-            // Events stat
-            StatItemView(
-                icon: "calendar",
-                color: .blue,
-                value: "\(eventCount)",
-                label: "Events"
-            )
-            
-            // Streak stat
-            StatItemView(
-                icon: "flame.fill",
-                color: .orange,
-                value: "\(streakCount)",
-                label: "Day Streak"
-            )
-        }
-        .padding(.horizontal)
+        Text(title)
+            .font(.caption)
+            .fontWeight(.semibold)
+            .foregroundColor(.white.opacity(0.6))
+            .tracking(2)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 4)
+            .padding(.bottom, 8)
+            .padding(.top, 8)
     }
 }
 
-// Individual stat item
-struct StatItemView: View {
-    let icon: String
-    let color: Color
-    let value: String
+// Stat card with colored icons
+struct StatCard: View {
+    let number: String
     let label: String
+    let icon: String
+    
+    // Get appropriate color for each stat type
+    private var iconColor: Color {
+        switch icon {
+        case "heart": return .red
+        case "calendar": return .blue
+        case "flame": return .orange
+        default: return .white
+        }
+    }
     
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 24))
-                .foregroundColor(color)
+                .foregroundColor(iconColor)
+                .padding(.bottom, 4)
             
-            Text(value)
-                .font(.system(size: 20, weight: .bold))
+            Text(number)
+                .font(.system(size: 32, weight: .bold))
                 .foregroundColor(.white)
             
             Text(label)
-                .font(.caption)
-                .foregroundColor(.gray)
+                .font(.system(size: 12))
+                .fontWeight(.medium)
+                .foregroundColor(.white.opacity(0.6))
         }
         .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color(UIColor.systemGray6).opacity(0.2))
-        .cornerRadius(16)
+        .padding(.vertical, 20)
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(12)
     }
 }
 
-// Features section
-struct MoreFeaturesSection: View {
-    var onSettingsTapped: () -> Void
-    var onAboutTapped: () -> Void
-    var onFeedbackTapped: () -> Void
-    var onShareTapped: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            Text("FEATURES")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(.gray)
-                .tracking(2)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-            
-            // Settings option
-            MoreOptionRow(
-                icon: "gear",
-                title: "Settings",
-                subtitle: "Customize app preferences",
-                action: onSettingsTapped
-            )
-            
-            Divider()
-                .background(Color.white.opacity(0.1))
-                .padding(.horizontal)
-            
-            // About option
-            MoreOptionRow(
-                icon: "info.circle",
-                title: "About",
-                subtitle: "Learn more about Moti",
-                action: onAboutTapped
-            )
-            
-            Divider()
-                .background(Color.white.opacity(0.1))
-                .padding(.horizontal)
-            
-            // Feedback option
-            MoreOptionRow(
-                icon: "envelope",
-                title: "Send Feedback",
-                subtitle: "Help us improve",
-                action: onFeedbackTapped
-            )
-            
-            Divider()
-                .background(Color.white.opacity(0.1))
-                .padding(.horizontal)
-            
-            // Share option
-            MoreOptionRow(
-                icon: "square.and.arrow.up",
-                title: "Share App",
-                subtitle: "Spread motivation",
-                action: onShareTapped
-            )
-        }
-        .background(Color(UIColor.systemGray6).opacity(0.2))
-        .cornerRadius(16)
-        .padding(.horizontal)
-    }
-}
-
-// More option row component
-struct MoreOptionRow: View {
+// Option row with minimalist design
+struct OptionRow: View {
     let icon: String
     let title: String
-    let subtitle: String
     var action: () -> Void
     
     var body: some View {
         Button(action: action) {
             HStack(spacing: 16) {
                 Image(systemName: icon)
-                    .font(.system(size: 22))
+                    .font(.system(size: 18))
                     .foregroundColor(.white)
-                    .frame(width: 24)
+                    .frame(width: 20)
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                }
+                Text(title)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14))
-                    .foregroundColor(.gray)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.3))
             }
-            .padding()
+            .padding(.vertical, 16)
+            .padding(.horizontal, 16)
         }
     }
 }
 
-// Categories section
-struct CategoriesSection: View {
-    let categories: [String]
-    @Binding var selectedCategories: Set<String>
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Text("PREFERRED CATEGORIES")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(.gray)
-                .tracking(2)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
-                .padding(.bottom, 4)
-            
-            Text("Select your favorite categories for personalized content")
-                .font(.caption)
-                .foregroundColor(.gray)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-            
-            VStack(spacing: 10) {
-                ForEach(categories, id: \.self) { category in
-                    CategoryToggleRow(
-                        category: category,
-                        isSelected: selectedCategories.contains(category),
-                        onToggle: {
-                            if selectedCategories.contains(category) {
-                                selectedCategories.remove(category)
-                            } else {
-                                selectedCategories.insert(category)
-                            }
-                        }
-                    )
-                }
-            }
-            .padding(.vertical, 8)
-            .background(Color(UIColor.systemGray6).opacity(0.2))
-            .cornerRadius(16)
-            .padding(.horizontal)
-        }
-    }
-}
-
-// Category toggle row
-struct CategoryToggleRow: View {
+// Category row with colored icon backgrounds
+struct CategoryRow: View {
     let category: String
     let isSelected: Bool
     var onToggle: () -> Void
     
-    // Color mapping for category backgrounds - reusing from the main app
-    private func colorForCategory(_ category: String) -> Color {
+    // Icons for categories
+    private func iconForCategory(_ category: String) -> String {
         switch category {
-        case "Success & Achievement":
-            return Color.blue.opacity(0.7)
-        case "Life & Perspective":
-            return Color.purple.opacity(0.7)
-        case "Dreams & Goals":
-            return Color.green.opacity(0.7)
-        case "Courage & Confidence":
-            return Color.orange.opacity(0.7)
-        case "Perseverance & Resilience":
-            return Color.red.opacity(0.7)
-        case "Growth & Change":
-            return Color.teal.opacity(0.7)
-        case "Action & Determination":
-            return Color.indigo.opacity(0.7)
-        case "Mindset & Attitude":
-            return Color.pink.opacity(0.7)
-        case "Focus & Discipline":
-            return Color.yellow.opacity(0.7)
-        default:
-            return Color.gray.opacity(0.7)
+        case "Success & Achievement": return "trophy"
+        case "Life & Perspective": return "scope"
+        case "Dreams & Goals": return "sparkles"
+        case "Courage & Confidence": return "bolt.heart"
+        case "Perseverance & Resilience": return "figure.walk"
+        case "Growth & Change": return "leaf"
+        case "Action & Determination": return "flag"
+        case "Mindset & Attitude": return "brain"
+        case "Focus & Discipline": return "target"
+        default: return "quote.bubble"
         }
     }
     
-    // Icon mapping for categories - reusing from the main app
-    private func iconForCategory(_ category: String) -> String {
+    // Color for category icons
+    private func colorForCategory(_ category: String) -> Color {
         switch category {
-        case "Success & Achievement":
-            return "trophy"
-        case "Life & Perspective":
-            return "scope"
-        case "Dreams & Goals":
-            return "sparkles"
-        case "Courage & Confidence":
-            return "bolt.heart"
-        case "Perseverance & Resilience":
-            return "figure.walk"
-        case "Growth & Change":
-            return "leaf"
-        case "Action & Determination":
-            return "flag"
-        case "Mindset & Attitude":
-            return "brain"
-        case "Focus & Discipline":
-            return "target"
-        default:
-            return "quote.bubble"
+        case "Success & Achievement": return Color.blue
+        case "Life & Perspective": return Color.purple
+        case "Dreams & Goals": return Color.green
+        case "Courage & Confidence": return Color.orange
+        case "Perseverance & Resilience": return Color.red
+        case "Growth & Change": return Color.teal
+        case "Action & Determination": return Color.indigo
+        case "Mindset & Attitude": return Color.pink
+        case "Focus & Discipline": return Color.yellow
+        default: return Color.gray
         }
     }
     
     var body: some View {
         Button(action: onToggle) {
-            HStack {
-                // Category icon
-                Image(systemName: iconForCategory(category))
-                    .font(.system(size: 16))
-                    .foregroundColor(.white)
-                    .frame(width: 30, height: 30)
-                    .background(colorForCategory(category))
-                    .clipShape(Circle())
+            HStack(spacing: 16) {
+                // Category icon with colored background
+                ZStack {
+                    Circle()
+                        .fill(colorForCategory(category))
+                        .frame(width: 32, height: 32)
+                    
+                    Image(systemName: iconForCategory(category))
+                        .font(.system(size: 16))
+                        .foregroundColor(.white)
+                }
                 
                 Text(category)
-                    .font(.subheadline)
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white)
                 
                 Spacer()
                 
+                // Green checkmark when selected
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(isSelected ? .green : .gray)
-                    .font(.system(size: 20))
+                    .foregroundColor(isSelected ? .green : .white.opacity(0.3))
+                    .font(.system(size: 18))
             }
-            .padding(.horizontal)
-            .padding(.vertical, 6)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
         }
     }
 }
 
-// App info section
-struct AppInfoSection: View {
-    var body: some View {
-        VStack(spacing: 8) {
-            Text("Moti")
-                .font(.headline)
-                .foregroundColor(.white)
-            
-            Text("Version 1.0")
-                .font(.caption)
-                .foregroundColor(.gray)
-            
-            Text("© 2025 Moti Team")
-                .font(.caption2)
-                .foregroundColor(.gray)
-                .padding(.top, 4)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color(UIColor.systemGray6).opacity(0.1))
-        .cornerRadius(16)
-        .padding(.horizontal)
-    }
-}
+// MARK: - Additional Views (unchanged but included for reference)
 
-// MARK: - Additional Views
-
-// Settings View
+// Settings View with dark mode option removed
 struct SettingsView: View {
     @Environment(\.presentationMode) var presentationMode
-    @Binding var isDarkModeEnabled: Bool
     @Binding var notificationsEnabled: Bool
     @Binding var selectedReminderTime: Date
     
@@ -444,31 +333,48 @@ struct SettingsView: View {
                 
                 VStack {
                     List {
-                        Section(header: Text("Appearance").foregroundColor(.gray)) {
-                            Toggle("Dark Mode", isOn: $isDarkModeEnabled)
-                                .tint(.white)
-                        }
-                        .listRowBackground(Color(UIColor.systemGray6).opacity(0.2))
-                        
-                        Section(header: Text("Notifications").foregroundColor(.gray)) {
-                            Toggle("Daily Quote Reminder", isOn: $notificationsEnabled)
-                                .tint(.white)
+                        Section(header: Text("NOTIFICATIONS").font(.caption).fontWeight(.semibold).foregroundColor(.white.opacity(0.6))) {
+                            HStack {
+                                Text("Daily Quote Reminder")
+                                    .foregroundColor(.white)
+                                
+                                Spacer()
+                                
+                                // Custom toggle for notifications
+                                ZStack {
+                                    Capsule()
+                                        .fill(notificationsEnabled ? Color.gray.opacity(0.3) : Color.gray.opacity(0.2))
+                                        .frame(width: 50, height: 30)
+                                    
+                                    Circle()
+                                        .fill(notificationsEnabled ? Color.white.opacity(0.9) : Color.gray.opacity(0.5))
+                                        .frame(width: 26, height: 26)
+                                        .offset(x: notificationsEnabled ? 10 : -10)
+                                        .animation(.spring(response: 0.2), value: notificationsEnabled)
+                                }
+                                .onTapGesture {
+                                    notificationsEnabled.toggle()
+                                }
+                            }
                             
                             if notificationsEnabled {
                                 DatePicker("Reminder Time", selection: $selectedReminderTime, displayedComponents: .hourAndMinute)
+                                    .foregroundColor(.white)
+                                    .datePickerStyle(CompactDatePickerStyle())
+                                    .accentColor(.white.opacity(0.7))
                             }
                         }
-                        .listRowBackground(Color(UIColor.systemGray6).opacity(0.2))
+                        .listRowBackground(Color.white.opacity(0.05))
                         
-                        Section(header: Text("Storage").foregroundColor(.gray)) {
+                        Section(header: Text("STORAGE").font(.caption).fontWeight(.semibold).foregroundColor(.white.opacity(0.6))) {
                             Button(action: {
                                 // This would clear the app's cache
                             }) {
                                 Text("Clear Cache")
-                                    .foregroundColor(.red)
+                                    .foregroundColor(.red.opacity(0.9))
                             }
                         }
-                        .listRowBackground(Color(UIColor.systemGray6).opacity(0.2))
+                        .listRowBackground(Color.white.opacity(0.05))
                     }
                     .scrollContentBackground(.hidden)
                 }
@@ -480,10 +386,10 @@ struct SettingsView: View {
                     Button("Done") {
                         presentationMode.wrappedValue.dismiss()
                     }
+                    .foregroundColor(.white)
                 }
             }
         }
-        .preferredColorScheme(.dark)
     }
 }
 
