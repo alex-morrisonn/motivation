@@ -6,5 +6,6 @@ struct wdigetExtensionBundle: WidgetBundle {
     @WidgetBundleBuilder
     var body: some Widget {
         QuoteWidget()
+        CompactQuoteWidget()
     }
 }

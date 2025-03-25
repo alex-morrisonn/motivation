@@ -220,90 +220,104 @@ struct EventEditorView: View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
             
-            VStack(spacing: 20) {
-                Text(isNew ? "Add New Event" : "Edit Event")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .padding(.top, 20)
-                
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Event Title")
-                        .font(.headline)
+            ScrollView {
+                VStack(spacing: 20) {
+                    Text(isNew ? "Add New Event" : "Edit Event")
+                        .font(.title)
+                        .fontWeight(.bold)
                         .foregroundColor(.white)
+                        .padding(.top, 20)
                     
-                    TextField("Enter title", text: $title)
-                        .padding()
-                        .background(Color(UIColor.systemGray6).opacity(0.2))
-                        .cornerRadius(10)
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal)
-                
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Date & Time")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    DatePicker("", selection: $date)
-                        .datePickerStyle(GraphicalDatePickerStyle())
-                        .background(Color(UIColor.systemGray6).opacity(0.2))
-                        .cornerRadius(10)
-                        .colorScheme(.dark)
-                }
-                .padding(.horizontal)
-                
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Notes")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    TextEditor(text: $notes)
-                        .frame(height: 100)
-                        .padding(5)
-                        .background(Color(UIColor.systemGray6).opacity(0.2))
-                        .cornerRadius(10)
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal)
-                
-                Toggle(isOn: $isCompleted) {
-                    Text("Completed")
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal)
-                
-                HStack {
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Text("Cancel")
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Event Title")
                             .font(.headline)
                             .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
+                        
+                        TextField("Enter title", text: $title)
                             .padding()
-                            .background(Color.gray.opacity(0.3))
+                            .background(Color(UIColor.systemGray6).opacity(0.2))
                             .cornerRadius(10)
+                            .foregroundColor(.white)
                     }
+                    .padding(.horizontal)
                     
-                    Button(action: {
-                        saveEvent()
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Text("Save")
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Date & Time")
                             .font(.headline)
-                            .foregroundColor(.black)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.white)
+                            .foregroundColor(.white)
+                        
+                        DatePicker("", selection: $date)
+                            .datePickerStyle(GraphicalDatePickerStyle())
+                            .background(Color(UIColor.systemGray6).opacity(0.2))
                             .cornerRadius(10)
+                            .colorScheme(.dark)
                     }
-                    .disabled(title.isEmpty)
-                    .opacity(title.isEmpty ? 0.5 : 1)
+                    .padding(.horizontal)
+                    
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Notes")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        ZStack(alignment: .topLeading) {
+                            TextEditor(text: $notes)
+                                .frame(height: 100)
+                                .padding(5)
+                                .background(Color(UIColor.systemGray6).opacity(0.2))
+                                .cornerRadius(10)
+                                .foregroundColor(.white)
+                                .colorScheme(.dark) // Force dark mode for TextEditor
+                            
+                            if notes.isEmpty {
+                                Text("Add notes here...")
+                                    .foregroundColor(.gray)
+                                    .padding(.horizontal, 10)
+                                    .padding(.top, 13)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                    
+                    Toggle(isOn: $isCompleted) {
+                        Text("Completed")
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal)
+                    
+                    HStack {
+                        Button(action: {
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            Text("Cancel")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.gray.opacity(0.3))
+                                .cornerRadius(10)
+                        }
+                        
+                        Button(action: {
+                            saveEvent()
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            Text("Save")
+                                .font(.headline)
+                                .foregroundColor(.black)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.white)
+                                .cornerRadius(10)
+                        }
+                        .disabled(title.isEmpty)
+                        .opacity(title.isEmpty ? 0.5 : 1)
+                    }
+                    .padding(.horizontal)
+                    
+                    // Add padding at the bottom to ensure scrolling can reach all content
+                    Spacer(minLength: 30)
                 }
-                .padding(.horizontal)
-                
-                Spacer()
+                .padding(.bottom, 20)
             }
         }
     }

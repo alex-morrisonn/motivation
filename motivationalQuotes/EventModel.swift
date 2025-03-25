@@ -1,6 +1,20 @@
 import Foundation
 import SwiftUI
 
+#if os(iOS)
+import WidgetKit
+#endif
+
+// Shared App Group identifier - use this same string in both app and widget extension
+let appGroupIdentifier = "group.com.motivationalQuotes.shared"
+
+// Access shared UserDefaults
+extension UserDefaults {
+    static var shared: UserDefaults {
+        return UserDefaults(suiteName: appGroupIdentifier) ?? .standard
+    }
+}
+
 // Event model for calendar entries
 struct Event: Identifiable, Codable, Equatable {
     var id = UUID()
@@ -24,16 +38,21 @@ class EventService: ObservableObject {
         loadEvents()
     }
     
-    // Save events to UserDefaults
+    // Save events to Shared UserDefaults
     private func saveEvents() {
         if let encoded = try? JSONEncoder().encode(events) {
-            UserDefaults.standard.set(encoded, forKey: "savedEvents")
+            UserDefaults.shared.set(encoded, forKey: "savedEvents")
+            
+            // Update WidgetCenter to refresh widgets
+            #if os(iOS)
+            WidgetCenter.shared.reloadAllTimelines()
+            #endif
         }
     }
     
-    // Load events from UserDefaults
+    // Load events from Shared UserDefaults
     private func loadEvents() {
-        if let savedEvents = UserDefaults.standard.data(forKey: "savedEvents") {
+        if let savedEvents = UserDefaults.shared.data(forKey: "savedEvents") {
             if let decodedEvents = try? JSONDecoder().decode([Event].self, from: savedEvents) {
                 events = decodedEvents
                 return
@@ -89,4 +108,48 @@ class EventService: ObservableObject {
             return (eventDate >= today && eventDate <= nextWeek)
         }.sorted { $0.date < $1.date }
     }
+    
+    // Get events for the current month
+    func getEventsForCurrentMonth() -> [Event] {
+        let calendar = Calendar.current
+        let currentDate = Date()
+        let currentMonth = calendar.component(.month, from: currentDate)
+        let currentYear = calendar.component(.year, from: currentDate)
+        
+        return events.filter { event in
+            let eventMonth = calendar.component(.month, from: event.date)
+            let eventYear = calendar.component(.year, from: event.date)
+            return eventMonth == currentMonth && eventYear == currentYear
+        }
+    }
+    
+    // Get days in current month that have events
+    func getEventDaysForCurrentMonth() -> [Int: Bool] {
+        let events = getEventsForCurrentMonth()
+        let calendar = Calendar.current
+        
+        var eventDays = [Int: Bool]()
+        
+        for event in events {
+            let day = calendar.component(.day, from: event.date)
+            eventDays[day] = true
+        }
+        
+        return eventDays
+    }
 }
+
+// NOTE: Instead of adding this extension here, add the following to your ContentView:
+/*
+.onOpenURL { url in
+    if url.scheme == "moti" {
+        if url.host == "calendar" {
+            // Navigate to calendar or home tab
+            self.selectedTab = 0 // Adjust based on your app's structure
+        } else if url.host == "quotes" {
+            // Navigate to quotes tab
+            self.selectedTab = 1 // Adjust based on your app's structure
+        }
+    }
+}
+*/

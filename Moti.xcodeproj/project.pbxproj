@@ -58,6 +58,7 @@
 		1E4183402D8EC71100AAEC12 /* Moti.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Moti.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E4183502D8EC71300AAEC12 /* MotiTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MotiTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E41835A2D8EC71300AAEC12 /* MotiUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MotiUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1E61DA2E2D928393006A63EA /* wdigetExtensionExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = wdigetExtensionExtension.entitlements; sourceTree = "<group>"; };
 		1EB90A062D910709004C0A32 /* SharedQuotes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedQuotes.swift; sourceTree = "<group>"; };
 		1ECDCF7E2D8ECF3600123E99 /* wdigetExtensionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = wdigetExtensionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -137,6 +138,7 @@
 		1E4183372D8EC71100AAEC12 = {
 			isa = PBXGroup;
 			children = (
+				1E61DA2E2D928393006A63EA /* wdigetExtensionExtension.entitlements */,
 				1EB90A062D910709004C0A32 /* SharedQuotes.swift */,
 				1E4183422D8EC71100AAEC12 /* motivationalQuotes */,
 				1E4183532D8EC71300AAEC12 /* motivationalQuotesTests */,
@@ -643,8 +645,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = wdigetExtensionExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = wdigetExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = wdigetExtension;
@@ -669,8 +673,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = wdigetExtensionExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = wdigetExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = wdigetExtension;
