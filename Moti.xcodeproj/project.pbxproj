@@ -59,6 +59,7 @@
 		1E4183502D8EC71300AAEC12 /* MotiTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MotiTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E41835A2D8EC71300AAEC12 /* MotiUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MotiUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E61DA2E2D928393006A63EA /* wdigetExtensionExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = wdigetExtensionExtension.entitlements; sourceTree = "<group>"; };
+		1E61DA2F2D92870E006A63EA /* Moti.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = Moti.entitlements; path = Moti/Moti.entitlements; sourceTree = "<group>"; };
 		1EB90A062D910709004C0A32 /* SharedQuotes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedQuotes.swift; sourceTree = "<group>"; };
 		1ECDCF7E2D8ECF3600123E99 /* wdigetExtensionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = wdigetExtensionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -138,6 +139,7 @@
 		1E4183372D8EC71100AAEC12 = {
 			isa = PBXGroup;
 			children = (
+				1E61DA2F2D92870E006A63EA /* Moti.entitlements */,
 				1E61DA2E2D928393006A63EA /* wdigetExtensionExtension.entitlements */,
 				1EB90A062D910709004C0A32 /* SharedQuotes.swift */,
 				1E4183422D8EC71100AAEC12 /* motivationalQuotes */,
@@ -521,9 +523,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Moti/Moti.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"motivationalQuotes/Preview Content\"";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -549,9 +553,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Moti/Moti.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"motivationalQuotes/Preview Content\"";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
