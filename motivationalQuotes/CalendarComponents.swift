@@ -194,11 +194,11 @@ struct EventEditorView: View {
     private let isNew: Bool
     private var event: Event?
     
-    // For new event
-    init(eventService: EventService = EventService.shared) {
+    // For new event - now accepts initialDate parameter to use selected date
+    init(eventService: EventService = EventService.shared, initialDate: Date = Date()) {
         self.eventService = eventService
         _title = State(initialValue: "")
-        _date = State(initialValue: Date())
+        _date = State(initialValue: initialDate)
         _notes = State(initialValue: "")
         _isCompleted = State(initialValue: false)
         isNew = true

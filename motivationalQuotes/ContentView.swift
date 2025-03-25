@@ -672,7 +672,7 @@ struct HomeQuoteView: View {
             if let event = editingEvent {
                 EventEditorView(event: event)
             } else {
-                EventEditorView()
+                EventEditorView(initialDate: selectedDate) // Pass selected date here
             }
         }
     }
@@ -714,17 +714,13 @@ struct ContentView: View {
                     }
                     .tag(2)
                 
-                // Widgets Tab
-                ZStack {
-                    Color.black.edgesIgnoringSafeArea(.all)
-                    Text("Widgets")
-                        .foregroundColor(.white)
-                }
-                .tabItem {
-                    Image(systemName: "square.grid.2x2.fill")
-                    Text("Widgets")
-                }
-                .tag(3)
+                // Widgets Tab - Updated to show WidgetsShowcaseView
+                WidgetsShowcaseView()
+                    .tabItem {
+                        Image(systemName: "square.grid.2x2.fill")
+                        Text("Widgets")
+                    }
+                    .tag(3)
                 
                 // More Tab
                 ZStack {
@@ -761,6 +757,17 @@ struct ContentView: View {
                     .frame(height: 0.5)
                     .foregroundColor(Color.white.opacity(0.3))
                     .padding(.bottom, 49) // Tab bar height is typically 49 points
+            }
+        }
+        .onOpenURL { url in
+            if url.scheme == "moti" {
+                if url.host == "calendar" {
+                    // Navigate to calendar or home tab
+                    self.selectedTab = 0
+                } else if url.host == "quotes" {
+                    // Navigate to quotes tab
+                    self.selectedTab = 1
+                }
             }
         }
     }
