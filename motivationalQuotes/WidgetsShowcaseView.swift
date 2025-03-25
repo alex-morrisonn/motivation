@@ -1,9 +1,48 @@
 import SwiftUI
 
+// Custom segmented control for better visibility
+struct CustomSegmentedControl: View {
+    @Binding var selectedIndex: Int
+    let options: [String]
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(0..<options.count, id: \.self) { index in
+                Button(action: {
+                    selectedIndex = index
+                }) {
+                    Text(options[index])
+                        .fontWeight(selectedIndex == index ? .semibold : .regular)
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 16)
+                        .frame(maxWidth: .infinity)
+                }
+                .background(
+                    selectedIndex == index ?
+                    Color.white :
+                    Color.white.opacity(0.15) // More visible unselected state
+                )
+                .foregroundColor(selectedIndex == index ? .black : .white)
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 1) // Add border
+                )
+                .padding(.horizontal, 4)
+            }
+        }
+        .padding(8)
+        .background(Color.black.opacity(0.5))
+        .cornerRadius(16)
+        .padding(.horizontal)
+    }
+}
+
 // Widget showcase view to display available widgets
 struct WidgetsShowcaseView: View {
     @ObservedObject private var quoteService = QuoteService.shared
     @State private var selectedWidgetType = 0
+    private let tabOptions = ["Home Screen", "Lock Screen"]
     
     // Demo quote for the preview
     private var demoQuote: Quote {
@@ -23,13 +62,11 @@ struct WidgetsShowcaseView: View {
                         .foregroundColor(.white)
                         .padding(.top, 16)
                     
-                    // Widget type selector
-                    Picker("Widget Type", selection: $selectedWidgetType) {
-                        Text("Home Screen").tag(0)
-                        Text("Lock Screen").tag(1)
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
-                    .padding(.horizontal)
+                    // Custom segmented control with better visibility
+                    CustomSegmentedControl(
+                        selectedIndex: $selectedWidgetType,
+                        options: tabOptions
+                    )
                     
                     // Instructions
                     InstructionsCard(
@@ -363,8 +400,11 @@ struct CalendarPreview: View {
     var body: some View {
         VStack(alignment: .center, spacing: 4) {
             // Month title
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMMM yyyy"
+            let formatter: DateFormatter = {
+                let formatter = DateFormatter()
+                formatter.dateFormat = "MMMM yyyy"
+                return formatter
+            }()
             Text(formatter.string(from: today))
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(.white)
@@ -435,30 +475,38 @@ struct LockScreenWidgetPreview: View {
     let type: LockScreenWidgetType
     
     var body: some View {
-        ZStack {
-            // Background for lock screen widgets
-            Color.black
-            
+        Group {
             switch type {
             case .circular:
                 // Circular widget
                 ZStack {
                     Circle()
-                        .fill(Color(red: 0.05, green: 0.05, blue: 0.2))
-                        .frame(width: 120, height: 120)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Color(red: 0.1, green: 0.1, blue: 0.3),
+                                    Color(red: 0.08, green: 0.08, blue: 0.2)
+                                ]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .shadow(color: Color.black.opacity(0.3), radius: 4, x: 0, y: 2)
                     
-                    VStack {
+                    VStack(spacing: 2) {
                         Text("\"")
                             .font(.system(size: 24, weight: .bold))
                             .foregroundColor(.white)
+                            .offset(y: -5)
                         
-                        let shortQuote = shortenQuote(quote.text, maxLength: 20)
+                        let shortQuote = shortenQuote(quote.text, maxLength: 30)
                         Text(shortQuote)
-                            .font(.system(size: 10))
+                            .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                             .lineLimit(3)
                             .padding(.horizontal, 12)
+                            .padding(.bottom, 4)
                     }
                 }
                 .frame(width: 130, height: 130)
@@ -466,43 +514,64 @@ struct LockScreenWidgetPreview: View {
             case .rectangular:
                 // Rectangular widget
                 ZStack {
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(red: 0.05, green: 0.05, blue: 0.2))
-                        .frame(width: 160, height: 120)
+                    RoundedRectangle(cornerRadius: 22)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Color(red: 0.1, green: 0.1, blue: 0.3),
+                                    Color(red: 0.05, green: 0.05, blue: 0.15)
+                                ]),
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .shadow(color: Color.black.opacity(0.3), radius: 4, x: 0, y: 2)
                     
-                    VStack(spacing: 4) {
+                    VStack(spacing: 6) {
                         let shortQuote = shortenQuote(quote.text, maxLength: 80)
                         Text(shortQuote)
-                            .font(.system(size: 10))
+                            .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                            .lineLimit(5)
-                            .padding(.horizontal, 12)
+                            .lineLimit(4)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
                         
                         if shortQuote.count < 80 {
                             Text("— \(quote.author)")
-                                .font(.system(size: 8))
-                                .foregroundColor(.white.opacity(0.7))
+                                .font(.system(size: 10, weight: .light))
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.bottom, 8)
                         }
                     }
                 }
-                .frame(width: 160, height: 120)
+                .frame(width: 150, height: 120)
                 
             case .inline:
                 // Inline widget
                 ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color(red: 0.05, green: 0.05, blue: 0.2))
-                        .frame(height: 24)
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Color(red: 0.1, green: 0.1, blue: 0.3),
+                                    Color(red: 0.08, green: 0.08, blue: 0.25)
+                                ]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
+                        .frame(height: 30)
                     
                     let veryShortQuote = shortenQuote(quote.text, maxLength: 40)
                     Text(veryShortQuote)
-                        .font(.system(size: 10))
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.white)
                         .lineLimit(1)
-                        .padding(.horizontal, 8)
+                        .padding(.horizontal, 16)
                 }
-                .frame(height: 24)
+                .frame(height: 30)
             }
         }
     }
