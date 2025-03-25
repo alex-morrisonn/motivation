@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 // Minimalistic More View with clean black and white theme
 struct MoreView: View {
@@ -6,11 +7,20 @@ struct MoreView: View {
     @ObservedObject var eventService = EventService.shared
     
     @State private var showingAbout = false
-    @State private var showingSettings = false
     @State private var showingFeedback = false
     @State private var showingShare = false
     @State private var notificationsEnabled = true
-    @State private var selectedReminderTime = Date()
+    @State private var showingCacheAlert = false
+    @State private var showingCacheConfirmation = false
+    
+    // Set default reminder time to 9:00 AM
+    @State private var selectedReminderTime: Date = {
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        components.hour = 9
+        components.minute = 0
+        return Calendar.current.date(from: components) ?? Date()
+    }()
+    
     @State private var selectedCategories: Set<String> = []
     
     var body: some View {
@@ -42,21 +52,82 @@ struct MoreView: View {
                     }
                     .padding(.top, 16)
                     
-                    // Feature options section
+                    // Settings section - Integrated directly
+                    VStack(spacing: 0) {
+                        SectionHeader(title: "SETTINGS")
+                        
+                        // Section background
+                        VStack(spacing: 0) {
+                            // Notifications toggle
+                            HStack {
+                                Image(systemName: "bell")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.white)
+                                    .frame(width: 20)
+                                
+                                Text("Daily Quote Reminder")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.white)
+                                
+                                Spacer()
+                                
+                                // Custom dimmer toggle
+                                ZStack {
+                                    Capsule()
+                                        .fill(notificationsEnabled ? Color.gray.opacity(0.3) : Color.gray.opacity(0.2))
+                                        .frame(width: 50, height: 30)
+                                    
+                                    Circle()
+                                        .fill(notificationsEnabled ? Color.white.opacity(0.7) : Color.gray.opacity(0.5))
+                                        .frame(width: 26, height: 26)
+                                        .offset(x: notificationsEnabled ? 10 : -10)
+                                        .animation(.spring(response: 0.2), value: notificationsEnabled)
+                                }
+                                .onTapGesture {
+                                    notificationsEnabled.toggle()
+                                }
+                            }
+                            .padding(.vertical, 16)
+                            .padding(.horizontal, 16)
+                            
+                            // Show time picker only when notifications are enabled
+                            if notificationsEnabled {
+                                Divider()
+                                    .background(Color.white.opacity(0.1))
+                                
+                                HStack {
+                                    Image(systemName: "clock")
+                                        .font(.system(size: 18))
+                                        .foregroundColor(.white)
+                                        .frame(width: 20)
+                                    
+                                    Text("Reminder Time")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(.white)
+                                    
+                                    Spacer()
+                                    
+                                    DatePicker("", selection: $selectedReminderTime, displayedComponents: .hourAndMinute)
+                                        .labelsHidden()
+                                        .frame(width: 100)
+                                        .colorScheme(.dark)
+                                }
+                                .padding(.vertical, 16)
+                                .padding(.horizontal, 16)
+                            }
+                            
+                            // Removed the Clear Cache button from here
+                        }
+                        .background(Color.white.opacity(0.05))
+                        .cornerRadius(12)
+                    }
+                    
+                    // Other options section
                     VStack(spacing: 0) {
                         SectionHeader(title: "OPTIONS")
                         
                         // Section background
                         VStack(spacing: 0) {
-                            OptionRow(
-                                icon: "gear",
-                                title: "Settings",
-                                action: { showingSettings.toggle() }
-                            )
-                            
-                            Divider()
-                                .background(Color.white.opacity(0.1))
-                            
                             OptionRow(
                                 icon: "info.circle",
                                 title: "About",
@@ -121,6 +192,32 @@ struct MoreView: View {
                         .cornerRadius(12)
                     }
                     
+                    // Clear Cache section at the bottom
+                    VStack(spacing: 0) {
+                        // Clear cache button with red text
+                        Button(action: {
+                            showingCacheAlert = true
+                        }) {
+                            HStack {
+                                Image(systemName: "trash")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.red.opacity(0.9))
+                                    .frame(width: 20)
+                                
+                                Text("Clear Cache")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.red.opacity(0.9))
+                                
+                                Spacer()
+                            }
+                        }
+                        .padding(.vertical, 16)
+                        .padding(.horizontal, 16)
+                    }
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(12)
+                    .padding(.bottom, 10)
+                    
                     // App info
                     VStack(spacing: 8) {
                         Text("Moti")
@@ -143,12 +240,6 @@ struct MoreView: View {
                 .padding(.bottom, 30)
             }
         }
-        .sheet(isPresented: $showingSettings) {
-            SettingsView(
-                notificationsEnabled: $notificationsEnabled,
-                selectedReminderTime: $selectedReminderTime
-            )
-        }
         .sheet(isPresented: $showingAbout) {
             AboutView()
         }
@@ -157,6 +248,53 @@ struct MoreView: View {
         }
         .sheet(isPresented: $showingShare) {
             ShareSheet(activityItems: ["Check out Moti, my favorite motivational quotes app!"])
+        }
+        .alert("Clear Cache", isPresented: $showingCacheAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Clear", role: .destructive) {
+                clearAppCache()
+                showingCacheConfirmation = true
+            }
+        } message: {
+            Text("This will clear all cached data and refresh widgets. Your favorites and events will not be affected.")
+        }
+        .alert("Cache Cleared", isPresented: $showingCacheConfirmation) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("All cached data has been cleared successfully.")
+        }
+    }
+    
+    // Function to clear app cache
+    func clearAppCache() {
+        // Clear files in the caches directory
+        do {
+            let fileManager = FileManager.default
+            let cacheURL = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            let cacheContents = try fileManager.contentsOfDirectory(at: cacheURL, includingPropertiesForKeys: nil)
+            
+            for url in cacheContents {
+                try fileManager.removeItem(at: url)
+            }
+            
+            // Clear temporary data from UserDefaults (except favorites and events)
+            // This preserves important data while clearing potential corrupted cache
+            let defaults = UserDefaults.standard
+            if let bundleID = Bundle.main.bundleIdentifier {
+                defaults.dictionaryRepresentation().keys.forEach { key in
+                    // Skip specific keys we want to preserve
+                    let keysToPreserve = ["savedFavorites", "savedEvents"]
+                    if !keysToPreserve.contains(key) && key.hasPrefix(bundleID) {
+                        defaults.removeObject(forKey: key)
+                    }
+                }
+            }
+            
+            // Reload all widget timelines to refresh their data
+            WidgetCenter.shared.reloadAllTimelines()
+            
+        } catch {
+            print("Error clearing cache: \(error)")
         }
     }
 }
@@ -318,80 +456,7 @@ struct CategoryRow: View {
     }
 }
 
-// MARK: - Additional Views (unchanged but included for reference)
-
-// Settings View with dark mode option removed
-struct SettingsView: View {
-    @Environment(\.presentationMode) var presentationMode
-    @Binding var notificationsEnabled: Bool
-    @Binding var selectedReminderTime: Date
-    
-    var body: some View {
-        NavigationView {
-            ZStack {
-                Color.black.edgesIgnoringSafeArea(.all)
-                
-                VStack {
-                    List {
-                        Section(header: Text("NOTIFICATIONS").font(.caption).fontWeight(.semibold).foregroundColor(.white.opacity(0.6))) {
-                            HStack {
-                                Text("Daily Quote Reminder")
-                                    .foregroundColor(.white)
-                                
-                                Spacer()
-                                
-                                // Custom toggle for notifications
-                                ZStack {
-                                    Capsule()
-                                        .fill(notificationsEnabled ? Color.gray.opacity(0.3) : Color.gray.opacity(0.2))
-                                        .frame(width: 50, height: 30)
-                                    
-                                    Circle()
-                                        .fill(notificationsEnabled ? Color.white.opacity(0.9) : Color.gray.opacity(0.5))
-                                        .frame(width: 26, height: 26)
-                                        .offset(x: notificationsEnabled ? 10 : -10)
-                                        .animation(.spring(response: 0.2), value: notificationsEnabled)
-                                }
-                                .onTapGesture {
-                                    notificationsEnabled.toggle()
-                                }
-                            }
-                            
-                            if notificationsEnabled {
-                                DatePicker("Reminder Time", selection: $selectedReminderTime, displayedComponents: .hourAndMinute)
-                                    .foregroundColor(.white)
-                                    .datePickerStyle(CompactDatePickerStyle())
-                                    .accentColor(.white.opacity(0.7))
-                            }
-                        }
-                        .listRowBackground(Color.white.opacity(0.05))
-                        
-                        Section(header: Text("STORAGE").font(.caption).fontWeight(.semibold).foregroundColor(.white.opacity(0.6))) {
-                            Button(action: {
-                                // This would clear the app's cache
-                            }) {
-                                Text("Clear Cache")
-                                    .foregroundColor(.red.opacity(0.9))
-                            }
-                        }
-                        .listRowBackground(Color.white.opacity(0.05))
-                    }
-                    .scrollContentBackground(.hidden)
-                }
-            }
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                    .foregroundColor(.white)
-                }
-            }
-        }
-    }
-}
+// MARK: - Additional Views
 
 // About View
 struct AboutView: View {
