@@ -722,17 +722,13 @@ struct ContentView: View {
                     }
                     .tag(3)
                 
-                // More Tab
-                ZStack {
-                    Color.black.edgesIgnoringSafeArea(.all)
-                    Text("More")
-                        .foregroundColor(.white)
-                }
-                .tabItem {
-                    Image(systemName: "ellipsis")
-                    Text("More")
-                }
-                .tag(4)
+                // More Tab - Now using the new MoreView
+                MoreView()
+                    .tabItem {
+                        Image(systemName: "ellipsis")
+                        Text("More")
+                    }
+                    .tag(4)
             }
             .accentColor(.white) // Active tab color
             .onAppear {
