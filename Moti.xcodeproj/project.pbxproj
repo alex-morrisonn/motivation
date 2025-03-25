@@ -55,9 +55,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		1E4183402D8EC71100AAEC12 /* motivationalQuotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = motivationalQuotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		1E4183502D8EC71300AAEC12 /* motivationalQuotesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = motivationalQuotesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		1E41835A2D8EC71300AAEC12 /* motivationalQuotesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = motivationalQuotesUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1E4183402D8EC71100AAEC12 /* Moti.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Moti.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1E4183502D8EC71300AAEC12 /* MotiTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MotiTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1E41835A2D8EC71300AAEC12 /* MotiUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MotiUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1EB90A062D910709004C0A32 /* SharedQuotes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedQuotes.swift; sourceTree = "<group>"; };
 		1ECDCF7E2D8ECF3600123E99 /* wdigetExtensionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = wdigetExtensionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -150,9 +150,9 @@
 		1E4183412D8EC71100AAEC12 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1E4183402D8EC71100AAEC12 /* motivationalQuotes.app */,
-				1E4183502D8EC71300AAEC12 /* motivationalQuotesTests.xctest */,
-				1E41835A2D8EC71300AAEC12 /* motivationalQuotesUITests.xctest */,
+				1E4183402D8EC71100AAEC12 /* Moti.app */,
+				1E4183502D8EC71300AAEC12 /* MotiTests.xctest */,
+				1E41835A2D8EC71300AAEC12 /* MotiUITests.xctest */,
 				1ECDCF7E2D8ECF3600123E99 /* wdigetExtensionExtension.appex */,
 			);
 			name = Products;
@@ -170,9 +170,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1E41833F2D8EC71100AAEC12 /* motivationalQuotes */ = {
+		1E41833F2D8EC71100AAEC12 /* Moti */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1E4183642D8EC71300AAEC12 /* Build configuration list for PBXNativeTarget "motivationalQuotes" */;
+			buildConfigurationList = 1E4183642D8EC71300AAEC12 /* Build configuration list for PBXNativeTarget "Moti" */;
 			buildPhases = (
 				1E41833C2D8EC71100AAEC12 /* Sources */,
 				1E41833D2D8EC71100AAEC12 /* Frameworks */,
@@ -187,16 +187,16 @@
 			fileSystemSynchronizedGroups = (
 				1E4183422D8EC71100AAEC12 /* motivationalQuotes */,
 			);
-			name = motivationalQuotes;
+			name = Moti;
 			packageProductDependencies = (
 			);
 			productName = motivationalQuotes;
-			productReference = 1E4183402D8EC71100AAEC12 /* motivationalQuotes.app */;
+			productReference = 1E4183402D8EC71100AAEC12 /* Moti.app */;
 			productType = "com.apple.product-type.application";
 		};
-		1E41834F2D8EC71300AAEC12 /* motivationalQuotesTests */ = {
+		1E41834F2D8EC71300AAEC12 /* MotiTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1E4183672D8EC71300AAEC12 /* Build configuration list for PBXNativeTarget "motivationalQuotesTests" */;
+			buildConfigurationList = 1E4183672D8EC71300AAEC12 /* Build configuration list for PBXNativeTarget "MotiTests" */;
 			buildPhases = (
 				1E41834C2D8EC71300AAEC12 /* Sources */,
 				1E41834D2D8EC71300AAEC12 /* Frameworks */,
@@ -210,16 +210,16 @@
 			fileSystemSynchronizedGroups = (
 				1E4183532D8EC71300AAEC12 /* motivationalQuotesTests */,
 			);
-			name = motivationalQuotesTests;
+			name = MotiTests;
 			packageProductDependencies = (
 			);
 			productName = motivationalQuotesTests;
-			productReference = 1E4183502D8EC71300AAEC12 /* motivationalQuotesTests.xctest */;
+			productReference = 1E4183502D8EC71300AAEC12 /* MotiTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		1E4183592D8EC71300AAEC12 /* motivationalQuotesUITests */ = {
+		1E4183592D8EC71300AAEC12 /* MotiUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1E41836A2D8EC71300AAEC12 /* Build configuration list for PBXNativeTarget "motivationalQuotesUITests" */;
+			buildConfigurationList = 1E41836A2D8EC71300AAEC12 /* Build configuration list for PBXNativeTarget "MotiUITests" */;
 			buildPhases = (
 				1E4183562D8EC71300AAEC12 /* Sources */,
 				1E4183572D8EC71300AAEC12 /* Frameworks */,
@@ -233,11 +233,11 @@
 			fileSystemSynchronizedGroups = (
 				1E41835D2D8EC71300AAEC12 /* motivationalQuotesUITests */,
 			);
-			name = motivationalQuotesUITests;
+			name = MotiUITests;
 			packageProductDependencies = (
 			);
 			productName = motivationalQuotesUITests;
-			productReference = 1E41835A2D8EC71300AAEC12 /* motivationalQuotesUITests.xctest */;
+			productReference = 1E41835A2D8EC71300AAEC12 /* MotiUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 		1ECDCF7D2D8ECF3600123E99 /* wdigetExtensionExtension */ = {
@@ -288,7 +288,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 1E41833B2D8EC71100AAEC12 /* Build configuration list for PBXProject "motivationalQuotes" */;
+			buildConfigurationList = 1E41833B2D8EC71100AAEC12 /* Build configuration list for PBXProject "Moti" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -302,9 +302,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1E41833F2D8EC71100AAEC12 /* motivationalQuotes */,
-				1E41834F2D8EC71300AAEC12 /* motivationalQuotesTests */,
-				1E4183592D8EC71300AAEC12 /* motivationalQuotesUITests */,
+				1E41833F2D8EC71100AAEC12 /* Moti */,
+				1E41834F2D8EC71300AAEC12 /* MotiTests */,
+				1E4183592D8EC71300AAEC12 /* MotiUITests */,
 				1ECDCF7D2D8ECF3600123E99 /* wdigetExtensionExtension */,
 			);
 		};
@@ -379,12 +379,12 @@
 /* Begin PBXTargetDependency section */
 		1E4183522D8EC71300AAEC12 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 1E41833F2D8EC71100AAEC12 /* motivationalQuotes */;
+			target = 1E41833F2D8EC71100AAEC12 /* Moti */;
 			targetProxy = 1E4183512D8EC71300AAEC12 /* PBXContainerItemProxy */;
 		};
 		1E41835C2D8EC71300AAEC12 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 1E41833F2D8EC71100AAEC12 /* motivationalQuotes */;
+			target = 1E41833F2D8EC71100AAEC12 /* Moti */;
 			targetProxy = 1E41835B2D8EC71300AAEC12 /* PBXContainerItemProxy */;
 		};
 		1ECDCF932D8ECF3A00123E99 /* PBXTargetDependency */ = {
@@ -584,7 +584,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/motivationalQuotes.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/motivationalQuotes";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Moti.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Moti";
 			};
 			name = Debug;
 		};
@@ -602,7 +602,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/motivationalQuotes.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/motivationalQuotes";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Moti.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Moti";
 			};
 			name = Release;
 		};
@@ -693,7 +693,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1E41833B2D8EC71100AAEC12 /* Build configuration list for PBXProject "motivationalQuotes" */ = {
+		1E41833B2D8EC71100AAEC12 /* Build configuration list for PBXProject "Moti" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1E4183622D8EC71300AAEC12 /* Debug */,
@@ -702,7 +702,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1E4183642D8EC71300AAEC12 /* Build configuration list for PBXNativeTarget "motivationalQuotes" */ = {
+		1E4183642D8EC71300AAEC12 /* Build configuration list for PBXNativeTarget "Moti" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1E4183652D8EC71300AAEC12 /* Debug */,
@@ -711,7 +711,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1E4183672D8EC71300AAEC12 /* Build configuration list for PBXNativeTarget "motivationalQuotesTests" */ = {
+		1E4183672D8EC71300AAEC12 /* Build configuration list for PBXNativeTarget "MotiTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1E4183682D8EC71300AAEC12 /* Debug */,
@@ -720,7 +720,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1E41836A2D8EC71300AAEC12 /* Build configuration list for PBXNativeTarget "motivationalQuotesUITests" */ = {
+		1E41836A2D8EC71300AAEC12 /* Build configuration list for PBXNativeTarget "MotiUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1E41836B2D8EC71300AAEC12 /* Debug */,
