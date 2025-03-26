@@ -13,6 +13,7 @@ struct MoreView: View {
     @State private var showingPermissionAlert = false
     @State private var showingCacheAlert = false
     @State private var showingCacheConfirmation = false
+    @State private var showingThemesWIPAlert = false
     
     @State private var selectedCategories: Set<String> = []
     
@@ -121,6 +122,48 @@ struct MoreView: View {
                         .background(Color.white.opacity(0.05))
                         .cornerRadius(12)
                     }
+                    
+                    // Themes section
+                    VStack(spacing: 0) {
+                        SectionHeader(title: "THEMES")
+                        
+                        // Section background
+                        VStack(spacing: 0) {
+                            Button(action: {
+                                showingThemesWIPAlert = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "paintpalette")
+                                        .font(.system(size: 18))
+                                        .foregroundColor(.white)
+                                        .frame(width: 20)
+                                    
+                                    Text("Change App Theme")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(.white)
+                                    
+                                    Spacer()
+                                    
+                                    Text("Coming Soon")
+                                        .font(.caption)
+                                        .foregroundColor(.yellow.opacity(0.8))
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 4)
+                                        .background(Color.yellow.opacity(0.2))
+                                        .cornerRadius(10)
+                                    
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.3))
+                                }
+                                .padding(.vertical, 16)
+                                .padding(.horizontal, 16)
+                            }
+                        }
+                        .background(Color.white.opacity(0.05))
+                        .cornerRadius(12)
+                    }
+                    .padding(.bottom, 20)
                     
                     // Other options section
                     VStack(spacing: 0) {
@@ -276,6 +319,11 @@ struct MoreView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text("All cached data has been cleared successfully.")
+        }
+        .alert("Themes Feature", isPresented: $showingThemesWIPAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("The themes feature is currently under development. Check back soon for updates!")
         }
         .onAppear {
             // Make sure notification state is updated when view appears
