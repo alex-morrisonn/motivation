@@ -683,6 +683,9 @@ struct HomeQuoteView: View {
 struct ContentView: View {
     @State private var selectedTab = 0
     @EnvironmentObject var notificationManager: NotificationManager
+    @ObservedObject var streakManager = StreakManager.shared
+    @State private var showingStreakCelebration = false
+    @State private var previousStreak = 0
     
     init() {
         // Set up the dark mode appearance
@@ -746,6 +749,9 @@ struct ContentView: View {
                 // Apply the appearance
                 UITabBar.appearance().standardAppearance = tabBarAppearance
                 UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
+                
+                // For streak tracking, store previous streak to detect changes
+                previousStreak = streakManager.currentStreak
             }
             
             // Add a subtle thin line at the top of the tab bar for better visual separation
@@ -771,6 +777,22 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenQuotesTab"))) { _ in
             // When a notification is tapped, navigate to the quotes tab
             self.selectedTab = 1 // Index of the Categories tab
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("StreakUpdated"))) { _ in
+            // Check if streak increased (but not first day)
+            if streakManager.currentStreak > previousStreak && previousStreak > 0 {
+                // Only show celebration for meaningful increases (no need to celebrate the 1st day)
+                showingStreakCelebration = true
+            }
+            
+            // Update previous streak for next comparison
+            previousStreak = streakManager.currentStreak
+        }
+        .fullScreenCover(isPresented: $showingStreakCelebration) {
+            StreakCelebrationView(
+                streakCount: streakManager.currentStreak,
+                isShowing: $showingStreakCelebration
+            )
         }
     }
 }

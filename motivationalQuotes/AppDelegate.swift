@@ -10,6 +10,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Check if we should reschedule notifications on app launch
         checkAndRescheduleNotifications()
         
+        // Check and update streak counter
+        StreakManager.shared.checkInToday()
+        
         return true
     }
     
@@ -52,5 +55,11 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
                 }
             }
         }
+    }
+    
+    // Called when the app becomes active (either from background or initial launch)
+    func applicationDidBecomeActive(_ application: UIApplication) {
+        // Update streak when app becomes active
+        StreakManager.shared.checkInToday()
     }
 }

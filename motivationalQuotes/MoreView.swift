@@ -6,6 +6,7 @@ struct MoreView: View {
     @ObservedObject var quoteService = QuoteService.shared
     @ObservedObject var eventService = EventService.shared
     @ObservedObject var notificationManager = NotificationManager.shared
+    @ObservedObject var streakManager = StreakManager.shared
     
     @State private var showingAbout = false
     @State private var showingFeedback = false
@@ -14,6 +15,7 @@ struct MoreView: View {
     @State private var showingCacheAlert = false
     @State private var showingCacheConfirmation = false
     @State private var showingThemesWIPAlert = false
+    @State private var showingStreakDetails = false
     
     @State private var selectedCategories: Set<String> = []
     
@@ -38,11 +40,25 @@ struct MoreView: View {
                             icon: "calendar"
                         )
                         
-                        StatCard(
-                            number: "7",
-                            label: "Day Streak",
-                            icon: "flame"
-                        )
+                        // Updated to use real streak data with tap action
+                        Button(action: {
+                            showingStreakDetails = true
+                        }) {
+                            StatCard(
+                                number: "\(streakManager.currentStreak)",
+                                label: "Day Streak",
+                                icon: "flame"
+                            )
+                            .overlay(
+                                // Subtle indicator that this is tappable
+                                Image(systemName: "info.circle")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white.opacity(0.6))
+                                    .padding(6),
+                                alignment: .topTrailing
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                     .padding(.top, 16)
                     
@@ -292,6 +308,9 @@ struct MoreView: View {
         .sheet(isPresented: $showingShare) {
             ShareSheet(activityItems: ["Check out Moti, my favorite motivational quotes app!"])
         }
+        .sheet(isPresented: $showingStreakDetails) {
+            StreakDetailsView()
+        }
         .alert("Notification Permission", isPresented: $showingPermissionAlert) {
             Button("Cancel", role: .cancel) {
                 // User canceled, make sure toggle reflects permission state
@@ -328,6 +347,9 @@ struct MoreView: View {
         .onAppear {
             // Make sure notification state is updated when view appears
             notificationManager.checkNotificationStatus()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("StreakUpdated"))) { _ in
+            // This ensures the UI updates when the streak changes
         }
     }
     
@@ -376,7 +398,8 @@ struct MoreView: View {
             if let bundleID = Bundle.main.bundleIdentifier {
                 defaults.dictionaryRepresentation().keys.forEach { key in
                     // Skip specific keys we want to preserve
-                    let keysToPreserve = ["savedFavorites", "savedEvents", "notificationsEnabled", "reminderTime"]
+                    let keysToPreserve = ["savedFavorites", "savedEvents", "notificationsEnabled", "reminderTime",
+                                          "streak_lastOpenDate", "streak_currentStreak", "streak_longestStreak", "streak_daysRecord"]
                     if !keysToPreserve.contains(key) && key.hasPrefix(bundleID) {
                         defaults.removeObject(forKey: key)
                     }
@@ -544,235 +567,5 @@ struct CategoryRow: View {
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
         }
-    }
-}
-
-// MARK: - Additional Views
-
-// About View
-struct AboutView: View {
-    @Environment(\.presentationMode) var presentationMode
-    
-    var body: some View {
-        NavigationView {
-            ZStack {
-                Color.black.edgesIgnoringSafeArea(.all)
-                
-                ScrollView {
-                    VStack(spacing: 20) {
-                        Image(systemName: "quote.bubble.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.white)
-                            .padding(.top, 30)
-                        
-                        Text("Moti")
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundColor(.white)
-                        
-                        Text("Version 1.0")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                        
-                        Divider()
-                            .background(Color.white.opacity(0.2))
-                            .padding(.horizontal, 40)
-                            .padding(.vertical, 20)
-                        
-                        Text("About Moti")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal)
-                        
-                        Text("Moti is a daily motivation companion designed to inspire and encourage you through life's journey. With a collection of carefully curated quotes across multiple categories, Moti helps you stay focused, positive, and motivated.")
-                            .font(.body)
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(.horizontal)
-                            .multilineTextAlignment(.leading)
-                        
-                        VStack(alignment: .leading, spacing: 15) {
-                            FeaturesRow(icon: "quote.bubble", title: "Daily Quotes", description: "A new inspirational quote each day")
-                            FeaturesRow(icon: "calendar", title: "Event Tracking", description: "Keep track of important dates and events")
-                            FeaturesRow(icon: "square.grid.2x2", title: "Home & Lock Screen Widgets", description: "Quick inspiration at a glance")
-                            FeaturesRow(icon: "heart", title: "Favorites Collection", description: "Save quotes that resonate with you")
-                        }
-                        .padding()
-                        .background(Color(UIColor.systemGray6).opacity(0.2))
-                        .cornerRadius(16)
-                        .padding(.horizontal)
-                        .padding(.top, 10)
-                        
-                        Spacer(minLength: 40)
-                    }
-                }
-            }
-            .navigationTitle("About")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                }
-            }
-        }
-        .preferredColorScheme(.dark)
-    }
-}
-
-// Features row for About view
-struct FeaturesRow: View {
-    let icon: String
-    let title: String
-    let description: String
-    
-    var body: some View {
-        HStack(spacing: 15) {
-            Image(systemName: icon)
-                .font(.system(size: 22))
-                .foregroundColor(.white)
-                .frame(width: 24)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                    .foregroundColor(.white)
-                
-                Text(description)
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-            }
-        }
-    }
-}
-
-// Feedback View
-struct FeedbackView: View {
-    @Environment(\.presentationMode) var presentationMode
-    @State private var feedbackText = ""
-    @State private var feedbackType = 0
-    @State private var contactEmail = ""
-    @State private var includeDeviceInfo = true
-    @State private var showingConfirmation = false
-    
-    private let feedbackTypes = ["General Feedback", "Bug Report", "Feature Request", "Question"]
-    
-    var body: some View {
-        NavigationView {
-            ZStack {
-                Color.black.edgesIgnoringSafeArea(.all)
-                
-                ScrollView {
-                    VStack(spacing: 20) {
-                        // Feedback type picker
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Feedback Type")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                            
-                            Picker("Feedback Type", selection: $feedbackType) {
-                                ForEach(0..<feedbackTypes.count, id: \.self) { index in
-                                    Text(feedbackTypes[index]).tag(index)
-                                }
-                            }
-                            .pickerStyle(SegmentedPickerStyle())
-                            .colorScheme(.dark)
-                        }
-                        .padding(.horizontal)
-                        
-                        // Feedback text editor
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Your Feedback")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                            
-                            ZStack(alignment: .topLeading) {
-                                if feedbackText.isEmpty {
-                                    Text("Please enter your feedback here...")
-                                        .foregroundColor(.gray)
-                                        .padding(.horizontal, 8)
-                                        .padding(.top, 8)
-                                }
-                                
-                                TextEditor(text: $feedbackText)
-                                    .foregroundColor(.white)
-                                    .frame(minHeight: 150)
-                                    .background(Color(UIColor.systemGray6).opacity(0.2))
-                                    .cornerRadius(8)
-                                    .colorScheme(.dark)
-                            }
-                        }
-                        .padding(.horizontal)
-                        
-                        // Contact email
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Contact Email (Optional)")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                            
-                            TextField("Your email address", text: $contactEmail)
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color(UIColor.systemGray6).opacity(0.2))
-                                .cornerRadius(8)
-                                .keyboardType(.emailAddress)
-                                .autocapitalization(.none)
-                        }
-                        .padding(.horizontal)
-                        
-                        // Include device info toggle
-                        Toggle(isOn: $includeDeviceInfo) {
-                            Text("Include Device Information")
-                                .foregroundColor(.white)
-                        }
-                        .padding(.horizontal)
-                        .tint(.white)
-                        
-                        // Submit button
-                        Button(action: {
-                            showingConfirmation = true
-                            // In a real app, this would send the feedback to a server
-                        }) {
-                            Text("Submit Feedback")
-                                .font(.headline)
-                                .foregroundColor(.black)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(
-                                    feedbackText.isEmpty ?
-                                        Color.gray :
-                                        Color.white
-                                )
-                                .cornerRadius(10)
-                                .padding(.horizontal)
-                        }
-                        .disabled(feedbackText.isEmpty)
-                        .padding(.top, 10)
-                        
-                        Spacer(minLength: 40)
-                    }
-                    .padding(.vertical, 20)
-                }
-                .alert(isPresented: $showingConfirmation) {
-                    Alert(
-                        title: Text("Thank You!"),
-                        message: Text("Your feedback has been submitted. We appreciate your input!"),
-                        dismissButton: .default(Text("OK")) {
-                            presentationMode.wrappedValue.dismiss()
-                        }
-                    )
-                }
-            }
-            .navigationTitle("Send Feedback")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                }
-            }
-        }
-        .preferredColorScheme(.dark)
     }
 }

@@ -7,11 +7,11 @@ struct CustomSegmentedControl: View {
     
     var body: some View {
         HStack(spacing: 0) {
-            ForEach(0..<options.count, id: \.self) { index in
+            ForEach(Array(options.enumerated()), id: \.offset) { index, option in
                 Button(action: {
                     selectedIndex = index
                 }) {
-                    Text(options[index])
+                    Text(option)
                         .fontWeight(selectedIndex == index ? .semibold : .regular)
                         .padding(.vertical, 12)
                         .padding(.horizontal, 16)
@@ -29,6 +29,7 @@ struct CustomSegmentedControl: View {
                         .stroke(Color.white.opacity(0.3), lineWidth: 1) // Add border
                 )
                 .padding(.horizontal, 4)
+                .id("tab-option-\(index)")
             }
         }
         .padding(8)
@@ -98,6 +99,7 @@ struct WidgetsShowcaseView: View {
                             }
                         )
                         .padding(.horizontal)
+                        .id("small-widget-preview")
                         
                         // Medium Widget Preview
                         WidgetPreviewCard(
@@ -112,6 +114,7 @@ struct WidgetsShowcaseView: View {
                             }
                         )
                         .padding(.horizontal)
+                        .id("medium-widget-preview")
                         
                         // Large Widget Preview
                         WidgetPreviewCard(
@@ -126,6 +129,7 @@ struct WidgetsShowcaseView: View {
                             }
                         )
                         .padding(.horizontal)
+                        .id("large-widget-preview")
                         
                     } else {
                         Text("LOCK SCREEN WIDGETS")
@@ -150,6 +154,7 @@ struct WidgetsShowcaseView: View {
                                     )
                                 }
                             )
+                            .id("circular-widget-preview")
                             
                             // Rectangular Lock Screen Widget
                             WidgetPreviewCard(
@@ -163,6 +168,7 @@ struct WidgetsShowcaseView: View {
                                     )
                                 }
                             )
+                            .id("rectangular-widget-preview")
                         }
                         .padding(.horizontal)
                         
@@ -179,6 +185,7 @@ struct WidgetsShowcaseView: View {
                             }
                         )
                         .padding(.horizontal)
+                        .id("inline-widget-preview")
                     }
                     
                     Spacer(minLength: 50)
@@ -221,6 +228,7 @@ struct InstructionsCard: View {
                             .foregroundColor(.white.opacity(0.9))
                             .fixedSize(horizontal: false, vertical: true)
                     }
+                    .id("step-\(isHomeScreen ? "home" : "lock")-\(step.number)")
                 }
             }
             .padding(.leading, 4)
@@ -231,7 +239,8 @@ struct InstructionsCard: View {
     }
     
     // Step-by-step instructions
-    struct Step {
+    struct Step: Identifiable {
+        let id = UUID()
         let number: Int
         let instruction: String
     }
@@ -332,7 +341,7 @@ struct HomeScreenWidgetPreview: View {
                 Spacer()
             }
             
-            // Widget content based on size
+            // Content based on size
             if size == .large {
                 // Large widget with quote and calendar
                 VStack(alignment: .center, spacing: 8) {
@@ -395,7 +404,6 @@ struct HomeScreenWidgetPreview: View {
 struct CalendarPreview: View {
     let calendar = Calendar.current
     let today = Date()
-    let weekdays = ["S", "M", "T", "W", "T", "F", "S"]
     
     var body: some View {
         VStack(alignment: .center, spacing: 4) {
@@ -412,11 +420,12 @@ struct CalendarPreview: View {
             
             // Weekday headers
             HStack(spacing: 0) {
-                ForEach(weekdays, id: \.self) { day in
+                ForEach(Array(["S", "M", "T", "W", "T", "F", "S"].enumerated()), id: \.offset) { index, day in
                     Text(day)
                         .font(.system(size: 9, weight: .medium))
                         .foregroundColor(.white.opacity(0.7))
                         .frame(maxWidth: .infinity)
+                        .id("cal-weekday-\(index)")
                 }
             }
             .padding(.horizontal, 4)
@@ -432,7 +441,8 @@ struct CalendarPreview: View {
             ForEach(0..<rows, id: \.self) { row in
                 HStack(spacing: 0) {
                     ForEach(0..<7, id: \.self) { column in
-                        let dayNumber = row * 7 + column - firstWeekday + 1
+                        let cellIndex = row * 7 + column
+                        let dayNumber = cellIndex - firstWeekday + 1
                         
                         if dayNumber > 0 && dayNumber <= daysInMonth {
                             ZStack {
@@ -456,13 +466,16 @@ struct CalendarPreview: View {
                                 }
                             }
                             .frame(maxWidth: .infinity, maxHeight: 24)
+                            .id("cal-day-\(row)-\(column)")
                         } else {
                             // Empty cell for days outside current month
                             Text("")
                                 .frame(maxWidth: .infinity, maxHeight: 24)
+                                .id("cal-empty-\(row)-\(column)")
                         }
                     }
                 }
+                .id("cal-row-\(row)")
             }
         }
         .padding(.horizontal, 8)
@@ -585,7 +598,6 @@ struct LockScreenWidgetPreview: View {
     }
 }
 
-// Preview
 struct WidgetsShowcaseView_Previews: PreviewProvider {
     static var previews: some View {
         WidgetsShowcaseView()
