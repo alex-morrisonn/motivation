@@ -97,19 +97,19 @@
 			path = MotiWidget;
 			sourceTree = "<group>";
 		};
-		1E4183422D8EC71100AAEC12 /* motivationalQuotes */ = {
+		1E4183422D8EC71100AAEC12 /* MotiApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = motivationalQuotes;
+			path = MotiApp;
 			sourceTree = "<group>";
 		};
-		1E4183532D8EC71300AAEC12 /* motivationalQuotesTests */ = {
+		1E4183532D8EC71300AAEC12 /* MotiAppTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = motivationalQuotesTests;
+			path = MotiAppTests;
 			sourceTree = "<group>";
 		};
-		1E41835D2D8EC71300AAEC12 /* motivationalQuotesUITests */ = {
+		1E41835D2D8EC71300AAEC12 /* MotiAppUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = motivationalQuotesUITests;
+			path = MotiAppUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -161,9 +161,9 @@
 				1E21CE062D937197000F7451 /* MotiWidgetExtension.entitlements */,
 				1E61DA2F2D92870E006A63EA /* Moti.entitlements */,
 				1EB90A062D910709004C0A32 /* SharedQuotes.swift */,
-				1E4183422D8EC71100AAEC12 /* motivationalQuotes */,
-				1E4183532D8EC71300AAEC12 /* motivationalQuotesTests */,
-				1E41835D2D8EC71300AAEC12 /* motivationalQuotesUITests */,
+				1E4183422D8EC71100AAEC12 /* MotiApp */,
+				1E4183532D8EC71300AAEC12 /* MotiAppTests */,
+				1E41835D2D8EC71300AAEC12 /* MotiAppUITests */,
 				1E21CDF12D93715B000F7451 /* MotiWidget */,
 				1ECDCF7F2D8ECF3600123E99 /* Frameworks */,
 				1E4183412D8EC71100AAEC12 /* Products */,
@@ -231,7 +231,7 @@
 				1E21CE002D93715C000F7451 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				1E4183422D8EC71100AAEC12 /* motivationalQuotes */,
+				1E4183422D8EC71100AAEC12 /* MotiApp */,
 			);
 			name = Moti;
 			packageProductDependencies = (
@@ -258,7 +258,7 @@
 				1E4183522D8EC71300AAEC12 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				1E4183532D8EC71300AAEC12 /* motivationalQuotesTests */,
+				1E4183532D8EC71300AAEC12 /* MotiAppTests */,
 			);
 			name = MotiTests;
 			packageProductDependencies = (
@@ -281,7 +281,7 @@
 				1E41835C2D8EC71300AAEC12 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				1E41835D2D8EC71300AAEC12 /* motivationalQuotesUITests */,
+				1E41835D2D8EC71300AAEC12 /* MotiAppUITests */,
 			);
 			name = MotiUITests;
 			packageProductDependencies = (
@@ -613,7 +613,7 @@
 				CODE_SIGN_ENTITLEMENTS = Moti/Moti.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"motivationalQuotes/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"MotiApp/Preview Content\"";
 				DEVELOPMENT_TEAM = 9282G9F23C;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -644,7 +644,7 @@
 				CODE_SIGN_ENTITLEMENTS = Moti/Moti.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"motivationalQuotes/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"MotiApp/Preview Content\"";
 				DEVELOPMENT_TEAM = 9282G9F23C;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;

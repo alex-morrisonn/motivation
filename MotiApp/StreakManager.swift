@@ -214,7 +214,7 @@ class StreakManager: ObservableObject {
             content.sound = UNNotificationSound.default
             
             // Create the request
-            let identifier = "com.motivationalQuotes.streakMilestone.\(streakDays)"
+            let identifier = "com.MotiApp.streakMilestone.\(streakDays)"
             let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
             
             // Add the notification request

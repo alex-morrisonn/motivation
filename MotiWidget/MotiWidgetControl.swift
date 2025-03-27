@@ -10,7 +10,7 @@ import SwiftUI
 import WidgetKit
 
 struct MotiWidgetControl: ControlWidget {
-    static let kind: String = "com.motivationalQuotes.MotiWidget"
+    static let kind: String = "com.MotiApp.MotiWidget"
 
     var body: some ControlWidgetConfiguration {
         AppIntentControlConfiguration(

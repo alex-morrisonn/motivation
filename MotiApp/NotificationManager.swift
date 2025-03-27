@@ -16,7 +16,7 @@ class NotificationManager: ObservableObject {
     }()
     
     private let notificationCenter = UNUserNotificationCenter.current()
-    private let notificationIdentifier = "com.motivationalQuotes.dailyReminder"
+    private let notificationIdentifier = "com.MotiApp.dailyReminder"
     
     init() {
         loadSettings()

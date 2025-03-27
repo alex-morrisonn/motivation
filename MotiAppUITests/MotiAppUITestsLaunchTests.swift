@@ -1,13 +1,6 @@
-//
-//  motivationalQuotesUITestsLaunchTests.swift
-//  motivationalQuotesUITests
-//
-//  Created by Alex Morrison on 22/3/2025.
-//
-
 import XCTest
 
-final class motivationalQuotesUITestsLaunchTests: XCTestCase {
+final class MotiAppUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
