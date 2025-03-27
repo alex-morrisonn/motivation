@@ -16,6 +16,7 @@ struct MoreView: View {
     @State private var showingCacheConfirmation = false
     @State private var showingThemesWIPAlert = false
     @State private var showingStreakDetails = false
+    @State private var showingPrivacyPolicy = false
     
     @State private var selectedCategories: Set<String> = []
     
@@ -197,6 +198,15 @@ struct MoreView: View {
                                 .background(Color.white.opacity(0.1))
                             
                             OptionRow(
+                                        icon: "lock.shield",
+                                        title: "Privacy Policy",
+                                        action: { showingPrivacyPolicy.toggle() }
+                                    )
+                                    
+                            Divider()
+                                .background(Color.white.opacity(0.1))
+                            
+                            OptionRow(
                                 icon: "envelope",
                                 title: "Send Feedback",
                                 action: { showingFeedback.toggle() }
@@ -310,6 +320,9 @@ struct MoreView: View {
         }
         .sheet(isPresented: $showingStreakDetails) {
             StreakDetailsView()
+        }
+        .sheet(isPresented: $showingPrivacyPolicy) {
+            PrivacyPolicyView()
         }
         .alert("Notification Permission", isPresented: $showingPermissionAlert) {
             Button("Cancel", role: .cancel) {

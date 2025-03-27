@@ -1,9 +1,40 @@
 import Foundation
 import SwiftUI
+import UserNotifications
 
-// Streak Manager to handle app usage streak logic
+// Streak Manager to handle app usage streak logic with comprehensive error handling
 class StreakManager: ObservableObject {
     static let shared = StreakManager()
+    
+    // Error types for streak operations
+    enum StreakError: Error {
+        case dateCalculationFailed(String)
+        case saveDataFailed(String)
+        case loadDataFailed(String)
+        case appGroupAccessDenied
+        case invalidStreak
+        case invalidDate
+        case dataCorruption(String)
+        
+        var description: String {
+            switch self {
+            case .dateCalculationFailed(let details):
+                return "Failed to calculate streak dates: \(details)"
+            case .saveDataFailed(let details):
+                return "Failed to save streak data: \(details)"
+            case .loadDataFailed(let details):
+                return "Failed to load streak data: \(details)"
+            case .appGroupAccessDenied:
+                return "Failed to access app group storage"
+            case .invalidStreak:
+                return "Invalid streak value"
+            case .invalidDate:
+                return "Invalid date value"
+            case .dataCorruption(let details):
+                return "Streak data corrupted: \(details)"
+            }
+        }
+    }
     
     // Published properties that will update the UI when changed
     @Published var currentStreak: Int = 0
@@ -15,46 +46,126 @@ class StreakManager: ObservableObject {
     private let currentStreakKey = "streak_currentStreak"
     private let longestStreakKey = "streak_longestStreak"
     private let streakDaysKey = "streak_daysRecord"
+    private let backupSuffix = "_backup"
     
     // UserDefaults instance - using the shared group for widget access
-    private let defaults = UserDefaults.shared
+    private var defaults: UserDefaults
     
     // Days record to track which days the app was opened (stored as timestamps)
     private var streakDays: [TimeInterval] = []
     
-    private init() {
-        loadStreakData()
-    }
+    // Flag to track if data was corrupted on load
+    private var dataWasCorrupted = false
     
-    // Load saved streak data from UserDefaults
-    private func loadStreakData() {
-        if let lastDate = defaults.object(forKey: lastOpenDateKey) as? Date {
-            lastOpenDate = lastDate
-            currentStreak = defaults.integer(forKey: currentStreakKey)
-            longestStreak = defaults.integer(forKey: longestStreakKey)
-            
-            if let savedDays = defaults.array(forKey: streakDaysKey) as? [TimeInterval] {
-                streakDays = savedDays
-            }
-            
-            // Check if we need to update since last open
-            checkStreak()
+    private init() {
+        // Initialize with UserDefaults access error handling
+        if let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) {
+            self.defaults = sharedDefaults
+            print("Successfully connected to shared app group UserDefaults")
         } else {
-            // First app open ever - initialize with 0
+            print("ERROR: Could not access shared app group, falling back to standard UserDefaults")
+            self.defaults = UserDefaults.standard
+        }
+        
+        do {
+            try loadStreakData()
+            
+            // Validate loaded data
+            if !isStreakDataValid() {
+                print("Warning: Loaded streak data failed validation, attempting to repair")
+                repairStreakData()
+            }
+        } catch let error as StreakError {
+            print("Error loading streak data: \(error.description)")
+            createBackup()
+            resetStreakData()
+        } catch {
+            print("Unexpected error loading streak data: \(error.localizedDescription)")
+            createBackup()
             resetStreakData()
         }
     }
     
-    // Save streak data to UserDefaults
-    private func saveStreakData() {
-        defaults.set(lastOpenDate, forKey: lastOpenDateKey)
-        defaults.set(currentStreak, forKey: currentStreakKey)
-        defaults.set(longestStreak, forKey: longestStreakKey)
-        defaults.set(streakDays, forKey: streakDaysKey)
+    // MARK: - Data Management
+    
+    // Load saved streak data from UserDefaults with error handling
+    private func loadStreakData() throws {
+        do {
+            // First, check if we have backup data if regular data is corrupted
+            if isDataCorrupted() && isBackupAvailable() {
+                print("Primary streak data appears corrupted, attempting to restore from backup")
+                try restoreFromBackup()
+                return
+            }
+            
+            // Regular loading
+            if let lastDate = defaults.object(forKey: lastOpenDateKey) as? Date {
+                lastOpenDate = lastDate
+                currentStreak = defaults.integer(forKey: currentStreakKey)
+                longestStreak = defaults.integer(forKey: longestStreakKey)
+                
+                if let savedDays = defaults.array(forKey: streakDaysKey) as? [TimeInterval] {
+                    streakDays = savedDays
+                } else {
+                    print("Warning: No streak days found, initializing empty array")
+                    streakDays = []
+                }
+                
+                // Check if we need to update since last open
+                try checkStreak()
+            } else {
+                // First app open ever - initialize with 0
+                print("No previous streak data found, initializing new streak")
+                resetStreakData()
+            }
+        } catch let streakError as StreakError {
+            print("Streak error in loadStreakData: \(streakError.description)")
+            throw streakError
+        } catch {
+            print("Unexpected error in loadStreakData: \(error.localizedDescription)")
+            throw StreakError.loadDataFailed("Unexpected error: \(error.localizedDescription)")
+        }
     }
     
-    // Check and possibly update the streak counter
-    private func checkStreak() {
+    // Save streak data to UserDefaults with error handling
+    private func saveStreakData() throws {
+        do {
+            // Validate data before saving
+            guard currentStreak >= 0, longestStreak >= 0,
+                  currentStreak <= 1000, longestStreak <= 1000 else { // Reasonable upper limits
+                throw StreakError.invalidStreak
+            }
+            
+            // Create backup before saving new data
+            createBackup()
+            
+            // Save the data
+            defaults.set(lastOpenDate, forKey: lastOpenDateKey)
+            defaults.set(currentStreak, forKey: currentStreakKey)
+            defaults.set(longestStreak, forKey: longestStreakKey)
+            defaults.set(streakDays, forKey: streakDaysKey)
+            
+            // Verify data was saved correctly
+            if defaults.integer(forKey: currentStreakKey) != currentStreak ||
+               defaults.integer(forKey: longestStreakKey) != longestStreak {
+                print("ERROR: Streak data verification failed after save")
+                throw StreakError.saveDataFailed("Verification failed")
+            }
+            
+            print("Streak data saved successfully: current=\(currentStreak), longest=\(longestStreak)")
+        } catch let streakError as StreakError {
+            print("Failed to save streak data: \(streakError.description)")
+            throw streakError
+        } catch {
+            print("Unexpected error saving streak data: \(error.localizedDescription)")
+            throw StreakError.saveDataFailed(error.localizedDescription)
+        }
+    }
+    
+    // MARK: - Streak Logic
+    
+    // Check and possibly update the streak counter with error handling
+    private func checkStreak() throws {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         
@@ -63,79 +174,124 @@ class StreakManager: ObservableObject {
             currentStreak = 1
             lastOpenDate = today
             recordDay(today)
-            saveStreakData()
+            try saveStreakData()
+            
+            print("First app open, started new streak")
+            
+            // Notify observers
+            NotificationCenter.default.post(name: NSNotification.Name("StreakUpdated"), object: nil)
             return
         }
-        
+
+        // To this:
         let lastOpenDay = calendar.startOfDay(for: lastDate)
         
         // If the app was already opened today, no streak update needed
         if calendar.isDate(today, inSameDayAs: lastOpenDay) {
+            print("App already opened today, streak remains at \(currentStreak)")
             return
         }
         
         // Calculate days between last open and today
-        if let daysBetween = calendar.dateComponents([.day], from: lastOpenDay, to: today).day {
-            switch daysBetween {
-            case 1:
-                // Consecutive day - increase streak
-                currentStreak += 1
-                
-                // Update longest streak if needed
-                if currentStreak > longestStreak {
-                    longestStreak = currentStreak
-                }
-                
-                // Check for streak milestones
-                checkForStreakMilestone()
-                
-                recordDay(today)
-                
-            case 0:
-                // Same day, no change to streak
-                break
-                
-            default:
-                // More than one day passed - streak broken
-                currentStreak = 1
-                
-                // Clear old streak days before adding today
-                clearOldStreakDays()
-                recordDay(today)
+        guard let daysBetween = calendar.dateComponents([.day], from: lastOpenDay, to: today).day else {
+            print("ERROR: Failed to calculate days between dates")
+            throw StreakError.dateCalculationFailed("Could not calculate interval between dates")
+        }
+        
+        let previousStreak = currentStreak
+        
+        switch daysBetween {
+        case 1:
+            // Consecutive day - increase streak
+            currentStreak += 1
+            
+            // Update longest streak if needed
+            if currentStreak > longestStreak {
+                print("New record! Longest streak updated: \(longestStreak) → \(currentStreak)")
+                longestStreak = currentStreak
             }
             
-            // Update last open date to today
-            lastOpenDate = today
-            saveStreakData()
+            // Check for streak milestones
+            checkForStreakMilestone()
+            
+            print("Streak continued: \(previousStreak) → \(currentStreak)")
+            recordDay(today)
+            
+        case 0:
+            // Same day, no change to streak
+            print("Same day detected, streak unchanged at \(currentStreak)")
+            break
+            
+        default:
+            // More than one day passed - streak broken
+            let missedDays = daysBetween - 1
+            print("Streak broken after \(currentStreak) days (missed \(missedDays) days)")
+            
+            currentStreak = 1
+            
+            // Clear old streak days before adding today
+            clearOldStreakDays()
+            recordDay(today)
+        }
+        
+        // Update last open date to today
+        lastOpenDate = today
+        try saveStreakData()
+        
+        // Notify observers if streak changed
+        if previousStreak != currentStreak {
+            NotificationCenter.default.post(name: NSNotification.Name("StreakUpdated"), object: nil)
         }
     }
     
-    // Record a day in the streak days array
+    // Record a day in the streak days array with validation
     private func recordDay(_ day: Date) {
-        // Add the day's timestamp to the record
-        streakDays.append(day.timeIntervalSince1970)
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: day)
         
-        // Keep only the last 366 days (for a year of history)
-        if streakDays.count > 366 {
-            streakDays = Array(streakDays.suffix(366))
+        // Check if this day already exists in the record to avoid duplicates
+        let dayTimestamp = startOfDay.timeIntervalSince1970
+        if !streakDays.contains(dayTimestamp) {
+            // Add the day's timestamp to the record
+            streakDays.append(dayTimestamp)
+            
+            // Keep only the last 366 days (for a year of history)
+            if streakDays.count > 366 {
+                streakDays = Array(streakDays.suffix(366))
+            }
+            
+            print("Recorded day in streak: \(startOfDay)")
+        } else {
+            print("Day already recorded in streak, skipping: \(startOfDay)")
         }
     }
     
     // Clear previous streak days when streak is broken
     private func clearOldStreakDays() {
-        // Optional: We could keep the history instead of clearing it
-        // For now, we're resetting when a streak breaks
+        let previousCount = streakDays.count
         streakDays.removeAll()
+        print("Cleared \(previousCount) previous streak days")
     }
     
-    // Public method to check in daily when app opens
+    // MARK: - Public Methods
+    
+    // Public method to check in daily when app opens with error handling
     func checkInToday() {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        
-        // Only proceed if this is a new day
-        if lastOpenDate == nil || !calendar.isDate(today, inSameDayAs: calendar.startOfDay(for: lastOpenDate!)) {
-            checkStreak()
+        do {
+            let calendar = Calendar.current
+            let today = calendar.startOfDay(for: Date())
+            
+            // Only proceed if this is a new day
+            if lastOpenDate == nil || !calendar.isDate(today, inSameDayAs: calendar.startOfDay(for: lastOpenDate!)) {
+                try checkStreak()
+            } else {
+                print("Check-in: Already checked in today")
+            }
+        } catch {
+            print("Error checking in today: \(error.localizedDescription)")
+            // If there's an error during check-in, we'll still count it as a visit
+            // to avoid penalizing the user for technical issues
+            ensureTodayIsRecorded()
         }
     }
     
@@ -163,20 +319,205 @@ class StreakManager: ObservableObject {
     
     // Method to reset streak data (for testing or if needed)
     func resetStreakData() {
+        print("Resetting streak data")
         currentStreak = 0
         longestStreak = 0
         lastOpenDate = nil
         streakDays.removeAll()
-        saveStreakData()
+        
+        do {
+            try saveStreakData()
+        } catch {
+            print("Error saving reset streak data: \(error.localizedDescription)")
+        }
     }
     
-    // Get the current streak's start date
+    // Get the current streak's start date with error handling
     func getStreakStartDate() -> Date? {
-        guard currentStreak > 0, let lastDate = lastOpenDate else { return nil }
+        guard currentStreak > 0, let lastDate = lastOpenDate else {
+            return nil
+        }
         
         let calendar = Calendar.current
-        return calendar.date(byAdding: .day, value: -(currentStreak - 1), to: lastDate)
+        do {
+            // Calculate streak start date
+            guard let startDate = calendar.date(byAdding: .day, value: -(currentStreak - 1), to: lastDate) else {
+                print("Warning: Could not calculate streak start date")
+                return nil
+            }
+            return startDate
+        } catch {
+            print("Error getting streak start date: \(error.localizedDescription)")
+            return nil
+        }
     }
+    
+    // MARK: - Error Recovery
+    
+    // Check if data appears to be corrupted
+    private func isDataCorrupted() -> Bool {
+        // Check for inconsistent streak values
+        if currentStreak < 0 || longestStreak < 0 ||
+           currentStreak > 1000 || longestStreak > 1000 {
+            return true
+        }
+        
+        // Check if longest streak is less than current streak
+        if longestStreak < currentStreak && currentStreak > 0 {
+            return true
+        }
+        
+        // Check if last open date is in the future
+        if let lastDate = lastOpenDate,
+           lastDate > Date().addingTimeInterval(60*60) { // Allow for slight clock differences (1 hour)
+            return true
+        }
+        
+        return false
+    }
+    
+    // Validate that streak data makes sense
+    private func isStreakDataValid() -> Bool {
+        // Check streak values are consistent
+        if currentStreak < 0 || longestStreak < 0 {
+            return false
+        }
+        
+        if longestStreak < currentStreak {
+            return false
+        }
+        
+        // Check streak days array makes sense for current streak
+        if currentStreak > 0 && streakDays.isEmpty {
+            return false
+        }
+        
+        return true
+    }
+    
+    // Attempt to repair corrupted streak data
+    private func repairStreakData() {
+        print("Attempting to repair streak data")
+        
+        // Fix longest streak if it's less than current streak
+        if longestStreak < currentStreak && currentStreak > 0 {
+            print("Fixing longest streak: \(longestStreak) → \(currentStreak)")
+            longestStreak = currentStreak
+        }
+        
+        // Fix negative values
+        if currentStreak < 0 {
+            print("Fixing negative current streak: \(currentStreak) → 0")
+            currentStreak = 0
+        }
+        
+        if longestStreak < 0 {
+            print("Fixing negative longest streak: \(longestStreak) → 0")
+            longestStreak = 0
+        }
+        
+        // Fix future dates
+        if let lastDate = lastOpenDate, lastDate > Date() {
+            print("Fixing future last open date")
+            lastOpenDate = Date()
+        }
+        
+        // If streak is positive but no days recorded, add today
+        if currentStreak > 0 && streakDays.isEmpty {
+            print("Adding today to empty streak days array")
+            recordDay(Date())
+        }
+        
+        // Save repaired data
+        do {
+            try saveStreakData()
+            print("Streak data repaired successfully")
+        } catch {
+            print("Failed to save repaired streak data: \(error.localizedDescription)")
+        }
+    }
+    
+    // Ensure today is recorded in the streak (for error recovery)
+    private func ensureTodayIsRecorded() {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        
+        if !isDateInStreak(today) {
+            print("Ensuring today is recorded in streak despite errors")
+            recordDay(today)
+            
+            // If there was no streak, start one
+            if currentStreak <= 0 {
+                currentStreak = 1
+                print("Starting new streak due to error recovery")
+            }
+            
+            lastOpenDate = today
+            
+            // Save changes
+            do {
+                try saveStreakData()
+            } catch {
+                print("Failed to save recovery streak data: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    // Create backup of streak data
+    private func createBackup() {
+        do {
+            // Only backup if we have valid data
+            if lastOpenDate != nil {
+                defaults.set(lastOpenDate, forKey: lastOpenDateKey + backupSuffix)
+                defaults.set(currentStreak, forKey: currentStreakKey + backupSuffix)
+                defaults.set(longestStreak, forKey: longestStreakKey + backupSuffix)
+                defaults.set(streakDays, forKey: streakDaysKey + backupSuffix)
+                
+                // Add timestamp of backup
+                defaults.set(Date(), forKey: "streak_backup_timestamp")
+                
+                print("Streak data backup created")
+            }
+        } catch {
+            print("Error creating streak data backup: \(error.localizedDescription)")
+        }
+    }
+    
+    // Check if backup is available
+    private func isBackupAvailable() -> Bool {
+        return defaults.object(forKey: lastOpenDateKey + backupSuffix) != nil
+    }
+    
+    // Restore from backup
+    private func restoreFromBackup() throws {
+        guard isBackupAvailable() else {
+            throw StreakError.dataCorruption("No backup available to restore from")
+        }
+        
+        if let backupDate = defaults.object(forKey: lastOpenDateKey + backupSuffix) as? Date {
+            lastOpenDate = backupDate
+            currentStreak = defaults.integer(forKey: currentStreakKey + backupSuffix)
+            longestStreak = defaults.integer(forKey: longestStreakKey + backupSuffix)
+            
+            if let backupDays = defaults.array(forKey: streakDaysKey + backupSuffix) as? [TimeInterval] {
+                streakDays = backupDays
+            } else {
+                streakDays = []
+            }
+            
+            print("Streak data restored from backup: current=\(currentStreak), longest=\(longestStreak)")
+            
+            // Mark that data was corrupted
+            dataWasCorrupted = true
+            
+            // After successful restore, update the data
+            try checkStreak()
+        } else {
+            throw StreakError.dataCorruption("Backup restoration failed")
+        }
+    }
+    
+    // MARK: - Notifications
     
     // Check for streak milestones and send notifications
     private func checkForStreakMilestone() {
@@ -189,13 +530,16 @@ class StreakManager: ObservableObject {
         }
     }
     
-    // Send a notification for reaching a streak milestone
+    // Send a notification for reaching a streak milestone with error handling
     private func sendStreakMilestoneNotification(_ streakDays: Int) {
         let notificationCenter = UNUserNotificationCenter.current()
         
         // Check notification permission
         notificationCenter.getNotificationSettings { settings in
-            guard settings.authorizationStatus == .authorized else { return }
+            guard settings.authorizationStatus == .authorized else {
+                print("Skipping streak notification - no permission")
+                return
+            }
             
             let content = UNMutableNotificationContent()
             content.title = "Streak Milestone Reached! 🔥"
@@ -214,15 +558,37 @@ class StreakManager: ObservableObject {
             content.sound = UNNotificationSound.default
             
             // Create the request
-            let identifier = "com.MotiApp.streakMilestone.\(streakDays)"
+            let identifier = "com.moti.streakMilestone.\(streakDays)"
             let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
             
-            // Add the notification request
+            // Add the notification request with error handling
             notificationCenter.add(request) { error in
                 if let error = error {
                     print("Error sending streak milestone notification: \(error.localizedDescription)")
+                } else {
+                    print("Streak milestone notification sent for \(streakDays) days")
                 }
             }
         }
+    }
+    
+    // MARK: - Debugging
+    
+    // Diagnostic method to print streak status (for debugging)
+    func printStreakDiagnostics() {
+        print("=== STREAK DIAGNOSTICS ===")
+        print("Current streak: \(currentStreak)")
+        print("Longest streak: \(longestStreak)")
+        print("Last open date: \(String(describing: lastOpenDate))")
+        print("Days recorded: \(streakDays.count)")
+        print("Data was corrupted: \(dataWasCorrupted)")
+        print("Backup available: \(isBackupAvailable())")
+        
+        let calendar = Calendar.current
+        if let lastDate = lastOpenDate {
+            print("Days since last open: \(calendar.dateComponents([.day], from: calendar.startOfDay(for: lastDate), to: calendar.startOfDay(for: Date())).day ?? 0)")
+        }
+        
+        print("=========================")
     }
 }

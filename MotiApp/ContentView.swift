@@ -29,17 +29,52 @@ struct Quote: Identifiable, Codable, Equatable {
     }
 }
 
-// Quote Service
+// Quote Service with error handling - Fixed for your project
 class QuoteService: ObservableObject {
     static let shared = QuoteService()
     
+    // Error type for QuoteService
+    enum QuoteServiceError: Error {
+        case failedToLoadFavorites
+        case failedToSaveFavorites
+        case invalidQuote
+        case quotesUnavailable
+        case categoryNotFound
+        
+        var description: String {
+            switch self {
+            case .failedToLoadFavorites: return "Failed to load favorites"
+            case .failedToSaveFavorites: return "Failed to save favorites"
+            case .invalidQuote: return "Invalid quote data"
+            case .quotesUnavailable: return "Quotes are unavailable"
+            case .categoryNotFound: return "Category not found"
+            }
+        }
+    }
+    
     // Local quotes data source - now using the shared quotes
-    private let quotes: [Quote] = SharedQuotes.all.map { Quote(from: $0) }
+    private let quotes: [Quote]
     
     // Favorites storage
     @Published var favorites: [Quote] = []
     
+    // UserDefaults key
+    private let favoritesKey = "savedFavorites"
+    private let backupFavoritesKey = "savedFavorites_backup"
+    
     init() {
+        // Initialize quotes with error handling
+        do {
+            quotes = SharedQuotes.all.map { Quote(from: $0) }
+            if quotes.isEmpty {
+                print("Warning: No quotes loaded from SharedQuotes")
+            }
+        } catch {
+            print("Error initializing quotes: \(error.localizedDescription)")
+            quotes = [] // Initialize with empty array on error
+        }
+        
+        // Load saved favorites
         loadFavorites()
     }
     
@@ -49,31 +84,126 @@ class QuoteService: ObservableObject {
         return Array(categories).sorted()
     }
     
-    // Get quotes by category
+    // Get quotes by category with error handling
     func getQuotes(forCategory category: String) -> [Quote] {
-        return quotes.filter { $0.category == category }
+        guard !quotes.isEmpty else {
+            print("Warning: Attempting to get quotes for category but quotes array is empty")
+            return []
+        }
+        
+        let filteredQuotes = quotes.filter { $0.category == category }
+        
+        if filteredQuotes.isEmpty {
+            print("Warning: No quotes found for category: \(category)")
+        }
+        
+        return filteredQuotes
     }
     
-    // Save favorites to UserDefaults
+    // Save favorites to UserDefaults with error handling
     private func saveFavorites() {
-        if let encoded = try? JSONEncoder().encode(favorites) {
-            UserDefaults.standard.set(encoded, forKey: "savedFavorites")
+        do {
+            let encoded = try JSONEncoder().encode(favorites)
+            UserDefaults.standard.set(encoded, forKey: favoritesKey)
+        } catch {
+            print("Error saving favorites: \(error.localizedDescription)")
+            // Create a backup of what we can encode
+            createFavoritesBackup()
         }
     }
     
-    // Load favorites from UserDefaults
-    private func loadFavorites() {
-        if let savedFavorites = UserDefaults.standard.data(forKey: "savedFavorites") {
-            if let decodedFavorites = try? JSONDecoder().decode([Quote].self, from: savedFavorites) {
-                favorites = decodedFavorites
-                return
+    // Create a backup of favorites in case of corruption
+    private func createFavoritesBackup() {
+        // Skip empty favorites
+        if favorites.isEmpty {
+            return
+        }
+        
+        // Try to encode only the valid favorites
+        var encodableFavorites: [Quote] = []
+        
+        for favorite in favorites {
+            do {
+                // Test if each favorite can be encoded individually
+                let _ = try JSONEncoder().encode(favorite)
+                encodableFavorites.append(favorite)
+            } catch {
+                print("Skipping non-encodable favorite: \(favorite.text)")
             }
         }
-        favorites = [] // Default to empty array if no favorites found
+        
+        // Save the backup if we have any valid favorites
+        if !encodableFavorites.isEmpty {
+            if let encoded = try? JSONEncoder().encode(encodableFavorites) {
+                UserDefaults.standard.set(encoded, forKey: backupFavoritesKey)
+                print("Successfully created backup with \(encodableFavorites.count) favorites")
+            }
+        }
     }
     
-    // Add quote to favorites
+    // Load favorites from UserDefaults with error handling
+    private func loadFavorites() {
+        if let savedFavorites = UserDefaults.standard.data(forKey: favoritesKey) {
+            do {
+                let decodedFavorites = try JSONDecoder().decode([Quote].self, from: savedFavorites)
+                favorites = decodedFavorites
+                print("Successfully loaded \(favorites.count) favorites")
+            } catch {
+                print("Error decoding favorites: \(error.localizedDescription)")
+                // Attempt to recover by using any valid favorites or starting with empty array
+                favorites = []
+                
+                // Try to recover corrupted data
+                attemptFavoritesRecovery()
+            }
+        } else {
+            favorites = [] // Default to empty array if no favorites found
+            print("No saved favorites found")
+        }
+    }
+    
+    // Recovery attempt for corrupted favorites data
+    private func attemptFavoritesRecovery() {
+        print("Attempting to recover favorites data...")
+        
+        // First, try to load from backup if it exists
+        if let backupData = UserDefaults.standard.data(forKey: backupFavoritesKey) {
+            do {
+                let recoveredFavorites = try JSONDecoder().decode([Quote].self, from: backupData)
+                if !recoveredFavorites.isEmpty {
+                    print("Recovered \(recoveredFavorites.count) favorites from backup")
+                    favorites = recoveredFavorites
+                    
+                    // Save to main storage
+                    saveFavorites()
+                    return
+                }
+            } catch {
+                print("Backup recovery failed: \(error.localizedDescription)")
+            }
+        }
+        
+        // If no backup or backup recovery failed, try to create a new backup
+        if let savedFavorites = UserDefaults.standard.data(forKey: favoritesKey) {
+            // Create a backup of corrupted data
+            UserDefaults.standard.set(savedFavorites, forKey: "savedFavorites_corrupted")
+            
+            // Reset favorites
+            favorites = []
+            saveFavorites()
+            
+            print("Favorites reset due to data corruption. A backup was created at 'savedFavorites_corrupted'")
+        }
+    }
+    
+    // Add quote to favorites with error handling
     func addToFavorites(_ quote: Quote) {
+        // Validate quote
+        guard !quote.text.isEmpty && !quote.author.isEmpty else {
+            print("Warning: Attempted to add invalid quote to favorites")
+            return
+        }
+        
         // Only add if not already in favorites
         if !favorites.contains(where: { $0.text == quote.text && $0.author == quote.author }) {
             favorites.append(quote)
@@ -81,10 +211,17 @@ class QuoteService: ObservableObject {
         }
     }
     
-    // Remove quote from favorites
+    // Remove quote from favorites with error handling
     func removeFromFavorites(_ quote: Quote) {
+        let initialCount = favorites.count
         favorites.removeAll(where: { $0.text == quote.text && $0.author == quote.author })
-        saveFavorites()
+        
+        if favorites.count < initialCount {
+            // Quote was found and removed
+            saveFavorites()
+        } else {
+            print("Warning: Quote not found in favorites for removal")
+        }
     }
     
     // Check if a quote is in favorites
@@ -92,23 +229,39 @@ class QuoteService: ObservableObject {
         return favorites.contains(where: { $0.text == quote.text && $0.author == quote.author })
     }
     
-    // Function to get today's quote
+    // Function to get today's quote with error handling
     func getTodaysQuote() -> Quote {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        
-        // Use the day of the year to pick a quote
-        guard let dayOfYear = calendar.ordinality(of: .day, in: .year, for: today) else {
-            return quotes[0] // Fallback to first quote
+        guard !quotes.isEmpty else {
+            print("Error: No quotes available to get today's quote")
+            return getFallbackQuote()
         }
         
-        // Use modulo to ensure we always get a valid index
-        let index = (dayOfYear - 1) % quotes.count
-        return quotes[index]
+        do {
+            let calendar = Calendar.current
+            let today = calendar.startOfDay(for: Date())
+            
+            // Use the day of the year to pick a quote
+            guard let dayOfYear = calendar.ordinality(of: .day, in: .year, for: today) else {
+                print("Warning: Could not determine day of year, using first quote")
+                return quotes[0]
+            }
+            
+            // Use modulo to ensure we always get a valid index
+            let index = (dayOfYear - 1) % quotes.count
+            return quotes[index]
+        } catch {
+            print("Error retrieving today's quote: \(error.localizedDescription)")
+            return getFallbackQuote()
+        }
     }
     
-    // Function to get a random quote
+    // Function to get a random quote with error handling
     func getRandomQuote() -> Quote {
+        guard !quotes.isEmpty else {
+            print("Error: No quotes available to get random quote")
+            return getFallbackQuote()
+        }
+        
         let randomIndex = Int.random(in: 0..<quotes.count)
         return quotes[randomIndex]
     }
