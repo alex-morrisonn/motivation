@@ -1,8 +1,17 @@
 import UIKit
 import UserNotifications
+import Firebase
+import FirebaseFirestore
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        // Initialize Firebase - Add this line for Firebase integration
+        FirebaseApp.configure()
+        
+        // Optional: Configure offline persistence for Firestore
+        let settings = FirestoreSettings()
+        settings.isPersistenceEnabled = true
+        Firestore.firestore().settings = settings
         
         // Set this class as the UNUserNotificationCenter delegate
         UNUserNotificationCenter.current().delegate = self
@@ -61,5 +70,15 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Update streak when app becomes active
         StreakManager.shared.checkInToday()
+    }
+    
+    // Called when the app is about to terminate
+    func applicationWillTerminate(_ application: UIApplication) {
+        // Optional: Perform any cleanup if needed
+    }
+    
+    // Called when the app enters the background
+    func applicationDidEnterBackground(_ application: UIApplication) {
+        // Optional: Save any unsaved data if needed
     }
 }

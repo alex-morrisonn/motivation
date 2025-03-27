@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseFirestore
 
 // Break down into smaller components to reduce compile-time complexity
 struct FeedbackTypeSelector: View {
@@ -155,6 +156,10 @@ struct FeedbackView: View {
     @State private var showingConfirmation = false
     @State private var isSubmitting = false
     
+    // Error handling
+    @State private var showingErrorAlert = false
+    @State private var errorMessage = ""
+    
     private let feedbackTypes = ["General", "Bug Report", "Feature", "Question"]
     
     var body: some View {
@@ -309,20 +314,70 @@ struct FeedbackView: View {
                     }
                 )
             }
+            .alert("Error Submitting Feedback", isPresented: $showingErrorAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorMessage)
+            }
         }
         .preferredColorScheme(.dark)
     }
     
     private func submitFeedback() {
+        // Basic validation
+        if feedbackText.isEmpty {
+            return
+        }
+        
+        // Email validation if provided
+        if !contactEmail.isEmpty && !isValidEmail(contactEmail) {
+            errorMessage = "Please enter a valid email address or leave the field empty."
+            showingErrorAlert = true
+            return
+        }
+        
+        // Show loading state
         withAnimation {
             isSubmitting = true
         }
         
-        // Simulate submission with delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            isSubmitting = false
-            showingConfirmation = true
+        // Get feedback type string
+        let typeString = feedbackTypes[feedbackType]
+        
+        // Submit to Firebase
+        Task {
+            do {
+                let success = try await FeedbackService.sendFeedback(
+                    text: feedbackText,
+                    type: typeString,
+                    email: contactEmail,
+                    includeDeviceInfo: includeDeviceInfo
+                )
+                
+                await MainActor.run {
+                    isSubmitting = false
+                    if success {
+                        showingConfirmation = true
+                    } else {
+                        errorMessage = "Unable to submit your feedback. Please try again later."
+                        showingErrorAlert = true
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    isSubmitting = false
+                    errorMessage = "Error: \(error.localizedDescription)"
+                    showingErrorAlert = true
+                }
+            }
         }
+    }
+    
+    // Basic email validation
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let emailPred = NSPredicate(format:"SELF MATCHES %@", emailRegEx)
+        return emailPred.evaluate(with: email)
     }
 }
 
