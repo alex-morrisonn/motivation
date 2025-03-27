@@ -19,6 +19,7 @@
 		1E6A60282D94CE8900AD9399 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 1E6A60272D94CE8900AD9399 /* FirebaseFirestore */; };
 		1E6A602D2D94DA3B00AD9399 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 1E6A602C2D94DA3B00AD9399 /* FirebaseAppCheck */; };
 		1E6A602F2D94DA6200AD9399 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1E6A602E2D94DA6200AD9399 /* FirebaseCrashlytics */; };
+		1E6A60322D9511A600AD9399 /* AppTrackingTransparency.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E6A60312D9511A600AD9399 /* AppTrackingTransparency.framework */; };
 		1EB90A072D91070E004C0A32 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
 		1EB90A082D9107C6004C0A32 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
 		1EB90A092D9107C6004C0A32 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
@@ -70,6 +71,8 @@
 		1E41835A2D8EC71300AAEC12 /* MotiUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MotiUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E61DA2F2D92870E006A63EA /* Moti.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = Moti.entitlements; path = Moti/Moti.entitlements; sourceTree = "<group>"; };
 		1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		1E6A60302D95103200AD9399 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; name = Info.plist; path = Moti/Info.plist; sourceTree = "<group>"; };
+		1E6A60312D9511A600AD9399 /* AppTrackingTransparency.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppTrackingTransparency.framework; path = System/Library/Frameworks/AppTrackingTransparency.framework; sourceTree = SDKROOT; };
 		1EB90A062D910709004C0A32 /* SharedQuotes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedQuotes.swift; sourceTree = "<group>"; };
 		1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -125,6 +128,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1E6A60322D9511A600AD9399 /* AppTrackingTransparency.framework in Frameworks */,
 				1E6A60262D94CE8900AD9399 /* FirebaseAnalytics in Frameworks */,
 				1E6A602F2D94DA6200AD9399 /* FirebaseCrashlytics in Frameworks */,
 				1E6A602D2D94DA3B00AD9399 /* FirebaseAppCheck in Frameworks */,
@@ -152,6 +156,7 @@
 		1E4183372D8EC71100AAEC12 = {
 			isa = PBXGroup;
 			children = (
+				1E6A60302D95103200AD9399 /* Info.plist */,
 				1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */,
 				1E21CE062D937197000F7451 /* MotiWidgetExtension.entitlements */,
 				1E61DA2F2D92870E006A63EA /* Moti.entitlements */,
@@ -179,6 +184,7 @@
 		1ECDCF7F2D8ECF3600123E99 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				1E6A60312D9511A600AD9399 /* AppTrackingTransparency.framework */,
 				1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */,
 				1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */,
 			);
@@ -611,6 +617,7 @@
 				DEVELOPMENT_TEAM = 9282G9F23C;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Moti/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -641,6 +648,7 @@
 				DEVELOPMENT_TEAM = 9282G9F23C;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Moti/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

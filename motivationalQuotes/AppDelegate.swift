@@ -5,6 +5,7 @@ import FirebaseFirestore
 import FirebaseAppCheck
 import FirebaseCrashlytics
 import FirebaseAnalytics
+import AppTrackingTransparency // Added for privacy compliance
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     
@@ -32,6 +33,11 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         
         // Reset badge count when app becomes active
         UIApplication.shared.applicationIconBadgeNumber = 0
+        
+        // Request tracking authorization (delayed to avoid interfering with app launch UX)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.requestTrackingAuthorization()
+        }
     }
     
     func applicationWillTerminate(_ application: UIApplication) {
@@ -40,6 +46,20 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     
     func applicationDidEnterBackground(_ application: UIApplication) {
         // Modern iOS handles state saving automatically
+    }
+    
+    // MARK: - Privacy and Tracking
+    
+    private func requestTrackingAuthorization() {
+        if #available(iOS 14.0, *) {
+            ATTrackingManager.requestTrackingAuthorization { status in
+                // Update analytics collection based on authorization status
+                let isEnabled = status == .authorized
+                DispatchQueue.main.async {
+                    Analytics.setAnalyticsCollectionEnabled(isEnabled)
+                }
+            }
+        }
     }
     
     // MARK: - Configuration Methods
@@ -64,8 +84,8 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         settings.cacheSizeBytes = 100 * 1024 * 1024
         Firestore.firestore().settings = settings
         
-        // Configure analytics
-        Analytics.setAnalyticsCollectionEnabled(true)
+        // Configure analytics - initially disabled until ATT permission is granted
+        Analytics.setAnalyticsCollectionEnabled(false)
         
         // Set user properties for analytics
         if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String {
@@ -77,7 +97,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     }
     
     private func configureAppGroup() {
-        // Ensure app group access is working
+        // Standardize app group name across app and widget extensions
         guard let _ = UserDefaults(suiteName: "group.com.alexmorrison.moti.shared") else {
             print("Warning: Could not access shared app group")
             return
@@ -101,11 +121,31 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         if notificationsEnabled {
             // Check if we have permission
             UNUserNotificationCenter.current().getNotificationSettings { settings in
-                if settings.authorizationStatus == .authorized {
+                if settings.authorizationStatus == .authorized ||
+                   settings.authorizationStatus == .provisional {
                     // We have permission, reschedule the notification
                     DispatchQueue.main.async {
                         NotificationManager.shared.scheduleNotification()
                     }
+                } else if settings.authorizationStatus == .notDetermined {
+                    // First time - request permission with provisional option
+                    self.requestNotificationPermission()
+                }
+            }
+        }
+    }
+    
+    private func requestNotificationPermission() {
+        // Request with provisional option for better UX
+        let options: UNAuthorizationOptions = [.alert, .sound, .badge, .provisional]
+        UNUserNotificationCenter.current().requestAuthorization(options: options) { granted, error in
+            if let error = error {
+                print("Error requesting notification permission: \(error.localizedDescription)")
+            }
+            
+            if granted {
+                DispatchQueue.main.async {
+                    NotificationManager.shared.scheduleNotification()
                 }
             }
         }
