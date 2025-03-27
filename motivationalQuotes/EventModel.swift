@@ -6,7 +6,7 @@ import WidgetKit
 #endif
 
 // Shared App Group identifier - use this same string in both app and widget extension
-let appGroupIdentifier = "group.com.motivationalQuotes.shared"
+let appGroupIdentifier = "group.com.alexmorrison.moti.shared"
 
 // Access shared UserDefaults
 extension UserDefaults {

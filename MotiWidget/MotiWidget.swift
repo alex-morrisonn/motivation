@@ -43,7 +43,7 @@ struct Quote: Identifiable, Codable, Equatable {
 }
 
 // Shared App Group identifier
-let appGroupIdentifier = "group.com.motivationalQuotes.shared"
+let appGroupIdentifier = "group.com.alexmorrison.moti.shared"
 
 // Access shared UserDefaults
 extension UserDefaults {
