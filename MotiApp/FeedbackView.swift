@@ -347,7 +347,7 @@ struct FeedbackView: View {
         // Submit to Firebase
         Task {
             do {
-                let success = try await FeedbackService.sendFeedback(
+                let result = try await FeedbackService.sendFeedback(
                     text: feedbackText,
                     type: typeString,
                     email: contactEmail,
@@ -356,10 +356,10 @@ struct FeedbackView: View {
                 
                 await MainActor.run {
                     isSubmitting = false
-                    if success {
+                    if result.success {
                         showingConfirmation = true
                     } else {
-                        errorMessage = "Unable to submit your feedback. Please try again later."
+                        errorMessage = result.error?.errorDescription ?? "Unable to submit your feedback. Please try again later."
                         showingErrorAlert = true
                     }
                 }

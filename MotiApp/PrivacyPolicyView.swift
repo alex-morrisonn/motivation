@@ -18,81 +18,68 @@ struct PrivacyPolicyView: View {
                         
                         Group {
                             sectionTitle("Introduction")
-                            
                             sectionText("""
-                            This Privacy Policy describes how Moti ("we", "our", or "us") collects, uses, and shares information about you when you use our mobile application (the "App").
-                            
-                            By using Moti, you agree to the collection and use of information in accordance with this policy.
+                            This Privacy Policy explains how Moti collects, uses, and discloses information about you when you use our mobile application. By using Moti, you agree to the practices described in this Privacy Policy.
                             """)
-                            
+
                             sectionTitle("Information We Collect")
-                            
                             sectionText("""
-                            We collect the following types of information:
-                            
-                            • Usage Data: We collect information about how you use our App, including app features you use, time spent in the app, and interaction with content.
-                            
-                            • Device Information: We collect information about your device, including device model, operating system, unique device identifiers, and network information.
-                            
-                            • User Preferences: We store your app preferences, favorites, and settings to provide a personalized experience.
+                            • Usage Data: Information about your interactions with the App, including features used, time spent, and content engagement.
+
+                            • Device Information: Details about your device, such as model, operating system, unique device identifiers, and network information.
+
+                            • User Preferences: Your in-app preferences, favorites, and settings to personalize your experience.
                             """)
-                            
+
                             sectionTitle("How We Use Your Information")
-                            
                             sectionText("""
                             We use the information we collect to:
                             
-                            • Provide, maintain, and improve the App
-                            • Understand how you use the App to enhance user experience
-                            • Detect and address technical issues
-                            • Monitor usage patterns and analytics
-                            """)
-                            
-                            sectionTitle("Third-Party Services")
-                            
-                            sectionText("""
-                            We use the following third-party services:
-                            
-                            • Firebase Analytics: Used to collect usage data and app performance metrics
-                            • Firebase Crashlytics: Used to track app crashes and technical issues
-                            
-                            These services may collect information sent by your device for their own purposes. Please review their privacy policies for more information.
+                            • Operate, maintain, and improve the App
+                            • Understand how users engage with the App to enhance the overall experience
+                            • Identify and address technical issues
+                            • Monitor usage trends and analytics
                             """)
                         }
-                        
+
                         Group {
+                            sectionTitle("Third-Party Services")
+                            sectionText("""
+                            We employ the following third-party services:
+                            
+                            • Firebase Analytics: Collects usage data and performance metrics
+                            • Firebase Crashlytics: Tracks app crashes and related technical issues
+                            
+                            These services may receive information directly from your device. Please consult their respective privacy policies for additional details on how they handle your data.
+                            """)
+
                             sectionTitle("Data Storage")
-                            
                             sectionText("""
-                            Most data is stored locally on your device. Some data, such as analytics, may be stored on our servers or third-party servers.
+                            Most data is stored locally on your device. Certain information, such as analytics data, may be stored on our servers or those of third-party providers.
                             """)
-                            
+
                             sectionTitle("Your Choices")
-                            
                             sectionText("""
-                            You can opt-out of analytics tracking through your device settings. 
-                            
-                            To delete all app data, you can uninstall the app from your device.
+                            • Opt-Out of Analytics: You may disable analytics tracking through your device settings.
+                            • Data Deletion: To remove all app data, simply uninstall the App from your device.
                             """)
-                            
+
                             sectionTitle("Children's Privacy")
-                            
                             sectionText("""
-                            Our App is not directed to children under 13. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided us with personal information, please contact us.
+                            Moti is not intended for children under 13. We do not knowingly collect personal information from individuals under 13. If you believe your child has provided us with personal information, please contact us so we can delete it.
                             """)
-                            
+
                             sectionTitle("Changes to This Privacy Policy")
-                            
                             sectionText("""
-                            We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy in the App.
+                            We may update this Privacy Policy from time to time. Any changes will be posted within the App, and your continued use of the App after such updates constitutes acceptance of the revised policy.
                             """)
-                            
+
                             sectionTitle("Contact Us")
-                            
                             sectionText("""
-                            If you have any questions about this Privacy Policy, please contact us at: [YOUR CONTACT EMAIL].
+                            If you have any questions or concerns about this Privacy Policy, please reach out to us at: [motii.team@gmail.com].
                             """)
                         }
+
                         
                         // Last updated date
                         Text("Last Updated: March 2025")
