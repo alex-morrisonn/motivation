@@ -2,6 +2,38 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    
+    <!-- Your AdMob app ID -->
+        <key>GADApplicationIdentifier</key>
+        <string>ca-app-pub-3940256099942544~1458002511</string>
+        
+        <!-- Required for iOS 14+ -->
+        <key>SKAdNetworkItems</key>
+        <array>
+            <dict>
+                <key>SKAdNetworkIdentifier</key>
+                <string>cstr6suwn9.skadnetwork</string>
+            </dict>
+            <!-- Add other SKAdNetworkIdentifier entries as recommended by Google -->
+        </array>
+        
+        <!-- User tracking permission request (required for iOS 14+) -->
+        <key>NSUserTrackingUsageDescription</key>
+        <string>This identifier will be used to deliver personalized ads to you.</string>
+        
+        <!-- Privacy manifest entries (newer iOS versions) -->
+        <key>NSPrivacyCollectedDataTypes</key>
+        <array>
+            <dict>
+                <key>NSPrivacyCollectedDataType</key>
+                <string>NSPrivacyCollectedDataTypeOtherDataTypes</string>
+                <key>NSPrivacyCollectedDataTypeLinked</key>
+                <true/>
+                <key>NSPrivacyCollectedDataTypeTracking</key>
+                <true/>
+            </dict>
+        </array>
+        
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -18,6 +50,6 @@
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>Moti would like to send you daily motivational quotes and streak milestone notifications.</string>
 	<key>NSUserTrackingUsageDescription</key>
-	<string>This identifier will be used to deliver personalized motivational content and improve your experience.</string>
+	<string>This identifier helps us personalize your daily quotes based on what inspires you most and improve app features you use frequently.</string>
 </dict>
 </plist>

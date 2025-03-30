@@ -76,7 +76,7 @@ struct PrivacyPolicyView: View {
 
                             sectionTitle("Contact Us")
                             sectionText("""
-                            If you have any questions or concerns about this Privacy Policy, please reach out to us at: [motii.team@gmail.com].
+                            If you have any questions or concerns about this Privacy Policy, please reach out to us at: motii.team@gmail.com.
                             """)
                         }
 
@@ -187,7 +187,7 @@ struct TermsOfServiceView: View {
                             sectionTitle("Contact Us")
                             
                             sectionText("""
-                            If you have any questions about these Terms, please contact us at: [YOUR CONTACT EMAIL].
+                            If you have any questions about these Terms, please contact us at: motii.team@gmail.com.
                             """)
                         }
                         
@@ -228,23 +228,3 @@ struct TermsOfServiceView: View {
             .lineSpacing(4)
     }
 }
-
-// Add these options to your MoreView
-// OptionRow(
-//     icon: "lock.shield",
-//     title: "Privacy Policy",
-//     action: { showingPrivacyPolicy.toggle() }
-// )
-//
-// OptionRow(
-//     icon: "doc.text",
-//     title: "Terms of Service",
-//     action: { showingTerms.toggle() }
-// )
-//
-// .sheet(isPresented: $showingPrivacyPolicy) {
-//     PrivacyPolicyView()
-// }
-// .sheet(isPresented: $showingTerms) {
-//     TermsOfServiceView()
-// }

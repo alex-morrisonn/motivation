@@ -484,6 +484,8 @@ struct CategoriesView: View {
                             }
                         }
                         .padding(.vertical)
+                        // Add extra padding at the bottom for the banner ad
+                        .padding(.bottom, 110)
                     }
                     
                     Spacer()
@@ -557,6 +559,8 @@ struct CategoriesView: View {
                             }
                         }
                         .padding(.vertical)
+                        // Add extra padding at the bottom for the banner ad
+                        .padding(.bottom, 110)
                     }
                 }
             }
@@ -617,6 +621,8 @@ struct FavoritesView: View {
                         }
                     }
                     .padding(.vertical)
+                    // Add extra padding at the bottom for the banner ad
+                    .padding(.bottom, 110)
                 }
             }
         }
@@ -815,8 +821,10 @@ struct HomeQuoteView: View {
                             }
                         }
                     }
-                    .padding(.bottom, 50) // Extra padding at bottom for better scrolling
                 }
+                // Add extra padding at the bottom to account for tab bar + banner ad
+                // Standard tab bar is 49pt + banner ad is 50pt + some extra space
+                .padding(.bottom, 110)
             }
         }
         .sheet(isPresented: $showingShareSheet) {
@@ -839,6 +847,9 @@ struct ContentView: View {
     @ObservedObject var streakManager = StreakManager.shared
     @State private var showingStreakCelebration = false
     @State private var previousStreak = 0
+    
+    // Banner ad unit ID - replace with your actual ad unit ID for production
+    private let bannerAdUnitID = "ca-app-pub-3940256099942544/2934735716" // Test ID
     
     init() {
         // Set up the dark mode appearance
@@ -889,6 +900,7 @@ struct ContentView: View {
                     .tag(4)
             }
             .accentColor(.white) // Active tab color
+            .withBannerAd(adUnitID: bannerAdUnitID) // Add banner ad to the bottom of the TabView
             .onAppear {
                 // Increase contrast for unselected tab items
                 let tabBarAppearance = UITabBarAppearance()
@@ -913,7 +925,7 @@ struct ContentView: View {
                 Rectangle()
                     .frame(height: 0.5)
                     .foregroundColor(Color.white.opacity(0.3))
-                    .padding(.bottom, 49) // Tab bar height is typically 49 points
+                    .padding(.bottom, 99) // Tab bar height plus ad height
             }
         }
         .onOpenURL { url in
@@ -930,6 +942,10 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenQuotesTab"))) { _ in
             // When a notification is tapped, navigate to the quotes tab
             self.selectedTab = 1 // Index of the Categories tab
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenStreakDetails"))) { _ in
+            // Open streak details when a streak notification is tapped
+            self.selectedTab = 4 // Index of the More tab
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("StreakUpdated"))) { _ in
             // Check if streak increased (but not first day)

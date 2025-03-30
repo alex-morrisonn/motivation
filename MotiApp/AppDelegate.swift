@@ -6,6 +6,7 @@ import FirebaseAppCheck
 import FirebaseCrashlytics
 import FirebaseAnalytics
 import AppTrackingTransparency // Added for privacy compliance
+import GoogleMobileAds // Added for AdMob support
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     
@@ -18,6 +19,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         case trackingPermissionDenied
         case firebaseConfigError
         case notificationConfigError
+        case adMobInitFailed
         
         var description: String {
             switch self {
@@ -33,6 +35,8 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
                 return "Error configuring Firebase services"
             case .notificationConfigError:
                 return "Error configuring notifications"
+            case .adMobInitFailed:
+                return "Failed to initialize AdMob"
             }
         }
     }
@@ -43,6 +47,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     private var isFirebaseInitialized = false
     private var isNotificationConfigured = false
     private var isAppGroupConfigured = false
+    private var isAdMobInitialized = false
     
     // MARK: - Application Lifecycle
     
@@ -56,6 +61,16 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
             // Continue app initialization despite Firebase failure
             // Log the error to the system for debugging
             NSLog("Firebase initialization error: \(error.localizedDescription)")
+        }
+        
+        // Initialize AdMob with error handling
+        do {
+            try configureAdMob()
+            isAdMobInitialized = true
+        } catch {
+            print("ERROR: AdMob initialization failed: \(error.localizedDescription)")
+            // Continue app initialization despite AdMob failure
+            NSLog("AdMob initialization error: \(error.localizedDescription)")
         }
         
         // Configure push notifications with error handling
@@ -161,6 +176,29 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     }
     
     // MARK: - Configuration Methods
+    
+    // Configure AdMob
+    private func configureAdMob() throws {
+        do {
+            // Initialize Google Mobile Ads SDK
+            GADMobileAds.sharedInstance().start { status in
+                if let error = status.adapterStatusesByClassName.values.first(where: { $0.state == .notReady }) {
+                    print("WARNING: AdMob initialization had issues: \(error)")
+                } else {
+                    print("AdMob successfully initialized")
+                }
+            }
+            
+            // For test devices (remove in production or use your test device IDs)
+            #if DEBUG
+            GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = ["GAD_SIMULATOR_ID"]
+            #endif
+            
+        } catch {
+            print("ERROR: Failed to initialize AdMob: \(error.localizedDescription)")
+            throw AppDelegateError.adMobInitFailed
+        }
+    }
     
     private func configureFirebase() throws {
         do {
