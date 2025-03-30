@@ -177,22 +177,20 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     
     // MARK: - Configuration Methods
     
-    // Configure AdMob
+    // Configure AdMob with updated API
     private func configureAdMob() throws {
         do {
             // Initialize Google Mobile Ads SDK
-            GADMobileAds.sharedInstance().start { status in
-                if let error = status.adapterStatusesByClassName.values.first(where: { $0.state == .notReady }) {
-                    print("WARNING: AdMob initialization had issues: \(error)")
-                } else {
-                    print("AdMob successfully initialized")
-                }
-            }
+            MobileAds.initialize()
+            print("AdMob successfully initialized")
             
             // For test devices (remove in production or use your test device IDs)
             #if DEBUG
-            GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = ["GAD_SIMULATOR_ID"]
+            MobileAds.shared.requestConfiguration.testDeviceIdentifiers = ["GAD_SIMULATOR_ID"]
             #endif
+            
+            // Set content rating
+            MobileAds.shared.requestConfiguration.maxAdContentRating = GADMaxAdContentRating.general
             
         } catch {
             print("ERROR: Failed to initialize AdMob: \(error.localizedDescription)")

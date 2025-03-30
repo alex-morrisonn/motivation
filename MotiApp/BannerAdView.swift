@@ -2,28 +2,42 @@ import SwiftUI
 import GoogleMobileAds
 import UIKit
 
-// UIKit wrapper for GADBannerView to use in SwiftUI
+// UIKit wrapper for BannerView to use in SwiftUI
 struct BannerAdView: UIViewRepresentable {
     var adUnitID: String
     
-    func makeUIView(context: Context) -> GADBannerView {
+    func makeUIView(context: Context) -> BannerView {
         // Create a banner view
-        let banner = GADBannerView(adSize: GADAdSizeBanner)
+        let banner = BannerView()
+        
+        // Set standard banner size (320x50)
+        banner.adSize = adSizeFor(cgSize: CGSize(width: 320, height: 50))
         
         // Set the ad unit ID
         banner.adUnitID = adUnitID
         
         // Set the root view controller for presenting the ad
-        banner.rootViewController = UIApplication.shared.windows.first?.rootViewController
+        banner.rootViewController = getWindowRootViewController()
         
         // Load the ad
-        banner.load(GADRequest())
+        banner.load(Request())
         
         return banner
     }
     
-    func updateUIView(_ uiView: GADBannerView, context: Context) {
+    func updateUIView(_ uiView: BannerView, context: Context) {
         // Nothing to update
+    }
+    
+    // Helper function to get the root view controller
+    private func getWindowRootViewController() -> UIViewController? {
+        // Modern approach to get root view controller
+        return UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows
+            .filter { $0.isKeyWindow }
+            .first?.rootViewController
     }
 }
 

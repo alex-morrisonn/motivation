@@ -42,12 +42,11 @@ struct MotiApp: App {
         UITableView.appearance().backgroundColor = .clear
     }
     
-    // Configure ads based on environment
     private func configureAds() {
         // Add test device IDs for simulator during development
         #if DEBUG
         let deviceIDs = ["GAD_SIMULATOR_ID"] // Add your real test device IDs here if testing on physical devices
-        GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = deviceIDs
+        MobileAds.shared.requestConfiguration.testDeviceIdentifiers = deviceIDs
         print("AdMob configured for DEBUG with test devices")
         #else
         // Production configuration
@@ -55,7 +54,11 @@ struct MotiApp: App {
         #endif
         
         // Set ad content rating
-        GADMobileAds.sharedInstance().requestConfiguration.maxAdContentRating = .general
+        MobileAds.shared.requestConfiguration.maxAdContentRating = GADMaxAdContentRating.general
+        
+        // Initialize the Mobile Ads SDK - the newest version doesn't take arguments
+        MobileAds.initialize()
+        print("Mobile Ads SDK initialization complete")
     }
     
     // Handle deep links
