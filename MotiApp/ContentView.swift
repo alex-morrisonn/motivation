@@ -756,6 +756,7 @@ struct HomeQuoteView: View {
 }
 
 // Main ContentView
+
 struct ContentView: View {
     @State private var selectedTab = 0
     @EnvironmentObject var notificationManager: NotificationManager
@@ -766,9 +767,26 @@ struct ContentView: View {
     @State private var showingPremiumOffer = false
     
     init() {
-        // Set up the dark mode appearance
-        UITabBar.appearance().backgroundColor = UIColor.black
-    }
+            // Ensure proper dark mode appearance for tab bar
+            let appearance = UITabBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = UIColor.black
+            
+            // Set the tab bar appearance for all states
+            UITabBar.appearance().standardAppearance = appearance
+            
+            // For iOS 15+ we need to set scrollEdgeAppearance as well
+            if #available(iOS 15.0, *) {
+                UITabBar.appearance().scrollEdgeAppearance = appearance
+            }
+            
+            // Increase contrast for unselected tab items for better visibility
+            appearance.stackedLayoutAppearance.normal.iconColor = UIColor.lightGray
+            appearance.stackedLayoutAppearance.normal.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.lightGray]
+            
+            print("Tab bar appearance configured with black background")
+        }
+        
     
     var body: some View {
         ZStack {
@@ -819,37 +837,15 @@ struct ContentView: View {
             }
             .accentColor(.white) // Active tab color
             
-            // Use enhanced banner ad instead of the basic one
-            .withEnhancedBannerAd(screenName: currentScreenName)
-            
-            .onAppear {
-                // Increase contrast for unselected tab items
-                let tabBarAppearance = UITabBarAppearance()
-                tabBarAppearance.configureWithOpaqueBackground()
-                tabBarAppearance.backgroundColor = UIColor.black
-                
-                // Make unselected items more visible
-                tabBarAppearance.stackedLayoutAppearance.normal.iconColor = UIColor.lightGray
-                tabBarAppearance.stackedLayoutAppearance.normal.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.lightGray]
-                
-                // Apply the appearance
-                UITabBar.appearance().standardAppearance = tabBarAppearance
-                UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
-                
-                // For streak tracking, store previous streak to detect changes
-                previousStreak = streakManager.currentStreak
-                
-                // Occasionally suggest premium (25% chance after 3+ app launches)
-                let launchCount = UserDefaults.standard.integer(forKey: "appLaunchCount")
-                if !adManager.isPremiumUser && launchCount > 3 && Double.random(in: 0...1) < 0.25 {
-                    // Delay premium offer to not interrupt initial app opening experience
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                        showingPremiumOffer = true
-                    }
+            // Banner ad at the top - non-intrusive
+            if !adManager.isPremiumUser {
+                VStack {
+                    // Banner ad on top
+                    EnhancedBannerAdView(screenName: currentScreenName)
+                        .padding(.top, getSafeAreaTopInset()) // Add padding for status bar
+                    
+                    Spacer()
                 }
-                
-                // Increment launch count
-                UserDefaults.standard.set(launchCount + 1, forKey: "appLaunchCount")
             }
             
             // Add a subtle thin line at the top of the tab bar for better visual separation
@@ -858,9 +854,10 @@ struct ContentView: View {
                 Rectangle()
                     .frame(height: 0.5)
                     .foregroundColor(Color.white.opacity(0.3))
-                    .padding(.bottom, adManager.isPremiumUser ? 49 : 99) // Adjust based on whether banner ads are shown
+                    .padding(.bottom, 49) // Tab bar height
             }
         }
+        .edgesIgnoringSafeArea(.top) // Allow the banner ad to extend to the top edge
         .sheet(isPresented: $showingPremiumOffer) {
             PremiumView()
         }
@@ -914,6 +911,16 @@ struct ContentView: View {
         case 4: return "MoreView"
         default: return "Default"
         }
+    }
+    
+    // Helper to get the safe area top inset
+    private func getSafeAreaTopInset() -> CGFloat {
+        // Get the top safe area inset
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            return window.safeAreaInsets.top
+        }
+        return 0
     }
 }
 
