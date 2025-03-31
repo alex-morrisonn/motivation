@@ -277,259 +277,214 @@ class QuoteService: ObservableObject {
     }
 }
 
-// ShareSheet for sharing functionality
-struct ShareSheet: UIViewControllerRepresentable {
-    let activityItems: [Any]
-    
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
-        return controller
-    }
-    
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
-        // Nothing to update
-    }
-}
-
-// Quote Card View (reusable component)
-struct QuoteCardView: View {
-    let quote: Quote
-    let isFavorite: Bool
-    var onFavoriteToggle: () -> Void
-    var onShare: () -> Void
-    var onRefresh: (() -> Void)?
+struct CategoriesView: View {
+    @ObservedObject private var quoteService = QuoteService.shared
+    @State private var selectedCategory: String? = nil
+    @State private var showingShareSheet = false
+    @State private var quoteToShare: Quote?
     
     var body: some View {
-        VStack {
-            Text(quote.text)
-                .font(.system(size: 24, weight: .medium))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 20)
+        ZStack {
+            Color.black.edgesIgnoringSafeArea(.all)
             
-            Text("— \(quote.author)")
-                .font(.system(size: 16, weight: .regular))
-                .foregroundColor(.gray)
-                .padding(.top, 16)
-                .padding(.bottom, 30)
-            
-            // Action Buttons - All on one line with equal spacing
-            HStack {
-                Spacer()
-                
-                // Favorite Button
-                Button(action: {
-                    onFavoriteToggle()
-                }) {
-                    Image(systemName: isFavorite ? "heart.fill" : "heart")
-                        .font(.system(size: 22))
-                        .foregroundColor(isFavorite ? .red : .white)
-                }
-                
-                Spacer()
-                
-                // Refresh Button (only if provided)
-                if let refreshAction = onRefresh {
-                    Button(action: {
-                        refreshAction()
-                    }) {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 22))
-                            .foregroundColor(.white)
-                    }
-                    
-                    Spacer()
-                }
-                
-                // Share Button
-                Button(action: {
-                    onShare()
-                }) {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 22))
+            if let category = selectedCategory {
+                // Show quotes for the selected category
+                VStack {
+                    // Category title
+                    Text(category)
+                        .font(.title)
+                        .fontWeight(.bold)
                         .foregroundColor(.white)
-                }
-                
-                Spacer()
-            }
-        }
-        .padding(.horizontal)
-    }
-}
-
-// Inside the CategoriesView struct, update the body property to integrate native ads
-
-var body: some View {
-    ZStack {
-        Color.black.edgesIgnoringSafeArea(.all)
-        
-        if let category = selectedCategory {
-            // Show quotes for the selected category
-            VStack {
-                // Category title
-                Text(category)
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .padding(.top, 20)
-                    .padding(.bottom, 20)
-                
-                // Quotes list
-                ScrollView {
-                    LazyVStack(spacing: 30) {
-                        let categoryQuotes = quoteService.getQuotes(forCategory: category)
-                        
-                        // Loop through quotes and insert native ads
-                        ForEach(Array(categoryQuotes.enumerated()), id: \.element.id) { index, quote in
-                            VStack(alignment: .leading, spacing: 15) {
-                                Text(quote.text)
-                                    .font(.system(size: 20, weight: .medium))
-                                    .foregroundColor(.white)
-                                    .multilineTextAlignment(.leading)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                
-                                Text("— \(quote.author)")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.gray)
-                                
-                                HStack {
-                                    Spacer()
+                        .padding(.top, 20)
+                        .padding(.bottom, 20)
+                    
+                    // Quotes list
+                    ScrollView {
+                        LazyVStack(spacing: 30) {
+                            let categoryQuotes = quoteService.getQuotes(forCategory: category)
+                            
+                            // Loop through quotes and insert native ads
+                            ForEach(Array(categoryQuotes.enumerated()), id: \.element.id) { index, quote in
+                                VStack(alignment: .leading, spacing: 15) {
+                                    Text(quote.text)
+                                        .font(.system(size: 20, weight: .medium))
+                                        .foregroundColor(.white)
+                                        .multilineTextAlignment(.leading)
+                                        .fixedSize(horizontal: false, vertical: true)
                                     
-                                    Button(action: {
-                                        if quoteService.isFavorite(quote) {
-                                            quoteService.removeFromFavorites(quote)
-                                        } else {
-                                            quoteService.addToFavorites(quote)
+                                    Text("— \(quote.author)")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(.gray)
+                                    
+                                    HStack {
+                                        Spacer()
+                                        
+                                        Button(action: {
+                                            if quoteService.isFavorite(quote) {
+                                                quoteService.removeFromFavorites(quote)
+                                            } else {
+                                                quoteService.addToFavorites(quote)
+                                            }
+                                        }) {
+                                            Image(systemName: quoteService.isFavorite(quote) ? "heart.fill" : "heart")
+                                                .font(.system(size: 22))
+                                                .foregroundColor(quoteService.isFavorite(quote) ? .red : .white)
                                         }
-                                    }) {
-                                        Image(systemName: quoteService.isFavorite(quote) ? "heart.fill" : "heart")
-                                            .font(.system(size: 22))
-                                            .foregroundColor(quoteService.isFavorite(quote) ? .red : .white)
+                                        
+                                        Spacer()
+                                        
+                                        Button(action: {
+                                            quoteToShare = quote
+                                            showingShareSheet = true
+                                        }) {
+                                            Image(systemName: "square.and.arrow.up")
+                                                .font(.system(size: 22))
+                                                .foregroundColor(.white)
+                                        }
+                                        
+                                        Spacer()
                                     }
-                                    
-                                    Spacer()
-                                    
-                                    Button(action: {
-                                        quoteToShare = quote
-                                        showingShareSheet = true
-                                    }) {
-                                        Image(systemName: "square.and.arrow.up")
-                                            .font(.system(size: 22))
-                                            .foregroundColor(.white)
-                                    }
-                                    
-                                    Spacer()
+                                }
+                                .padding()
+                                .background(Color.black.opacity(0.3))
+                                .cornerRadius(15)
+                                .padding(.horizontal)
+                                
+                                // Insert native ad after every 5 quotes if not premium
+                                if (index + 1) % 5 == 0 && index < categoryQuotes.count - 1 && !AdManager.shared.isPremiumUser {
+                                    NativeAdView()
                                 }
                             }
-                            .padding()
-                            .background(Color.black.opacity(0.3))
-                            .cornerRadius(15)
-                            .padding(.horizontal)
-                            
-                            // Insert native ad after every 5 quotes if not premium
-                            if (index + 1) % 5 == 0 && index < categoryQuotes.count - 1 && !AdManager.shared.isPremiumUser {
-                                NativeAdView()
-                            }
                         }
+                        .padding(.vertical)
+                        // Add extra padding at the bottom for the banner ad
+                        .padding(.bottom, AdManager.shared.isPremiumUser ? 30 : 110)
                     }
-                    .padding(.vertical)
-                    // Add extra padding at the bottom for the banner ad
-                    .padding(.bottom, AdManager.shared.isPremiumUser ? 30 : 110)
                 }
-                
-                Spacer()
-            }
-            .overlay(
-                VStack {
-                    HStack {
-                        Button(action: {
-                            selectedCategory = nil
-                            
-                            // Check if we should show an interstitial ad when exiting category
-                            InterstitialAdCoordinator.shared.checkForExitInterstitial(from: "CategoriesView")
-                        }) {
-                            Image(systemName: "chevron.left")
-                                .foregroundColor(.white)
-                                .font(.system(size: 16, weight: .bold))
-                                .padding()
+                .overlay(
+                    VStack {
+                        HStack {
+                            Button(action: {
+                                selectedCategory = nil
+                                
+                                // Check if we should show an interstitial ad when exiting category
+                                InterstitialAdCoordinator.shared.checkForExitInterstitial(from: "CategoriesView")
+                            }) {
+                                Image(systemName: "chevron.left")
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 16, weight: .bold))
+                                    .padding()
+                            }
+                            Spacer()
                         }
                         Spacer()
                     }
-                    Spacer()
-                }
-            )
-        } else {
-            // Show categories list with improved UI
-            VStack {
-                Text("Categories")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .padding(.top, 20)
-                    .padding(.bottom, 10)
-                
-                Text("Select a category to explore quotes")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                    .padding(.bottom, 20)
-                
-                ScrollView {
-                    LazyVGrid(columns: [GridItem(.flexible())], spacing: 16) {
-                        ForEach(Array(quoteService.getAllCategories().enumerated()), id: \.element) { index, category in
-                            Button(action: {
-                                selectedCategory = category
-                            }) {
-                                HStack {
-                                    // Category icon
-                                    Image(systemName: iconForCategory(category))
-                                        .font(.system(size: 24))
-                                        .foregroundColor(.white)
-                                        .frame(width: 40, height: 40)
-                                        .background(colorForCategory(category))
-                                        .clipShape(Circle())
-                                    
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(category)
-                                            .font(.headline)
+                )
+            } else {
+                // Show categories list with improved UI
+                VStack {
+                    Text("Categories")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.top, 20)
+                        .padding(.bottom, 10)
+                    
+                    Text("Select a category to explore quotes")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .padding(.bottom, 20)
+                    
+                    ScrollView {
+                        LazyVGrid(columns: [GridItem(.flexible())], spacing: 16) {
+                            ForEach(Array(quoteService.getAllCategories().enumerated()), id: \.element) { index, category in
+                                Button(action: {
+                                    selectedCategory = category
+                                }) {
+                                    HStack {
+                                        // Category icon
+                                        Image(systemName: iconForCategory(category))
+                                            .font(.system(size: 24))
                                             .foregroundColor(.white)
+                                            .frame(width: 40, height: 40)
+                                            .background(colorForCategory(category))
+                                            .clipShape(Circle())
                                         
-                                        Text("\(quoteService.getQuotes(forCategory: category).count) quotes")
-                                            .font(.caption)
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(category)
+                                                .font(.headline)
+                                                .foregroundColor(.white)
+                                            
+                                            Text("\(quoteService.getQuotes(forCategory: category).count) quotes")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        Image(systemName: "chevron.right")
                                             .foregroundColor(.gray)
                                     }
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(.gray)
+                                    .padding()
+                                    .background(Color(UIColor.systemGray6).opacity(0.2))
+                                    .cornerRadius(15)
+                                    .padding(.horizontal)
                                 }
-                                .padding()
-                                .background(Color(UIColor.systemGray6).opacity(0.2))
-                                .cornerRadius(15)
-                                .padding(.horizontal)
-                            }
-                            
-                            // Insert native ad after every 4 categories if not premium
-                            if (index + 1) % 4 == 0 && index < quoteService.getAllCategories().count - 1 && !AdManager.shared.isPremiumUser {
-                                NativeAdView()
+                                
+                                // Insert native ad after every 4 categories if not premium
+                                if (index + 1) % 4 == 0 && index < quoteService.getAllCategories().count - 1 && !AdManager.shared.isPremiumUser {
+                                    NativeAdView()
+                                }
                             }
                         }
+                        .padding(.vertical)
+                        // Add extra padding at the bottom for the banner ad
+                        .padding(.bottom, AdManager.shared.isPremiumUser ? 30 : 110)
                     }
-                    .padding(.vertical)
-                    // Add extra padding at the bottom for the banner ad
-                    .padding(.bottom, AdManager.shared.isPremiumUser ? 30 : 110)
                 }
             }
         }
-    }
-    .sheet(isPresented: $showingShareSheet) {
-        if let quote = quoteToShare {
-            ShareSheet(activityItems: ["\(quote.text) — \(quote.author)"])
+        .sheet(isPresented: $showingShareSheet) {
+            if let quote = quoteToShare {
+                ShareSheet(activityItems: ["\(quote.text) — \(quote.author)"])
+            }
+        }
+        .onAppear {
+            // Track screen view for ad rotation
+            InterstitialAdCoordinator.shared.trackNavigation()
         }
     }
-    .onAppear {
-        // Track screen view for ad rotation
-        InterstitialAdCoordinator.shared.trackNavigation()
+    
+    // Icons for categories
+    private func iconForCategory(_ category: String) -> String {
+        switch category {
+        case "Success & Achievement": return "trophy"
+        case "Life & Perspective": return "scope"
+        case "Dreams & Goals": return "sparkles"
+        case "Courage & Confidence": return "bolt.heart"
+        case "Perseverance & Resilience": return "figure.walk"
+        case "Growth & Change": return "leaf"
+        case "Action & Determination": return "flag"
+        case "Mindset & Attitude": return "brain"
+        case "Focus & Discipline": return "target"
+        default: return "quote.bubble"
+        }
+    }
+    
+    // Color for category icons
+    private func colorForCategory(_ category: String) -> Color {
+        switch category {
+        case "Success & Achievement": return Color.blue
+        case "Life & Perspective": return Color.purple
+        case "Dreams & Goals": return Color.green
+        case "Courage & Confidence": return Color.orange
+        case "Perseverance & Resilience": return Color.red
+        case "Growth & Change": return Color.teal
+        case "Action & Determination": return Color.indigo
+        case "Mindset & Attitude": return Color.pink
+        case "Focus & Discipline": return Color.yellow
+        default: return Color.gray
+        }
     }
 }
 

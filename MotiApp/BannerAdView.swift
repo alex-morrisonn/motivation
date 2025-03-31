@@ -102,31 +102,35 @@ struct EnhancedBannerAdView: View {
     }
 }
 
-// Update this section of your BannerAdContent implementation:
-
-func makeUIView(context: Context) -> BannerView {
-    let bannerView = BannerView()
-    bannerView.adUnitID = adUnitID
+// UIViewRepresentable for BannerView from GoogleMobileAds
+struct BannerAdContent: UIViewRepresentable {
+    let adUnitID: String
+    @Binding var adLoaded: Bool
+    @Binding var adHeight: CGFloat
     
-    if #available(iOS 16.0, *) {
-        // Use adaptive banner for better UI integration
-        bannerView.adSize = AdSize.currentOrientationAnchoredAdaptiveBanner(
-            withWidth: UIScreen.main.bounds.width
-        )
-    } else {
-        // Fallback for older iOS versions
-        bannerView.adSize = AdSize(
-            size: CGSize(width: UIScreen.main.bounds.width, height: 50),
+    func makeUIView(context: Context) -> BannerView {
+        let bannerView = BannerView()
+        bannerView.adUnitID = adUnitID
+        
+        // Use a standard banner size approach that works across iOS versions
+        // For iOS 18, we use the adaptive sizing without the deprecated method
+        let viewWidth = UIScreen.main.bounds.width
+        
+        // Create an adaptive banner size based on the current width
+        bannerView.adSize = AdSize.init(
+            size: CGSize(width: viewWidth, height: 50),
             flags: 0
         )
+        
+        // You can also use standard sizes if needed:
+        // bannerView.adSize = AdSize.banner // Standard 320x50
+        
+        bannerView.rootViewController = getWindowRootViewController()
+        bannerView.delegate = context.coordinator
+        bannerView.load(Request())
+        
+        return bannerView
     }
-    
-    bannerView.rootViewController = getWindowRootViewController()
-    bannerView.delegate = context.coordinator
-    bannerView.load(Request())
-    
-    return bannerView
-}
     
     func updateUIView(_ bannerView: BannerView, context: Context) {
         // Nothing to update
