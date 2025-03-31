@@ -102,30 +102,31 @@ struct EnhancedBannerAdView: View {
     }
 }
 
-// The actual banner ad UIKit wrapper
-struct BannerAdContent: UIViewRepresentable {
-    var adUnitID: String
-    @Binding var adLoaded: Bool
-    @Binding var adHeight: CGFloat
+// Update this section of your BannerAdContent implementation:
+
+func makeUIView(context: Context) -> BannerView {
+    let bannerView = BannerView()
+    bannerView.adUnitID = adUnitID
     
-    func makeUIView(context: Context) -> BannerView {
-        let bannerView = BannerView()
-        bannerView.adUnitID = adUnitID
-        
-        if #available(iOS 16.0, *) {
-            // Use adaptive banner for better UI integration
-            bannerView.adSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(UIScreen.main.bounds.width)
-        } else {
-            // Fallback for older iOS versions
-            bannerView.adSize = GADAdSizeFromCGSize(CGSize(width: UIScreen.main.bounds.width, height: 50))
-        }
-        
-        bannerView.rootViewController = getWindowRootViewController()
-        bannerView.delegate = context.coordinator
-        bannerView.load(GADRequest())
-        
-        return bannerView
+    if #available(iOS 16.0, *) {
+        // Use adaptive banner for better UI integration
+        bannerView.adSize = AdSize.currentOrientationAnchoredAdaptiveBanner(
+            withWidth: UIScreen.main.bounds.width
+        )
+    } else {
+        // Fallback for older iOS versions
+        bannerView.adSize = AdSize(
+            size: CGSize(width: UIScreen.main.bounds.width, height: 50),
+            flags: 0
+        )
     }
+    
+    bannerView.rootViewController = getWindowRootViewController()
+    bannerView.delegate = context.coordinator
+    bannerView.load(Request())
+    
+    return bannerView
+}
     
     func updateUIView(_ bannerView: BannerView, context: Context) {
         // Nothing to update
@@ -135,14 +136,14 @@ struct BannerAdContent: UIViewRepresentable {
         Coordinator(self)
     }
     
-    class Coordinator: NSObject, GADBannerViewDelegate {
+    class Coordinator: NSObject, BannerViewDelegate {
         var parent: BannerAdContent
         
         init(_ parent: BannerAdContent) {
             self.parent = parent
         }
         
-        func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
+        func bannerViewDidReceiveAd(_ bannerView: BannerView) {
             print("Banner ad loaded successfully")
             // Update the height based on the loaded ad
             parent.adHeight = bannerView.frame.height
@@ -152,7 +153,7 @@ struct BannerAdContent: UIViewRepresentable {
             }
         }
         
-        func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
+        func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
             print("Banner ad failed to load: \(error.localizedDescription)")
             parent.adLoaded = false
         }

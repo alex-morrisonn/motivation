@@ -81,7 +81,7 @@ class AdManager: NSObject, ObservableObject {
         if isPremiumUser { return }
         
         let request = Request()
-        InterstitialAd.load(withAdUnitID: interstitialAdUnitID, request: request) { [weak self] ad, error in
+        InterstitialAd.load(with: interstitialAdUnitID, request: request) { [weak self] ad, error in
             guard let self = self else { return }
             
             if let error = error {
@@ -120,7 +120,7 @@ class AdManager: NSObject, ObservableObject {
         }
         
         // Present the ad
-        interstitialAd.present(fromRootViewController: viewController)
+        interstitialAd.present(from: viewController)
         lastInterstitialTime = Date()
         sessionImpressions += 1
         return true
@@ -131,7 +131,7 @@ class AdManager: NSObject, ObservableObject {
     /// Loads a rewarded ad
     func loadRewardedAd() {
         let request = Request()
-        RewardedAd.load(withAdUnitID: rewardedAdUnitID, request: request) { [weak self] ad, error in
+        RewardedAd.load(with: rewardedAdUnitID, request: request) { [weak self] ad, error in
             guard let self = self else { return }
             
             if let error = error {
@@ -156,10 +156,11 @@ class AdManager: NSObject, ObservableObject {
             return
         }
         
-        rewardedAd.present(from: viewController, userDidEarnRewardHandler: { [weak self] reward in
+        rewardedAd.present(from: viewController) { [weak self] in
             guard let self = self else { return }
             
             // Get reward details
+            let reward = rewardedAd.adReward
             print("User earned reward: \(reward.amount) \(reward.type)")
             
             // Pre-load the next ad
@@ -167,7 +168,7 @@ class AdManager: NSObject, ObservableObject {
             
             // Call completion with success and reward amount
             completion(true, reward.amount.intValue)
-        })
+        }
     }
     
     // MARK: - Helper Methods
