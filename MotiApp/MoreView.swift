@@ -7,6 +7,7 @@ struct MoreView: View {
     @ObservedObject var eventService = EventService.shared
     @ObservedObject var notificationManager = NotificationManager.shared
     @ObservedObject var streakManager = StreakManager.shared
+    @ObservedObject var adManager = AdManager.shared
     
     @State private var showingAbout = false
     @State private var showingFeedback = false
@@ -18,6 +19,8 @@ struct MoreView: View {
     @State private var showingStreakDetails = false
     @State private var showingPrivacyPolicy = false
     @State private var showingTerms = false
+    @State private var showingPremiumView = false
+    @State private var showingRewardedAdView = false
     
     @State private var selectedCategories: Set<String> = []
     
@@ -28,6 +31,12 @@ struct MoreView: View {
             
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 30) {
+                    // Premium banner for non-premium users
+                    if !adManager.isPremiumUser {
+                        PremiumBanner(action: { showingPremiumView = true })
+                            .padding(.top, 10)
+                    }
+                    
                     // Stats cards with colors
                     HStack(spacing: 15) {
                         StatCard(
@@ -62,7 +71,7 @@ struct MoreView: View {
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
-                    .padding(.top, 16)
+                    .padding(.top, adManager.isPremiumUser ? 16 : 0)
                     
                     // Settings section - Integrated directly
                     VStack(spacing: 0) {
@@ -162,13 +171,23 @@ struct MoreView: View {
                                     
                                     Spacer()
                                     
-                                    Text("Coming Soon")
-                                        .font(.caption)
-                                        .foregroundColor(.yellow.opacity(0.8))
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 4)
-                                        .background(Color.yellow.opacity(0.2))
-                                        .cornerRadius(10)
+                                    if !adManager.isPremiumUser {
+                                        Text("Premium")
+                                            .font(.caption)
+                                            .foregroundColor(.yellow.opacity(0.8))
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 4)
+                                            .background(Color.yellow.opacity(0.2))
+                                            .cornerRadius(10)
+                                    } else {
+                                        Text("Coming Soon")
+                                            .font(.caption)
+                                            .foregroundColor(.blue.opacity(0.8))
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 4)
+                                            .background(Color.blue.opacity(0.2))
+                                            .cornerRadius(10)
+                                    }
                                     
                                     Image(systemName: "chevron.right")
                                         .font(.system(size: 14, weight: .medium))
@@ -189,6 +208,27 @@ struct MoreView: View {
                         
                         // Section background
                         VStack(spacing: 0) {
+                            // Add Premium option at the top when not premium
+                            if !adManager.isPremiumUser {
+                                OptionRow(
+                                    icon: "crown.fill",
+                                    title: "Upgrade to Premium",
+                                    action: { showingPremiumView.toggle() }
+                                )
+                                
+                                Divider()
+                                    .background(Color.white.opacity(0.1))
+                                    
+                                OptionRow(
+                                    icon: "gift.fill",
+                                    title: "Free Premium Trial",
+                                    action: { showingRewardedAdView.toggle() }
+                                )
+                                
+                                Divider()
+                                    .background(Color.white.opacity(0.1))
+                            }
+                            
                             OptionRow(
                                 icon: "info.circle",
                                 title: "About",
@@ -202,7 +242,7 @@ struct MoreView: View {
                                 icon: "lock.shield",
                                 title: "Privacy Policy",
                                 action: { showingPrivacyPolicy.toggle() }
-                                    )
+                            )
                                     
                             Divider()
                                 .background(Color.white.opacity(0.1))
@@ -337,6 +377,12 @@ struct MoreView: View {
         .sheet(isPresented: $showingTerms) {
             TermsOfServiceView()
         }
+        .sheet(isPresented: $showingPremiumView) {
+            PremiumView()
+        }
+        .sheet(isPresented: $showingRewardedAdView) {
+            RewardedAdView()
+        }
         .alert("Notification Permission", isPresented: $showingPermissionAlert) {
             Button("Cancel", role: .cancel) {
                 // User canceled, make sure toggle reflects permission state
@@ -368,7 +414,9 @@ struct MoreView: View {
         .alert("Themes Feature", isPresented: $showingThemesWIPAlert) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text("The themes feature is currently under development. Check back soon for updates!")
+            Text(adManager.isPremiumUser
+                 ? "The themes feature is currently under development. Check back soon for updates!"
+                 : "Themes are a premium feature. Upgrade to unlock when they become available.")
         }
         .onAppear {
             // Make sure notification state is updated when view appears
@@ -437,6 +485,68 @@ struct MoreView: View {
             
         } catch {
             print("Error clearing cache: \(error)")
+        }
+    }
+}
+
+// Premium banner at the top of the More view
+struct PremiumBanner: View {
+    var action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 15) {
+                // Crown icon
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [.yellow, .orange]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 50, height: 50)
+                    
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(.white)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Upgrade to Premium")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Text("Remove ads and unlock all features")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                }
+                
+                Spacer()
+                
+                // Arrow icon
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.yellow)
+                    .font(.system(size: 14))
+                    .padding(8)
+                    .background(Circle().fill(Color.yellow.opacity(0.2)))
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color(.sRGB, red: 0.1, green: 0.1, blue: 0.2, opacity: 0.8), Color(.sRGB, red: 0.1, green: 0.1, blue: 0.3, opacity: 0.8)]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .strokeBorder(Color.yellow.opacity(0.3), lineWidth: 1)
+                    )
+            )
         }
     }
 }
