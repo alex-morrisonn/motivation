@@ -7,10 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1E0498D52D9BC87400EE04EC /* privacy-policy.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E0498D42D9BC86B00EE04EC /* privacy-policy.md */; };
-		1E0498D62D9BC87400EE04EC /* privacy-policy.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E0498D42D9BC86B00EE04EC /* privacy-policy.md */; };
-		1E0498D72D9BC87400EE04EC /* privacy-policy.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E0498D42D9BC86B00EE04EC /* privacy-policy.md */; };
-		1E0498D82D9BC87400EE04EC /* privacy-policy.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E0498D42D9BC86B00EE04EC /* privacy-policy.md */; };
+		1E0498D52D9BC87400EE04EC /* index.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E0498D42D9BC86B00EE04EC /* index.md */; };
+		1E0498D62D9BC87400EE04EC /* index.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E0498D42D9BC86B00EE04EC /* index.md */; };
+		1E0498D72D9BC87400EE04EC /* index.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E0498D42D9BC86B00EE04EC /* index.md */; };
+		1E0498D82D9BC87400EE04EC /* index.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E0498D42D9BC86B00EE04EC /* index.md */; };
 		1E0921CA2D97ADC800852F14 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0921C92D97ADC800852F14 /* GoogleMobileAds */; };
 		1E21CDEF2D93715B000F7451 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */; };
 		1E21CDF02D93715B000F7451 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */; };
@@ -69,7 +69,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		1E0498D42D9BC86B00EE04EC /* privacy-policy.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "privacy-policy.md"; sourceTree = "<group>"; };
+		1E0498D42D9BC86B00EE04EC /* index.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = index.md; sourceTree = "<group>"; };
 		1E21CDEE2D93715B000F7451 /* MotiWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MotiWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E21CE062D937197000F7451 /* MotiWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MotiWidgetExtension.entitlements; sourceTree = "<group>"; };
 		1E4183402D8EC71100AAEC12 /* Moti.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Moti.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -163,7 +163,7 @@
 		1E4183372D8EC71100AAEC12 = {
 			isa = PBXGroup;
 			children = (
-				1E0498D42D9BC86B00EE04EC /* privacy-policy.md */,
+				1E0498D42D9BC86B00EE04EC /* index.md */,
 				1E6A60302D95103200AD9399 /* Info.plist */,
 				1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */,
 				1E21CE062D937197000F7451 /* MotiWidgetExtension.entitlements */,
@@ -357,7 +357,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1E6A60202D94CC2800AD9399 /* GoogleService-Info.plist in Resources */,
-				1E0498D82D9BC87400EE04EC /* privacy-policy.md in Resources */,
+				1E0498D82D9BC87400EE04EC /* index.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -366,7 +366,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1E6A60222D94CC2800AD9399 /* GoogleService-Info.plist in Resources */,
-				1E0498D72D9BC87400EE04EC /* privacy-policy.md in Resources */,
+				1E0498D72D9BC87400EE04EC /* index.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -375,7 +375,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1E6A60232D94CC2800AD9399 /* GoogleService-Info.plist in Resources */,
-				1E0498D52D9BC87400EE04EC /* privacy-policy.md in Resources */,
+				1E0498D52D9BC87400EE04EC /* index.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -384,7 +384,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1E6A60212D94CC2800AD9399 /* GoogleService-Info.plist in Resources */,
-				1E0498D62D9BC87400EE04EC /* privacy-policy.md in Resources */,
+				1E0498D62D9BC87400EE04EC /* index.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
