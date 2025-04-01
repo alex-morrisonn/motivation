@@ -21,6 +21,7 @@ struct MoreView: View {
     @State private var showingTerms = false
     @State private var showingPremiumView = false
     @State private var showingRewardedAdView = false
+    @State private var showingComingSoonAlert = false
     
     @State private var selectedCategories: Set<String> = []
     
@@ -30,25 +31,25 @@ struct MoreView: View {
             Color.black.edgesIgnoringSafeArea(.all)
             
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 30) {
+                VStack(spacing: 25) {
                     // Premium banner for non-premium users
-                    if !adManager.isPremiumUser {
-                        PremiumBanner(action: { showingPremiumView = true })
-                            .padding(.top, 10)
-                    }
+                    ComingSoonBanner(action: { showingPremiumView = true })
+                        .padding(.top, 10)
                     
                     // Stats cards with colors
                     HStack(spacing: 15) {
                         StatCard(
                             number: "\(quoteService.favorites.count)",
                             label: "Favorites",
-                            icon: "heart"
+                            icon: "heart",
+                            iconColor: .red
                         )
                         
                         StatCard(
                             number: "\(eventService.events.count)",
                             label: "Events",
-                            icon: "calendar"
+                            icon: "calendar",
+                            iconColor: .blue
                         )
                         
                         // Updated to use real streak data with tap action
@@ -58,7 +59,8 @@ struct MoreView: View {
                             StatCard(
                                 number: "\(streakManager.currentStreak)",
                                 label: "Day Streak",
-                                icon: "flame"
+                                icon: "flame",
+                                iconColor: .orange
                             )
                             .overlay(
                                 // Subtle indicator that this is tappable
@@ -71,9 +73,9 @@ struct MoreView: View {
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
-                    .padding(.top, adManager.isPremiumUser ? 16 : 0)
+                    .padding(.top, 16)
                     
-                    // Settings section - Integrated directly
+                    // Settings section
                     VStack(spacing: 0) {
                         SectionHeader(title: "SETTINGS")
                         
@@ -92,7 +94,7 @@ struct MoreView: View {
                                 
                                 Spacer()
                                 
-                                // Custom dimmer toggle connected to notification manager
+                                // Custom toggle connected to notification manager
                                 ZStack {
                                     Capsule()
                                         .fill(notificationManager.isNotificationsEnabled ? Color.gray.opacity(0.3) : Color.gray.opacity(0.2))
@@ -165,29 +167,19 @@ struct MoreView: View {
                                         .foregroundColor(.white)
                                         .frame(width: 20)
                                     
-                                    Text("Change App Theme")
+                                    Text("App Themes")
                                         .font(.system(size: 16, weight: .medium))
                                         .foregroundColor(.white)
                                     
                                     Spacer()
                                     
-                                    if !adManager.isPremiumUser {
-                                        Text("Premium")
-                                            .font(.caption)
-                                            .foregroundColor(.yellow.opacity(0.8))
-                                            .padding(.horizontal, 10)
-                                            .padding(.vertical, 4)
-                                            .background(Color.yellow.opacity(0.2))
-                                            .cornerRadius(10)
-                                    } else {
-                                        Text("Coming Soon")
-                                            .font(.caption)
-                                            .foregroundColor(.blue.opacity(0.8))
-                                            .padding(.horizontal, 10)
-                                            .padding(.vertical, 4)
-                                            .background(Color.blue.opacity(0.2))
-                                            .cornerRadius(10)
-                                    }
+                                    Text("Coming Soon")
+                                        .font(.caption)
+                                        .foregroundColor(.blue.opacity(0.8))
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 4)
+                                        .background(Color.blue.opacity(0.2))
+                                        .cornerRadius(10)
                                     
                                     Image(systemName: "chevron.right")
                                         .font(.system(size: 14, weight: .medium))
@@ -200,7 +192,76 @@ struct MoreView: View {
                         .background(Color.white.opacity(0.05))
                         .cornerRadius(12)
                     }
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 10)
+                    
+                    // Premium Info section
+                    VStack(spacing: 0) {
+                        SectionHeader(title: "PREMIUM")
+                        
+                        // Section background
+                        VStack(spacing: 0) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Image(systemName: "star.fill")
+                                        .font(.system(size: 18))
+                                        .foregroundColor(.yellow)
+                                        .frame(width: 20)
+                                    
+                                    Text("Premium Features")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(.white)
+                                    
+                                    Spacer()
+                                    
+                                    Text("In Development")
+                                        .font(.caption)
+                                        .foregroundColor(.orange)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 4)
+                                        .background(Color.orange.opacity(0.2))
+                                        .cornerRadius(10)
+                                }
+                                
+                                Text("We're working on premium features like ad removal, custom themes, and enhanced widgets. Stay tuned!")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.gray)
+                                    .padding(.leading, 36)
+                                    .padding(.trailing, 16)
+                                    .padding(.bottom, 8)
+                            }
+                            .padding(.vertical, 16)
+                            .padding(.horizontal, 16)
+                            
+                            Divider()
+                                .background(Color.white.opacity(0.1))
+                            
+                            Button(action: {
+                                showingPremiumView = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "crown.fill")
+                                        .font(.system(size: 18))
+                                        .foregroundColor(.yellow)
+                                        .frame(width: 20)
+                                    
+                                    Text("Learn More")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(.white)
+                                    
+                                    Spacer()
+                                    
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.3))
+                                }
+                                .padding(.vertical, 16)
+                                .padding(.horizontal, 16)
+                            }
+                        }
+                        .background(Color.white.opacity(0.05))
+                        .cornerRadius(12)
+                    }
+                    .padding(.bottom, 10)
                     
                     // Other options section
                     VStack(spacing: 0) {
@@ -208,27 +269,6 @@ struct MoreView: View {
                         
                         // Section background
                         VStack(spacing: 0) {
-                            // Add Premium option at the top when not premium
-                            if !adManager.isPremiumUser {
-                                OptionRow(
-                                    icon: "crown.fill",
-                                    title: "Upgrade to Premium",
-                                    action: { showingPremiumView.toggle() }
-                                )
-                                
-                                Divider()
-                                    .background(Color.white.opacity(0.1))
-                                    
-                                OptionRow(
-                                    icon: "gift.fill",
-                                    title: "Free Premium Trial",
-                                    action: { showingRewardedAdView.toggle() }
-                                )
-                                
-                                Divider()
-                                    .background(Color.white.opacity(0.1))
-                            }
-                            
                             OptionRow(
                                 icon: "info.circle",
                                 title: "About",
@@ -310,6 +350,7 @@ struct MoreView: View {
                         .background(Color.white.opacity(0.05))
                         .cornerRadius(12)
                     }
+                    .padding(.vertical, 10)
                     
                     // Clear Cache section at the bottom
                     VStack(spacing: 0) {
@@ -414,9 +455,12 @@ struct MoreView: View {
         .alert("Themes Feature", isPresented: $showingThemesWIPAlert) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text(adManager.isPremiumUser
-                 ? "The themes feature is currently under development. Check back soon for updates!"
-                 : "Themes are a premium feature. Upgrade to unlock when they become available.")
+            Text("The themes feature is currently under development. Check back soon for updates!")
+        }
+        .alert("Coming Soon", isPresented: $showingComingSoonAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("This feature is currently in development and will be available in a future update!")
         }
         .onAppear {
             // Make sure notification state is updated when view appears
@@ -489,36 +533,36 @@ struct MoreView: View {
     }
 }
 
-// Premium banner at the top of the More view
-struct PremiumBanner: View {
+// Coming Soon banner at the top of the More view
+struct ComingSoonBanner: View {
     var action: () -> Void
     
     var body: some View {
         Button(action: action) {
             HStack(spacing: 15) {
-                // Crown icon
+                // Icon container
                 ZStack {
                     Circle()
                         .fill(
                             LinearGradient(
-                                gradient: Gradient(colors: [.yellow, .orange]),
+                                gradient: Gradient(colors: [.blue, .purple]),
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                         .frame(width: 50, height: 50)
                     
-                    Image(systemName: "crown.fill")
+                    Image(systemName: "sparkles")
                         .font(.system(size: 24))
                         .foregroundColor(.white)
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Upgrade to Premium")
+                    Text("What's Coming Soon")
                         .font(.headline)
                         .foregroundColor(.white)
                     
-                    Text("Remove ads and unlock all features")
+                    Text("See upcoming features and improvements")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                 }
@@ -527,10 +571,10 @@ struct PremiumBanner: View {
                 
                 // Arrow icon
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.yellow)
+                    .foregroundColor(.blue)
                     .font(.system(size: 14))
                     .padding(8)
-                    .background(Circle().fill(Color.yellow.opacity(0.2)))
+                    .background(Circle().fill(Color.blue.opacity(0.2)))
             }
             .padding()
             .background(
@@ -544,7 +588,7 @@ struct PremiumBanner: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .strokeBorder(Color.yellow.opacity(0.3), lineWidth: 1)
+                            .strokeBorder(Color.blue.opacity(0.3), lineWidth: 1)
                     )
             )
         }
@@ -573,16 +617,7 @@ struct StatCard: View {
     let number: String
     let label: String
     let icon: String
-    
-    // Get appropriate color for each stat type
-    private var iconColor: Color {
-        switch icon {
-        case "heart": return .red
-        case "calendar": return .blue
-        case "flame": return .orange
-        default: return .white
-        }
-    }
+    let iconColor: Color
     
     var body: some View {
         VStack(spacing: 8) {

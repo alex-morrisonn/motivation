@@ -4,15 +4,6 @@ struct PremiumView: View {
     @ObservedObject private var adManager = AdManager.shared
     @Environment(\.presentationMode) var presentationMode
     
-    @State private var selectedOption = 1 // Default to monthly plan
-    
-    // Premium pricing options
-    private let pricingOptions = [
-        (period: "Monthly", price: "$1.99", savings: "", id: 0),
-        (period: "Yearly", price: "$9.99", savings: "Save 58%", id: 1),
-        (period: "Lifetime", price: "$19.99", savings: "Best Value", id: 2)
-    ]
-    
     var body: some View {
         ZStack {
             // Background
@@ -22,11 +13,11 @@ struct PremiumView: View {
                 VStack(spacing: 25) {
                     // Header
                     VStack(spacing: 10) {
-                        Text("Go Premium")
+                        Text("Premium Coming Soon")
                             .font(.system(size: 38, weight: .bold))
                             .foregroundColor(.white)
                         
-                        Text("Unlock the full Moti experience")
+                        Text("We're developing premium features for Moti")
                             .font(.headline)
                             .foregroundColor(.gray)
                     }
@@ -57,7 +48,7 @@ struct PremiumView: View {
                     
                     // Features list
                     VStack(alignment: .leading, spacing: 20) {
-                        Text("PREMIUM FEATURES")
+                        Text("UPCOMING PREMIUM FEATURES")
                             .font(.caption)
                             .fontWeight(.semibold)
                             .foregroundColor(.white.opacity(0.6))
@@ -106,39 +97,34 @@ struct PremiumView: View {
                     }
                     .padding(.horizontal)
                     
-                    // Pricing options
+                    // Coming Soon Notice
                     VStack(spacing: 15) {
-                        Text("SELECT YOUR PLAN")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white.opacity(0.6))
-                            .tracking(2)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 26)
+                        Image(systemName: "hourglass")
+                            .font(.system(size: 40))
+                            .foregroundColor(.yellow)
+                            .padding(.bottom, 10)
                         
-                        ForEach(pricingOptions, id: \.id) { option in
-                            PricingButton(
-                                period: option.period,
-                                price: option.price,
-                                savings: option.savings,
-                                isSelected: selectedOption == option.id
-                            ) {
-                                withAnimation {
-                                    selectedOption = option.id
-                                }
-                            }
-                        }
+                        Text("Premium Features Under Development")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        Text("We're working hard to bring you these premium features soon. For now, enjoy the free version of Moti with all quotes and widgets available!")
+                            .font(.body)
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
                     }
-                    .padding(.horizontal, 20)
+                    .padding()
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(16)
+                    .padding(.horizontal)
+                    .padding(.top, 10)
                     
-                    // Purchase button
+                    // Close button
                     Button(action: {
-                        // Here you would implement the actual in-app purchase
-                        // For now, just simulate activation
-                        adManager.activatePremium()
                         presentationMode.wrappedValue.dismiss()
                     }) {
-                        Text("Continue")
+                        Text("Continue with Free Version")
                             .font(.headline)
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
@@ -155,19 +141,6 @@ struct PremiumView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 20)
-                    
-                    // Restore purchases button
-                    Button(action: {
-                        // Here you would implement restore purchases logic
-                        // For demo, just simulate success or failure
-                        let randomSuccess = Bool.random()
-                        adManager.restorePremium(isSuccess: randomSuccess)
-                    }) {
-                        Text("Restore Purchases")
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.7))
-                            .padding(.vertical, 8)
-                    }
                     
                     // Privacy & Terms
                     HStack(spacing: 20) {
@@ -257,64 +230,9 @@ struct PremiumFeatureRow: View {
             
             Spacer()
             
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.green)
+            Image(systemName: "hourglass")
+                .foregroundColor(.yellow)
                 .font(.system(size: 18))
-        }
-    }
-}
-
-// Pricing option button
-struct PricingButton: View {
-    let period: String
-    let price: String
-    let savings: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(period)
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    Text(price)
-                        .font(.title3)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                }
-                
-                Spacer()
-                
-                if !savings.isEmpty {
-                    Text(savings)
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.black)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.yellow)
-                        )
-                }
-                
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 22))
-                    .foregroundColor(isSelected ? .green : .gray)
-                    .padding(.leading, 8)
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? Color.white.opacity(0.15) : Color.white.opacity(0.05))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? Color.yellow.opacity(0.8) : Color.clear, lineWidth: 2)
-                    )
-            )
         }
     }
 }

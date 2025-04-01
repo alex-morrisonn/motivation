@@ -765,6 +765,7 @@ struct ContentView: View {
     @State private var showingStreakCelebration = false
     @State private var previousStreak = 0
     @State private var showingPremiumOffer = false
+    @State private var showingPremiumAlert = false
     
     init() {
             // Ensure proper dark mode appearance for tab bar
@@ -870,8 +871,8 @@ struct ContentView: View {
                     // Navigate to quotes tab
                     self.selectedTab = 1
                 } else if url.host == "premium" {
-                    // Show premium view
-                    self.showingPremiumOffer = true
+                    // Show premium alert instead of view
+                    showPremiumComingSoonAlert()
                 }
             }
         }
@@ -899,6 +900,16 @@ struct ContentView: View {
                 isShowing: $showingStreakCelebration
             )
         }
+        .alert("Premium Coming Soon", isPresented: $showingPremiumAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Premium features are currently under development. For now, enjoy the free version with all quotes and widgets available!")
+        }
+    }
+    
+    // Helper to show premium coming soon alert
+    private func showPremiumComingSoonAlert() {
+        showingPremiumAlert = true
     }
     
     // Helper to get current screen name for context-aware ads

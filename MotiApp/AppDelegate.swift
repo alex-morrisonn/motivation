@@ -5,8 +5,8 @@ import FirebaseFirestore
 import FirebaseAppCheck
 import FirebaseCrashlytics
 import FirebaseAnalytics
-import AppTrackingTransparency // Added for privacy compliance
-import GoogleMobileAds // Added for AdMob support
+import AppTrackingTransparency
+import GoogleMobileAds
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     
@@ -52,133 +52,129 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     // MARK: - Application Lifecycle
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        // Set up Firebase and security with error handling
-        do {
-            try configureFirebase()
-            isFirebaseInitialized = true
-        } catch {
-            print("ERROR: Firebase initialization failed: \(error.localizedDescription)")
-            // Continue app initialization despite Firebase failure
-            // Log the error to the system for debugging
-            NSLog("Firebase initialization error: \(error.localizedDescription)")
-        }
+        // Initialize core services with proper error handling
+        initializeServices(application)
         
-        // Initialize AdMob with error handling
-        do {
-            try configureAdMob()
-            isAdMobInitialized = true
-        } catch {
-            print("ERROR: AdMob initialization failed: \(error.localizedDescription)")
-            // Continue app initialization despite AdMob failure
-            NSLog("AdMob initialization error: \(error.localizedDescription)")
-        }
+        // Ensure premium features are disabled (since they're not implemented yet)
+        ensurePremiumDisabled()
         
-        // Configure push notifications with error handling
-        do {
-            try configureNotifications(application)
-            isNotificationConfigured = true
-        } catch {
-            print("WARNING: Notification configuration failed: \(error.localizedDescription)")
-            // Continue app initialization despite notification failure
-        }
-        
-        // Configure app group for widget data sharing with error handling
-        do {
-            try configureAppGroup()
-            isAppGroupConfigured = true
-        } catch {
-            print("WARNING: App group configuration failed: \(error.localizedDescription)")
-            // Continue app initialization despite app group failure
-        }
-        
-        // Check and update streak counter with error handling
-        do {
-            StreakManager.shared.checkInToday()
-        } catch {
-            print("WARNING: Streak check-in failed: \(error.localizedDescription)")
-            // This is non-critical, app can continue
-        }
+        // Initialize streak manager
+        initializeStreakManager()
         
         return true
     }
     
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Update streak when app becomes active with error handling
-        do {
-            StreakManager.shared.checkInToday()
-        } catch {
-            print("WARNING: Streak update failed when app became active: \(error.localizedDescription)")
-            // Non-critical failure, continue
-        }
+        // Update streak when app becomes active
+        updateStreak()
         
-        // Reset badge count when app becomes active
+        // Reset badge count
         UIApplication.shared.applicationIconBadgeNumber = 0
         
+        // Make sure premium is always disabled since the feature is not available yet
+        ensurePremiumDisabled()
+        
         // Request tracking authorization with delay to avoid interfering with app launch UX
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.requestTrackingAuthorization()
-        }
+        requestTrackingPermissionWithDelay()
     }
     
     func applicationWillTerminate(_ application: UIApplication) {
-        // Ensure any unsaved data is persisted
-        do {
-            // No explicit action needed as Modern iOS handles UserDefaults persistence automatically
-            // But we can add any custom persistence logic here if needed
-            print("Application will terminate - ensuring data is saved")
-        } catch {
-            print("ERROR: Failed to save app state on termination: \(error.localizedDescription)")
-        }
+        // Save any pending data changes
+        saveAppState()
     }
     
     func applicationDidEnterBackground(_ application: UIApplication) {
-        // Ensure data is saved when app enters background
-        do {
-            print("Application entered background - ensuring data is saved")
-            // Modern iOS handles state saving automatically
-            // But we can add any custom state saving logic here if needed
-        } catch {
-            print("ERROR: Failed to save app state on background: \(error.localizedDescription)")
-        }
+        // Save app state when entering background
+        saveAppState()
     }
     
-    // MARK: - Privacy and Tracking
+    // MARK: - Core Initialization
     
-    private func requestTrackingAuthorization() {
-        if #available(iOS 14.0, *) {
-            ATTrackingManager.requestTrackingAuthorization { [weak self] status in
-                // Update analytics collection based on authorization status
-                let isEnabled = status == .authorized
-                DispatchQueue.main.async {
-                    do {
-                        Analytics.setAnalyticsCollectionEnabled(isEnabled)
-                        print("App Tracking Transparency status: \(status.rawValue)")
-                        
-                        if isEnabled {
-                            print("User allowed tracking - analytics enabled")
-                        } else {
-                            print("User denied tracking or status is not determined - limited analytics only")
-                        }
-                        
-                        // Log the tracking status if Firebase is initialized
-                        if self?.isFirebaseInitialized == true {
-                            Analytics.logEvent("tracking_status", parameters: ["status": status.rawValue])
-                        }
-                    } catch {
-                        print("ERROR: Failed to update analytics collection status: \(error.localizedDescription)")
-                    }
+    private func initializeServices(_ application: UIApplication) {
+        // Set up Firebase and security with error handling
+        initializeFirebase()
+        
+        // Initialize AdMob with error handling
+        initializeAdMob()
+        
+        // Configure push notifications
+        configureNotifications(application)
+        
+        // Configure app group for widget data sharing
+        configureAppGroup()
+    }
+    
+    // MARK: - Service Initialization
+    
+    private func initializeFirebase() {
+        do {
+            // Set up App Check before Firebase initialization
+            if #available(iOS 14.0, *) {
+                do {
+                    let providerFactory = DeviceCheckProviderFactory()
+                    AppCheck.setAppCheckProviderFactory(providerFactory)
+                    print("App Check configured successfully")
+                } catch {
+                    print("WARNING: Failed to configure App Check: \(error.localizedDescription)")
                 }
             }
-        } else {
-            // For iOS versions below 14, enable analytics by default
-            Analytics.setAnalyticsCollectionEnabled(true)
+            
+            // Initialize Firebase
+            FirebaseApp.configure()
+            print("Firebase core initialized successfully")
+            
+            // Configure Crashlytics
+            Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
+            print("Crashlytics configured successfully")
+            
+            // Configure offline persistence for Firestore
+            configureFirestoreSettings()
+            
+            // Configure analytics - initially disabled until ATT permission is granted
+            configureAnalytics()
+            
+            isFirebaseInitialized = true
+        } catch {
+            print("CRITICAL ERROR: Firebase configuration failed: \(error.localizedDescription)")
+            logError(error, critical: true)
+            attemptFirebaseRecovery()
         }
     }
     
-    // MARK: - Configuration Methods
+    private func configureFirestoreSettings() {
+        do {
+            let settings = FirestoreSettings()
+            settings.isPersistenceEnabled = true
+            // Use a reasonable cache size (100MB)
+            settings.cacheSizeBytes = 100 * 1024 * 1024
+            Firestore.firestore().settings = settings
+            print("Firestore offline persistence configured successfully")
+        } catch {
+            print("WARNING: Failed to configure Firestore settings: \(error.localizedDescription)")
+        }
+    }
     
-    // Configure AdMob with updated API
-    private func configureAdMob() throws {
+    private func configureAnalytics() {
+        do {
+            // Initially disable analytics until ATT permission is granted
+            Analytics.setAnalyticsCollectionEnabled(false)
+            
+            // Set user properties for analytics
+            if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String {
+                Analytics.setUserProperty(version, forName: "app_version")
+            } else {
+                print("WARNING: Could not retrieve app version for analytics")
+            }
+            
+            // Log app open event
+            Analytics.logEvent(AnalyticsEventAppOpen, parameters: nil)
+            print("Analytics initially configured (disabled until permission)")
+        } catch {
+            print("WARNING: Failed to configure Analytics: \(error.localizedDescription)")
+        }
+    }
+    
+    private func initializeAdMob() {
         do {
             // Initialize Google Mobile Ads SDK
             MobileAds.initialize()
@@ -192,83 +188,25 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
             // Set content rating
             MobileAds.shared.requestConfiguration.maxAdContentRating = GADMaxAdContentRating.general
             
+            isAdMobInitialized = true
         } catch {
             print("ERROR: Failed to initialize AdMob: \(error.localizedDescription)")
-            throw AppDelegateError.adMobInitFailed
+            logError(error)
         }
     }
     
-    private func configureFirebase() throws {
-        do {
-            // Set up App Check before Firebase initialization
-            if #available(iOS 14.0, *) {
-                do {
-                    let providerFactory = DeviceCheckProviderFactory()
-                    AppCheck.setAppCheckProviderFactory(providerFactory)
-                    print("App Check configured successfully")
-                } catch {
-                    print("WARNING: Failed to configure App Check: \(error.localizedDescription)")
-                    // Continue Firebase initialization despite App Check failure
-                }
-            }
-            
-            // Initialize Firebase with error handling
-            FirebaseApp.configure()
-            print("Firebase core initialized successfully")
-            
-            // Configure Crashlytics
-            do {
-                Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
-                print("Crashlytics configured successfully")
-            } catch {
-                print("WARNING: Failed to configure Crashlytics: \(error.localizedDescription)")
-                // Continue despite Crashlytics configuration failure
-            }
-            
-            // Configure offline persistence for Firestore
-            do {
-                let settings = FirestoreSettings()
-                settings.isPersistenceEnabled = true
-                // Use a reasonable cache size (100MB)
-                settings.cacheSizeBytes = 100 * 1024 * 1024
-                Firestore.firestore().settings = settings
-                print("Firestore offline persistence configured successfully")
-            } catch {
-                print("WARNING: Failed to configure Firestore settings: \(error.localizedDescription)")
-                // Continue despite Firestore settings failure
-            }
-            
-            // Configure analytics - initially disabled until ATT permission is granted
-            do {
-                Analytics.setAnalyticsCollectionEnabled(false)
-                
-                // Set user properties for analytics
-                if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String {
-                    Analytics.setUserProperty(version, forName: "app_version")
-                } else {
-                    print("WARNING: Could not retrieve app version for analytics")
-                }
-                
-                // Log app open event
-                Analytics.logEvent(AnalyticsEventAppOpen, parameters: nil)
-                print("Analytics initially configured (disabled until permission)")
-            } catch {
-                print("WARNING: Failed to configure Analytics: \(error.localizedDescription)")
-                // Continue despite Analytics configuration failure
-            }
-        } catch {
-            print("CRITICAL ERROR: Firebase configuration failed: \(error.localizedDescription)")
-            
-            // Record error for diagnostics
-            if let nsError = error as NSError? {
-                NSLog("Firebase configuration error: \(nsError.domain), code: \(nsError.code), description: \(nsError.localizedDescription)")
-            }
-            
-            throw AppDelegateError.firebaseInitFailed
-        }
+    private func configureNotifications(_ application: UIApplication) {
+        // Set this class as the UNUserNotificationCenter delegate
+        UNUserNotificationCenter.current().delegate = self
+        
+        // Check if we should reschedule notifications on app launch
+        checkAndRescheduleNotifications()
+        
+        isNotificationConfigured = true
+        print("Notification configuration completed")
     }
     
-    private func configureAppGroup() throws {
+    private func configureAppGroup() {
         do {
             // Standardize app group name across app and widget extensions
             guard let sharedDefaults = UserDefaults(suiteName: "group.com.alexmorrison.moti.shared") else {
@@ -288,31 +226,61 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
                 // Clean up test value
                 sharedDefaults.removeObject(forKey: testKey)
                 print("App group access verified successfully")
+                isAppGroupConfigured = true
             } else {
                 print("ERROR: App group verification failed - could not read back test value")
-                throw AppDelegateError.appGroupAccessFailed
+                createLocalFallbackStorage()
             }
         } catch {
             print("ERROR: App group configuration failed: \(error.localizedDescription)")
-            throw AppDelegateError.appGroupAccessFailed
+            createLocalFallbackStorage()
         }
     }
     
-    private func configureNotifications(_ application: UIApplication) throws {
+    // MARK: - Premium Features Management
+    
+    private func ensurePremiumDisabled() {
+        // Remove any stored premium status
+        UserDefaults.standard.removeObject(forKey: "isPremiumUser")
+        UserDefaults.standard.removeObject(forKey: "temporaryPremiumEndTime")
+        
+        // Set premium to false in AdManager
+        AdManager.shared.isPremiumUser = false
+        
+        // Clear any premium duration
+        AdManager.shared.checkTemporaryPremium()
+        
+        print("Premium features disabled - feature is not available yet")
+    }
+    
+    // MARK: - Streak Management
+    
+    private func initializeStreakManager() {
         do {
-            // Set this class as the UNUserNotificationCenter delegate
-            UNUserNotificationCenter.current().delegate = self
-            
-            // Check if we should reschedule notifications on app launch
-            checkAndRescheduleNotifications()
-            print("Notification configuration completed successfully")
+            StreakManager.shared.checkInToday()
+            print("Streak manager initialized successfully")
         } catch {
-            print("ERROR: Notification configuration failed: \(error.localizedDescription)")
-            throw AppDelegateError.notificationConfigError
+            print("WARNING: Streak initialization failed: \(error.localizedDescription)")
         }
     }
     
-    // MARK: - Notification Methods
+    private func updateStreak() {
+        do {
+            StreakManager.shared.checkInToday()
+        } catch {
+            print("WARNING: Streak update failed: \(error.localizedDescription)")
+        }
+    }
+    
+    // MARK: - App State Management
+    
+    private func saveAppState() {
+        // Modern iOS handles UserDefaults persistence automatically
+        // But we can add any custom persistence logic here if needed
+        print("Saving app state")
+    }
+    
+    // MARK: - Notifications Management
     
     private func checkAndRescheduleNotifications() {
         let defaults = UserDefaults.standard
@@ -383,9 +351,47 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         }
     }
     
+    // MARK: - Privacy and Tracking
+    
+    private func requestTrackingPermissionWithDelay() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.requestTrackingAuthorization()
+        }
+    }
+    
+    private func requestTrackingAuthorization() {
+        if #available(iOS 14.0, *) {
+            ATTrackingManager.requestTrackingAuthorization { [weak self] status in
+                // Update analytics collection based on authorization status
+                let isEnabled = status == .authorized
+                DispatchQueue.main.async {
+                    do {
+                        Analytics.setAnalyticsCollectionEnabled(isEnabled)
+                        print("App Tracking Transparency status: \(status.rawValue)")
+                        
+                        if isEnabled {
+                            print("User allowed tracking - analytics enabled")
+                        } else {
+                            print("User denied tracking or status is not determined - limited analytics only")
+                        }
+                        
+                        // Log the tracking status if Firebase is initialized
+                        if self?.isFirebaseInitialized == true {
+                            Analytics.logEvent("tracking_status", parameters: ["status": status.rawValue])
+                        }
+                    } catch {
+                        print("ERROR: Failed to update analytics collection status: \(error.localizedDescription)")
+                    }
+                }
+            }
+        } else {
+            // For iOS versions below 14, enable analytics by default
+            Analytics.setAnalyticsCollectionEnabled(true)
+        }
+    }
+    
     // MARK: - Error Recovery Methods
     
-    // Attempt to recover from Firebase initialization failure
     private func attemptFirebaseRecovery() {
         // This could try alternative initialization methods or
         // disable Firebase features gracefully
@@ -395,7 +401,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(false)
     }
     
-    // Attempt to recover from app group access failure
     private func createLocalFallbackStorage() {
         print("Creating local fallback storage instead of app group")
         // Here we could implement a mechanism to use local storage

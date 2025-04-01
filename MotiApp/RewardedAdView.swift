@@ -7,9 +7,6 @@ struct RewardedAdView: View {
     @Environment(\.presentationMode) var presentationMode
     
     @State private var isShowingAd = false
-    @State private var showingThankYou = false
-    @State private var rewardAmount = 0
-    @State private var rewardDuration = 0
     
     var body: some View {
         ZStack {
@@ -24,12 +21,12 @@ struct RewardedAdView: View {
                         .foregroundColor(.yellow)
                         .padding()
                     
-                    Text("Try Premium Features")
+                    Text("Coming Soon")
                         .font(.title)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                     
-                    Text("Watch a short video to unlock premium features for 24 hours")
+                    Text("Premium trial feature is currently under development")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
@@ -54,149 +51,46 @@ struct RewardedAdView: View {
                 
                 Spacer()
                 
-                // Watch ad button
-                Button(action: {
-                    if adManager.isRewardedAdReady {
-                        showRewardedAd()
-                    } else {
-                        // Try to load a new ad
-                        adManager.loadRewardedAd()
-                        
-                        // Show message that ad is not ready
-                        isShowingAd = false
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: "play.circle.fill")
-                            .font(.system(size: 20))
-                        
-                        Text("Watch Video For Premium")
-                            .fontWeight(.semibold)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        adManager.isRewardedAdReady ?
-                            LinearGradient(gradient: Gradient(colors: [.blue, .purple]), startPoint: .leading, endPoint: .trailing) :
-                            LinearGradient(gradient: Gradient(colors: [.gray.opacity(0.5), .gray.opacity(0.7)]), startPoint: .leading, endPoint: .trailing)
-                    )
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
-                    .padding(.horizontal)
-                    .shadow(color: adManager.isRewardedAdReady ? .blue.opacity(0.5) : .clear, radius: 5, x: 0, y: 2)
-                }
-                .disabled(!adManager.isRewardedAdReady)
-                
-                // Or buy premium button
-                Button(action: {
-                    // Here you would implement the IAP flow
-                    // For now just show a placeholder
-                }) {
-                    Text("Or Get Permanent Premium For $2.99")
-                        .fontWeight(.medium)
-                        .foregroundColor(.white.opacity(0.8))
-                        .padding(.vertical, 10)
-                }
-                .padding(.bottom, 20)
-            }
-            .padding(.bottom, 40)
-            
-            // Thank you overlay
-            if showingThankYou {
-                Color.black.opacity(0.8)
-                    .edgesIgnoringSafeArea(.all)
-                    .transition(.opacity)
-                
-                VStack(spacing: 20) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 80))
-                        .foregroundColor(.green)
+                // Development info
+                VStack(spacing: 15) {
+                    Image(systemName: "wrench.and.screwdriver")
+                        .font(.system(size: 40))
+                        .foregroundColor(.gray)
+                        .padding()
                     
-                    Text("Premium Activated!")
-                        .font(.title)
-                        .fontWeight(.bold)
+                    Text("Feature Under Development")
+                        .font(.headline)
                         .foregroundColor(.white)
                     
-                    Text("You now have premium features for 24 hours. Enjoy!")
-                        .font(.headline)
-                        .foregroundColor(.white.opacity(0.8))
+                    Text("In the future, you'll be able to watch short videos to unlock premium features for limited periods. Until then, enjoy the free version of Moti with all quotes and widgets available!")
+                        .font(.body)
+                        .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
-                    
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Text("Continue")
-                            .fontWeight(.semibold)
-                            .foregroundColor(.black)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Color.white)
-                            .cornerRadius(12)
-                            .padding(.horizontal, 40)
-                            .shadow(color: Color.white.opacity(0.3), radius: 5, x: 0, y: 3)
-                    }
-                    .padding(.top, 20)
                 }
-                .padding(30)
-                .background(Color.black.opacity(0.8))
-                .cornerRadius(20)
-                .shadow(color: Color.white.opacity(0.1), radius: 20, x: 0, y: 0)
-                .transition(.scale)
-                .padding(.horizontal, 30)
-            }
-        }
-        .navigationBarTitle("Premium Features", displayMode: .inline)
-        .onAppear {
-            if !adManager.isRewardedAdReady {
-                adManager.loadRewardedAd()
-            }
-        }
-    }
-    
-    private func showRewardedAd() {
-        isShowingAd = true
-        
-        // Get the root controller to present the ad
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootController = windowScene.windows.first?.rootViewController {
-            
-            adManager.showRewardedAd(from: rootController) { success, amount in
-                isShowingAd = false
+                .padding()
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(16)
+                .padding(.horizontal)
                 
-                if success {
-                    // Activate temporary premium
-                    rewardAmount = amount
-                    rewardDuration = 24 // hours
-                    
-                    // Grant the premium for 24 hours
-                    let temporaryPremiumEndTime = Date().addingTimeInterval(24 * 60 * 60)
-                    UserDefaults.standard.set(temporaryPremiumEndTime, forKey: "temporaryPremiumEndTime")
-                    
-                    // Refresh premium status in manager
-                    adManager.isPremiumUser = true
-                    
-                    // Schedule premium expiration
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 24 * 60 * 60) {
-                        if UserDefaults.standard.bool(forKey: "isPremiumUser") == false {
-                            adManager.isPremiumUser = false
-                        }
-                    }
-                    
-                    // Show thank you message
-                    withAnimation {
-                        showingThankYou = true
-                    }
-                    
-                    // Auto-dismiss after 3 seconds
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                        if showingThankYou {
-                            presentationMode.wrappedValue.dismiss()
-                        }
-                    }
+                // Close button
+                Button(action: {
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    Text("Return to App")
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.gray.opacity(0.3))
+                        .cornerRadius(12)
+                        .padding(.horizontal)
                 }
+                .padding(.top, 20)
+                .padding(.bottom, 40)
             }
         }
+        .navigationBarTitle("Premium Trial", displayMode: .inline)
     }
 }
 
