@@ -142,16 +142,7 @@ struct PremiumView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 20)
                     
-                    // Privacy & Terms
-                    HStack(spacing: 20) {
-                        Link("Privacy Policy", destination: URL(string: "https://example.com/privacy")!)
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        
-                        Link("Terms of Use", destination: URL(string: "https://example.com/terms")!)
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
+ 
                     .padding(.top, 10)
                     .padding(.bottom, 40)
                 }
