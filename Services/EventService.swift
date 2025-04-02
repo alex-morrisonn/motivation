@@ -143,9 +143,7 @@ class EventService: ObservableObject {
     private func saveEvents() {
         do {
             // Validate events before saving
-            guard !events.contains(where: {
-                $0.title.isEmpty || $0.date == Date.distantPast
-            }) else {
+            if events.contains(where: { $0.title.isEmpty || $0.date == Date.distantPast }) {
                 print("Warning: Attempting to save invalid event data")
                 // Continue saving anyway to avoid data loss
             }
@@ -310,12 +308,5 @@ class EventService: ObservableObject {
             saveEvents()
             print("No recovery source available, reset to empty events array")
         }
-    }
-}
-
-// Extension of UserDefaults to provide shared access for widgets
-extension UserDefaults {
-    static var shared: UserDefaults {
-        return UserDefaults(suiteName: appGroupIdentifier) ?? .standard
     }
 }
