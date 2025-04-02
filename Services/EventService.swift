@@ -319,6 +319,3 @@ extension UserDefaults {
         return UserDefaults(suiteName: appGroupIdentifier) ?? .standard
     }
 }
-
-// Shared App Group identifier for app-widget communication
-let appGroupIdentifier = "group.com.alexmorrison.moti.shared"

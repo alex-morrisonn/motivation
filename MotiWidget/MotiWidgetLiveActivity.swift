@@ -186,7 +186,7 @@ struct MotiWidgetLiveActivity: Widget {
 
 #Preview("Live Activity", as: .content) {
     MotiWidgetLiveActivity()
-} contentStates: {
+} contentState: {
     MotiWidgetAttributes.ContentState(
         quote: "Whether you think you can or you think you can't, you're right.",
         author: "Henry Ford",

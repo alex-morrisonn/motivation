@@ -2,20 +2,6 @@ import WidgetKit
 import SwiftUI
 import AppIntents
 
-// MARK: - Constants
-
-/// App group identifier for data sharing between app and widget
-let appGroupIdentifier = "group.com.alexmorrison.moti.shared"
-
-// MARK: - UserDefaults Extension
-
-/// Extended UserDefaults for shared access
-extension UserDefaults {
-    static var shared: UserDefaults {
-        return UserDefaults(suiteName: appGroupIdentifier) ?? .standard
-    }
-}
-
 // MARK: - Models
 
 /// Quote model for widget

@@ -2,7 +2,7 @@ import WidgetKit
 import AppIntents
 
 /// Configuration options for the Moti widget
-struct ConfigurationAppIntent: WidgetConfigurationIntent {
+struct MotiWidgetConfigurationIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource { "Quote Widget Settings" }
     static var description: IntentDescription { "Customize your daily quote widget" }
 
