@@ -1,7 +1,7 @@
 import SwiftUI
 import WidgetKit
 
-// Minimalistic More View with clean black and white theme
+// More View for settings and additional options
 struct MoreView: View {
     @ObservedObject var quoteService = QuoteService.shared
     @ObservedObject var eventService = EventService.shared
@@ -738,5 +738,13 @@ struct CategoryRow: View {
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
         }
+    }
+}
+
+// SwiftUI Preview
+struct MoreView_Previews: PreviewProvider {
+    static var previews: some View {
+        MoreView()
+            .preferredColorScheme(.dark)
     }
 }

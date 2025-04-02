@@ -1,10 +1,12 @@
 import SwiftUI
 
+/// Displays detailed information about the user's streak
 struct StreakDetailsView: View {
     @Environment(\.presentationMode) var presentationMode
-    @ObservedObject var streakManager = StreakManager.shared
+    @ObservedObject private var streakManager = StreakManager.shared
     
-    // Date formatters
+    // MARK: - Date Formatters
+    
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
@@ -17,6 +19,8 @@ struct StreakDetailsView: View {
         formatter.dateFormat = "MMMM yyyy"
         return formatter
     }()
+    
+    // MARK: - Body
     
     var body: some View {
         NavigationView {
@@ -56,7 +60,9 @@ struct StreakDetailsView: View {
         .preferredColorScheme(.dark)
     }
     
-    // Streak summary section
+    // MARK: - Component Views
+    
+    /// Current streak summary section
     private var streakSummaryView: some View {
         VStack(spacing: 20) {
             // Current streak number with flame
@@ -106,9 +112,7 @@ struct StreakDetailsView: View {
         .cornerRadius(16)
     }
     
-    // Calendar view showing streak days
-    // Replace the streakCalendarView in StreakDetailsView.swift with this wider version:
-
+    /// Calendar view showing streak days
     private var streakCalendarView: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("STREAK CALENDAR")
@@ -213,7 +217,7 @@ struct StreakDetailsView: View {
         .padding(.horizontal, 4) // Reduced horizontal padding to allow more width
     }
     
-    // Streak statistics
+    /// Streak statistics section
     private var streakStatsView: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("STREAK STATS")
@@ -241,9 +245,6 @@ struct StreakDetailsView: View {
                 
                 Divider()
                     .background(Color.white.opacity(0.2))
-                
-                // Additional stats could go here in the future
-                // For example, total days used, average weekly usage, etc.
             }
             .padding(16)
             .background(Color.black.opacity(0.3))
@@ -251,7 +252,7 @@ struct StreakDetailsView: View {
         }
     }
     
-    // Streak achievements section (placeholders for future feature)
+    /// Streak achievements section (placeholders for future feature)
     private var streakAchievementsView: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("ACHIEVEMENTS")
@@ -292,7 +293,6 @@ struct StreakDetailsView: View {
                     )
                     .id("achievement-3")
                     
-                    // Changed from "100.circle.fill" to "number.circle.fill"
                     achievementItem(
                         icon: "number.circle.fill",
                         title: "Century Club",
@@ -309,7 +309,7 @@ struct StreakDetailsView: View {
         }
     }
     
-    // Single achievement item
+    /// Single achievement item
     private func achievementItem(icon: String, title: String, description: String, isUnlocked: Bool, color: Color) -> some View {
         VStack(alignment: .center, spacing: 8) {
             ZStack {
@@ -338,7 +338,9 @@ struct StreakDetailsView: View {
     }
 }
 
-// Stat item component for streak stats
+// MARK: - Supporting Views
+
+/// Stat item component for streak stats
 struct StatItem: View {
     let value: String
     let label: String
@@ -372,8 +374,11 @@ struct StatItem: View {
     }
 }
 
+// MARK: - Preview
+
 struct StreakDetailsView_Previews: PreviewProvider {
     static var previews: some View {
         StreakDetailsView()
+            .preferredColorScheme(.dark)
     }
 }

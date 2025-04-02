@@ -1,16 +1,25 @@
 import SwiftUI
 
+/// A fullscreen celebration view that appears when the user reaches a streak milestone
 struct StreakCelebrationView: View {
+    // MARK: - Properties
+    
+    /// The current streak count to celebrate
     let streakCount: Int
+    
+    /// Binding to control whether the view is showing
     @Binding var isShowing: Bool
     
+    // Animation state properties
     @State private var scale: CGFloat = 0.5
     @State private var opacity: Double = 0
     @State private var rotation: Double = 0
     @State private var particlesOpacity: Double = 0
     
-    // Controls the particles animation
+    /// Controls the number of particles in the animation
     private let particleCount = 50
+    
+    // MARK: - Body
     
     var body: some View {
         ZStack {
@@ -18,9 +27,7 @@ struct StreakCelebrationView: View {
             Color.black.opacity(0.7)
                 .edgesIgnoringSafeArea(.all)
                 .onTapGesture {
-                    withAnimation {
-                        isShowing = false
-                    }
+                    dismissWithAnimation()
                 }
             
             // Celebration content
@@ -86,9 +93,7 @@ struct StreakCelebrationView: View {
                 
                 // Continue button
                 Button(action: {
-                    withAnimation {
-                        isShowing = false
-                    }
+                    dismissWithAnimation()
                 }) {
                     Text("Continue")
                         .font(.headline)
@@ -119,41 +124,65 @@ struct StreakCelebrationView: View {
             .scaleEffect(scale)
             .opacity(opacity)
             .onAppear {
-                // Animation sequence
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-                    scale = 1.0
-                    opacity = 1.0
-                }
-                
-                // Rotate flame slightly
-                withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
-                    rotation = 5
-                }
-                
-                // Particle animation
-                withAnimation(.easeIn(duration: 0.3).delay(0.2)) {
-                    particlesOpacity = 0.8
-                }
-                
-                // Auto dismiss after 5 seconds if no interaction
-                DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                    if isShowing {
-                        withAnimation {
-                            isShowing = false
-                        }
-                    }
-                }
+                startAnimations()
+                scheduleAutoDismiss()
             }
         }
     }
     
-    // Randomized particle colors
+    // MARK: - Private Methods
+    
+    /// Starts the entrance animations
+    private func startAnimations() {
+        // Animation sequence
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+            scale = 1.0
+            opacity = 1.0
+        }
+        
+        // Rotate flame slightly
+        withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+            rotation = 5
+        }
+        
+        // Particle animation
+        withAnimation(.easeIn(duration: 0.3).delay(0.2)) {
+            particlesOpacity = 0.8
+        }
+    }
+    
+    /// Dismisses the view with animation
+    private func dismissWithAnimation() {
+        withAnimation(.easeOut(duration: 0.3)) {
+            opacity = 0
+            scale = 0.8
+        }
+        
+        // Actually dismiss after animation completes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            isShowing = false
+        }
+    }
+    
+    /// Schedules auto-dismiss if user doesn't interact
+    private func scheduleAutoDismiss() {
+        // Auto dismiss after 5 seconds if no interaction
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            if isShowing {
+                dismissWithAnimation()
+            }
+        }
+    }
+    
+    /// Returns a random particle color based on index
     private func particleColor(for index: Int) -> Color {
         let colors: [Color] = [.orange, .yellow, .red, .pink, .purple]
         return colors[index % colors.count]
     }
     
-    // Dynamic congratulation text based on streak
+    // MARK: - Dynamic Text Content
+    
+    /// Dynamic congratulation text based on streak length
     private var congratulationText: String {
         if streakCount >= 100 {
             return "Phenomenal Dedication!"
@@ -166,7 +195,7 @@ struct StreakCelebrationView: View {
         }
     }
     
-    // Dynamic motivational text based on streak
+    /// Dynamic motivational text based on streak length
     private var motivationalText: String {
         if streakCount >= 100 {
             return "Your \(streakCount)-day streak is truly extraordinary. You've made motivation a core part of your life!"
@@ -177,5 +206,16 @@ struct StreakCelebrationView: View {
         } else {
             return "You've used Moti for \(streakCount) consecutive days. Keep the momentum going!"
         }
+    }
+}
+
+// MARK: - Preview
+
+struct StreakCelebrationView_Previews: PreviewProvider {
+    static var previews: some View {
+        StreakCelebrationView(
+            streakCount: 7,
+            isShowing: .constant(true)
+        )
     }
 }

@@ -1,20 +1,29 @@
 import SwiftUI
 import UIKit
 
-// A coordinator to show interstitial ads at appropriate moments in the app
+/// A coordinator class to intelligently manage when to show interstitial ads
+/// This helps prevent excessive ad display while maintaining good monetization
 class InterstitialAdCoordinator: ObservableObject {
+    // MARK: - Singleton Instance
+    
+    /// Shared instance for app-wide access
     static let shared = InterstitialAdCoordinator()
     
+    // MARK: - Properties
+    
+    /// Reference to the ad manager
     @ObservedObject private var adManager = AdManager.shared
     
-    // Track number of navigation actions to determine when to show ads
+    /// Track number of navigation actions to determine when to show ads
     private var navigationCounter = 0
     
-    // Show ads every N navigation actions (adjustable)
+    /// Show ads every N navigation actions (adjustable)
     private let navigationThreshold = 5
     
-    // Track when the app was last backgrounded/foregrounded
+    /// Track when the app was last backgrounded/foregrounded
     private var lastForegroundTime: Date?
+    
+    // MARK: - Initialization
     
     private init() {
         // Register for app lifecycle notifications
@@ -33,7 +42,10 @@ class InterstitialAdCoordinator: ObservableObject {
         )
     }
     
-    // Call this method when navigating between screens
+    // MARK: - Public Methods
+    
+    /// Call this method when navigating between screens to track potential ad opportunities
+    /// - Returns: Boolean indicating if threshold was reached
     func trackNavigation() -> Bool {
         // Skip if premium user
         if adManager.isPremiumUser {
@@ -51,14 +63,14 @@ class InterstitialAdCoordinator: ObservableObject {
         return false
     }
     
-    // Call this when user completes an action
+    /// Call this when user completes an action that warrants an interstitial
     func checkForInterstitial() {
         if trackNavigation() {
             tryShowingInterstitial()
         }
     }
     
-    // Smart ad display on app return after significant time
+    /// Smart ad display on app return after significant time
     func checkForReturnToAppInterstitial() {
         // Skip if premium user
         if adManager.isPremiumUser {
@@ -84,7 +96,8 @@ class InterstitialAdCoordinator: ObservableObject {
         lastForegroundTime = currentTime
     }
     
-    // Show interstitial when exiting certain views
+    /// Show interstitial when exiting certain views
+    /// - Parameter viewName: The name of the view being exited
     func checkForExitInterstitial(from viewName: String) {
         // Skip if premium user
         if adManager.isPremiumUser {
@@ -106,13 +119,15 @@ class InterstitialAdCoordinator: ObservableObject {
         }
     }
     
-    // Private helper to attempt showing an interstitial
+    // MARK: - Private Methods
+    
+    /// Private helper to attempt showing an interstitial
     private func tryShowingInterstitial() {
         // Get the root controller to present the ad
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let rootController = windowScene.windows.first?.rootViewController {
             
-            // Try showing the ad
+            // Try showing the ad through AdManager
             _ = adManager.showInterstitialAd(from: rootController)
         }
     }
@@ -128,12 +143,16 @@ class InterstitialAdCoordinator: ObservableObject {
     }
 }
 
-// Extension for View to easily track navigation
+// MARK: - View Extension for Ad Tracking
+
+/// Extension to make it easy to track navigation for ad display
 extension View {
+    /// Track navigation through this view for potential ad display
+    /// - Returns: The modified view with ad tracking
     func trackNavigationForAds() -> some View {
         let shouldShowAd = InterstitialAdCoordinator.shared.trackNavigation()
         
-        // If we should show an ad, trigger it
+        // If we should show an ad, trigger it after a short delay
         if shouldShowAd {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,

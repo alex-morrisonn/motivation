@@ -1,6 +1,184 @@
 import SwiftUI
 
-// Custom segmented control for better visibility
+/// A view that showcases all available widgets and how to add them
+struct WidgetsShowcaseView: View {
+    // MARK: - Properties
+    
+    @ObservedObject private var quoteService = QuoteService.shared
+    @State private var selectedWidgetType = 0
+    private let tabOptions = ["Home Screen", "Lock Screen"]
+    
+    // Demo quote for the preview
+    private var demoQuote: Quote {
+        quoteService.getTodaysQuote()
+    }
+    
+    // MARK: - Body
+    
+    var body: some View {
+        ZStack {
+            // Background
+            Color.black.edgesIgnoringSafeArea(.all)
+            
+            ScrollView {
+                VStack(spacing: 24) {
+                    Text("Widgets")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.top, 16)
+                    
+                    // Tab selector for Home Screen vs Lock Screen widgets
+                    CustomSegmentedControl(
+                        selectedIndex: $selectedWidgetType,
+                        options: tabOptions
+                    )
+                    
+                    // Instructions card
+                    InstructionsCard(
+                        isHomeScreen: selectedWidgetType == 0
+                    )
+                    .padding(.horizontal)
+                    
+                    // Widget previews - different for each tab
+                    if selectedWidgetType == 0 {
+                        homeScreenWidgetPreviews
+                    } else {
+                        lockScreenWidgetPreviews
+                    }
+                    
+                    Spacer(minLength: 50)
+                }
+                .padding(.bottom, 30)
+            }
+        }
+    }
+    
+    // MARK: - Widget Preview Views
+    
+    /// Home screen widget previews
+    private var homeScreenWidgetPreviews: some View {
+        VStack(spacing: 20) {
+            Text("HOME SCREEN WIDGETS")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(.gray)
+                .tracking(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal)
+                .padding(.top, 8)
+            
+            // Small Widget Preview
+            WidgetPreviewCard(
+                title: "Small",
+                description: "Quote only",
+                size: CGSize(width: 170, height: 170),
+                content: {
+                    HomeScreenWidgetPreview(
+                        quote: demoQuote,
+                        size: .small
+                    )
+                }
+            )
+            .padding(.horizontal)
+            .id("small-widget-preview")
+            
+            // Medium Widget Preview
+            WidgetPreviewCard(
+                title: "Medium",
+                description: "Quote with more text",
+                size: CGSize(width: 320, height: 170),
+                content: {
+                    HomeScreenWidgetPreview(
+                        quote: demoQuote,
+                        size: .medium
+                    )
+                }
+            )
+            .padding(.horizontal)
+            .id("medium-widget-preview")
+            
+            // Large Widget Preview
+            WidgetPreviewCard(
+                title: "Large",
+                description: "Quote with calendar",
+                size: CGSize(width: 320, height: 360),
+                content: {
+                    HomeScreenWidgetPreview(
+                        quote: demoQuote,
+                        size: .large
+                    )
+                }
+            )
+            .padding(.horizontal)
+            .id("large-widget-preview")
+        }
+    }
+    
+    /// Lock screen widget previews
+    private var lockScreenWidgetPreviews: some View {
+        VStack(spacing: 20) {
+            Text("LOCK SCREEN WIDGETS")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(.gray)
+                .tracking(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal)
+                .padding(.top, 8)
+            
+            HStack(spacing: 16) {
+                // Circular Lock Screen Widget
+                WidgetPreviewCard(
+                    title: "Circular",
+                    description: "Short quote",
+                    size: CGSize(width: 160, height: 160),
+                    content: {
+                        LockScreenWidgetPreview(
+                            quote: demoQuote,
+                            type: .circular
+                        )
+                    }
+                )
+                .id("circular-widget-preview")
+                
+                // Rectangular Lock Screen Widget
+                WidgetPreviewCard(
+                    title: "Rectangular",
+                    description: "Longer quote",
+                    size: CGSize(width: 160, height: 160),
+                    content: {
+                        LockScreenWidgetPreview(
+                            quote: demoQuote,
+                            type: .rectangular
+                        )
+                    }
+                )
+                .id("rectangular-widget-preview")
+            }
+            .padding(.horizontal)
+            
+            // Inline Lock Screen Widget
+            WidgetPreviewCard(
+                title: "Inline",
+                description: "Single line quote",
+                size: CGSize(width: 320, height: 60),
+                content: {
+                    LockScreenWidgetPreview(
+                        quote: demoQuote,
+                        type: .inline
+                    )
+                }
+            )
+            .padding(.horizontal)
+            .id("inline-widget-preview")
+        }
+    }
+}
+
+// MARK: - Supporting Components
+
+/// Custom segmented control with better visibility
 struct CustomSegmentedControl: View {
     @Binding var selectedIndex: Int
     let options: [String]
@@ -39,164 +217,7 @@ struct CustomSegmentedControl: View {
     }
 }
 
-// Widget showcase view to display available widgets
-struct WidgetsShowcaseView: View {
-    @ObservedObject private var quoteService = QuoteService.shared
-    @State private var selectedWidgetType = 0
-    private let tabOptions = ["Home Screen", "Lock Screen"]
-    
-    // Demo quote for the preview
-    private var demoQuote: Quote {
-        quoteService.getTodaysQuote()
-    }
-    
-    var body: some View {
-        ZStack {
-            // Background
-            Color.black.edgesIgnoringSafeArea(.all)
-            
-            ScrollView {
-                VStack(spacing: 24) {
-                    Text("Widgets")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .padding(.top, 16)
-                    
-                    // Custom segmented control with better visibility
-                    CustomSegmentedControl(
-                        selectedIndex: $selectedWidgetType,
-                        options: tabOptions
-                    )
-                    
-                    // Instructions
-                    InstructionsCard(
-                        isHomeScreen: selectedWidgetType == 0
-                    )
-                    .padding(.horizontal)
-                    
-                    // Widget previews
-                    if selectedWidgetType == 0 {
-                        Text("HOME SCREEN WIDGETS")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.gray)
-                            .tracking(2)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal)
-                            .padding(.top, 8)
-                        
-                        // Small Widget Preview
-                        WidgetPreviewCard(
-                            title: "Small",
-                            description: "Quote only",
-                            size: CGSize(width: 170, height: 170),
-                            content: {
-                                HomeScreenWidgetPreview(
-                                    quote: demoQuote,
-                                    size: .small
-                                )
-                            }
-                        )
-                        .padding(.horizontal)
-                        .id("small-widget-preview")
-                        
-                        // Medium Widget Preview
-                        WidgetPreviewCard(
-                            title: "Medium",
-                            description: "Quote with more text",
-                            size: CGSize(width: 320, height: 170),
-                            content: {
-                                HomeScreenWidgetPreview(
-                                    quote: demoQuote,
-                                    size: .medium
-                                )
-                            }
-                        )
-                        .padding(.horizontal)
-                        .id("medium-widget-preview")
-                        
-                        // Large Widget Preview
-                        WidgetPreviewCard(
-                            title: "Large",
-                            description: "Quote with calendar",
-                            size: CGSize(width: 320, height: 360),
-                            content: {
-                                HomeScreenWidgetPreview(
-                                    quote: demoQuote,
-                                    size: .large
-                                )
-                            }
-                        )
-                        .padding(.horizontal)
-                        .id("large-widget-preview")
-                        
-                    } else {
-                        Text("LOCK SCREEN WIDGETS")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.gray)
-                            .tracking(2)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal)
-                            .padding(.top, 8)
-                        
-                        HStack(spacing: 16) {
-                            // Circular Lock Screen Widget
-                            WidgetPreviewCard(
-                                title: "Circular",
-                                description: "Short quote",
-                                size: CGSize(width: 160, height: 160),
-                                content: {
-                                    LockScreenWidgetPreview(
-                                        quote: demoQuote,
-                                        type: .circular
-                                    )
-                                }
-                            )
-                            .id("circular-widget-preview")
-                            
-                            // Rectangular Lock Screen Widget
-                            WidgetPreviewCard(
-                                title: "Rectangular",
-                                description: "Longer quote",
-                                size: CGSize(width: 160, height: 160),
-                                content: {
-                                    LockScreenWidgetPreview(
-                                        quote: demoQuote,
-                                        type: .rectangular
-                                    )
-                                }
-                            )
-                            .id("rectangular-widget-preview")
-                        }
-                        .padding(.horizontal)
-                        
-                        // Inline Lock Screen Widget
-                        WidgetPreviewCard(
-                            title: "Inline",
-                            description: "Single line quote",
-                            size: CGSize(width: 320, height: 60),
-                            content: {
-                                LockScreenWidgetPreview(
-                                    quote: demoQuote,
-                                    type: .inline
-                                )
-                            }
-                        )
-                        .padding(.horizontal)
-                        .id("inline-widget-preview")
-                    }
-                    
-                    Spacer(minLength: 50)
-                }
-                .padding(.bottom, 30)
-            }
-        }
-    }
-}
-
-// Instructions card component
+/// Instructions card component explaining how to add widgets
 struct InstructionsCard: View {
     let isHomeScreen: Bool
     
@@ -262,7 +283,7 @@ struct InstructionsCard: View {
     ]
 }
 
-// Widget preview card component
+/// Widget preview card component
 struct WidgetPreviewCard: View {
     let title: String
     let description: String
@@ -304,17 +325,19 @@ struct WidgetPreviewCard: View {
     }
 }
 
-// Widget size enum
+// MARK: - Widget Previews
+
+/// Widget size enum
 enum HomeWidgetSize {
     case small, medium, large
 }
 
-// Lock screen widget type enum
+/// Lock screen widget type enum
 enum LockScreenWidgetType {
     case circular, rectangular, inline
 }
 
-// Home screen widget preview
+/// Home screen widget preview
 struct HomeScreenWidgetPreview: View {
     let quote: Quote
     let size: HomeWidgetSize
@@ -400,7 +423,7 @@ struct HomeScreenWidgetPreview: View {
     }
 }
 
-// Simplified calendar preview for the large widget
+/// Simplified calendar preview for the large widget
 struct CalendarPreview: View {
     let calendar = Calendar.current
     let today = Date()
@@ -482,7 +505,7 @@ struct CalendarPreview: View {
     }
 }
 
-// Lock screen widget preview
+/// Lock screen widget preview
 struct LockScreenWidgetPreview: View {
     let quote: Quote
     let type: LockScreenWidgetType
@@ -598,8 +621,11 @@ struct LockScreenWidgetPreview: View {
     }
 }
 
+// MARK: - Previews
+
 struct WidgetsShowcaseView_Previews: PreviewProvider {
     static var previews: some View {
         WidgetsShowcaseView()
+            .preferredColorScheme(.dark)
     }
 }

@@ -2,18 +2,23 @@ import SwiftUI
 import GoogleMobileAds
 import UIKit
 
-// Native ad component to blend with your app's content
+/// Native ad component that blends naturally with your app's content
+/// Use this for in-feed ads or content breaks in scrolling views
 struct NativeAdView: View {
+    // MARK: - Properties
+    
     @ObservedObject private var adManager = AdManager.shared
     @State private var nativeAdLoaded = false
     @State private var nativeAdHeight: CGFloat = 0
+    
+    // MARK: - View Body
     
     var body: some View {
         if adManager.isPremiumUser {
             EmptyView() // No ad for premium users
         } else {
             VStack {
-                // Use UIViewControllerRepresentable instead of UIViewRepresentable
+                // Use UIViewControllerRepresentable for more reliable ad loading
                 NativeAdController(
                     adUnitID: adManager.nativeAdUnitID,
                     adLoaded: $nativeAdLoaded,
@@ -37,11 +42,16 @@ struct NativeAdView: View {
     }
 }
 
-// Use UIViewControllerRepresentable instead to avoid context initialization issues
+/// UIViewControllerRepresentable for creating native ads
+/// This approach avoids context initialization issues that can occur with UIViewRepresentable
 struct NativeAdController: UIViewControllerRepresentable {
+    // MARK: - Properties
+    
     var adUnitID: String
     @Binding var adLoaded: Bool
     @Binding var adHeight: CGFloat
+    
+    // MARK: - UIViewControllerRepresentable Methods
     
     func makeUIViewController(context: Context) -> UIViewController {
         let viewController = UIViewController()
@@ -76,6 +86,8 @@ struct NativeAdController: UIViewControllerRepresentable {
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
+    
+    // MARK: - Coordinator Class
     
     class Coordinator: NSObject, AdLoaderDelegate, NativeAdDelegate {
         var parent: NativeAdController
@@ -127,6 +139,7 @@ struct NativeAdController: UIViewControllerRepresentable {
         
         // MARK: - Helper methods
         
+        /// Creates a styled native ad UI
         private func createNativeAdUI(with nativeAd: NativeAd) -> UIView {
             // Create a container view
             let containerView = UIView()
@@ -247,11 +260,13 @@ struct NativeAdController: UIViewControllerRepresentable {
             return containerView
         }
         
+        /// Creates a native ad view safely
         private func createNativeAdView() throws -> GoogleMobileAds.NativeAdView? {
-            // This creates the NativeAdView safely
             let nativeAdView = GoogleMobileAds.NativeAdView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 40, height: 300))
             return nativeAdView
         }
+        
+        // MARK: - UI Component Creation
         
         private func createAdBadge() -> UILabel {
             let label = UILabel()
@@ -309,6 +324,28 @@ struct NativeAdController: UIViewControllerRepresentable {
             label.font = UIFont.systemFont(ofSize: 12)
             label.textColor = .gray
             return label
+        }
+    }
+}
+
+// MARK: - Preview Provider
+
+struct NativeAdView_Previews: PreviewProvider {
+    static var previews: some View {
+        ZStack {
+            Color.black.edgesIgnoringSafeArea(.all)
+            
+            VStack {
+                Text("Content above native ad")
+                    .foregroundColor(.white)
+                    .padding()
+                
+                NativeAdView()
+                
+                Text("Content below native ad")
+                    .foregroundColor(.white)
+                    .padding()
+            }
         }
     }
 }

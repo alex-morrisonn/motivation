@@ -15,7 +15,6 @@
 		1E21CDEF2D93715B000F7451 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */; };
 		1E21CDF02D93715B000F7451 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */; };
 		1E21CE012D93715C000F7451 /* MotiWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E21CDEE2D93715B000F7451 /* MotiWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		1E21CE072D9374A0000F7451 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
 		1E6A60202D94CC2800AD9399 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */; };
 		1E6A60212D94CC2800AD9399 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */; };
 		1E6A60222D94CC2800AD9399 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */; };
@@ -25,9 +24,6 @@
 		1E6A602D2D94DA3B00AD9399 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 1E6A602C2D94DA3B00AD9399 /* FirebaseAppCheck */; };
 		1E6A602F2D94DA6200AD9399 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1E6A602E2D94DA6200AD9399 /* FirebaseCrashlytics */; };
 		1E6A60322D9511A600AD9399 /* AppTrackingTransparency.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E6A60312D9511A600AD9399 /* AppTrackingTransparency.framework */; };
-		1EB90A072D91070E004C0A32 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
-		1EB90A082D9107C6004C0A32 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
-		1EB90A092D9107C6004C0A32 /* SharedQuotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB90A062D910709004C0A32 /* SharedQuotes.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -79,7 +75,6 @@
 		1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		1E6A60302D95103200AD9399 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; name = Info.plist; path = Moti/Info.plist; sourceTree = "<group>"; };
 		1E6A60312D9511A600AD9399 /* AppTrackingTransparency.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppTrackingTransparency.framework; path = System/Library/Frameworks/AppTrackingTransparency.framework; sourceTree = SDKROOT; };
-		1EB90A062D910709004C0A32 /* SharedQuotes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedQuotes.swift; sourceTree = "<group>"; };
 		1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -89,6 +84,117 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+			);
+			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
+		};
+		1EDF7FB32D9CA27C00228E56 /* Exceptions for "Models" folder in "MotiTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				EventModel.swift,
+			);
+			target = 1E41834F2D8EC71300AAEC12 /* MotiTests */;
+		};
+		1EDF7FB42D9CA27C00228E56 /* Exceptions for "Models" folder in "MotiUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				EventModel.swift,
+			);
+			target = 1E4183592D8EC71300AAEC12 /* MotiUITests */;
+		};
+		1EDF7FB52D9CA27C00228E56 /* Exceptions for "Models" folder in "MotiWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				EventModel.swift,
+			);
+			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
+		};
+		1EDF7FBE2D9CA2D300228E56 /* Exceptions for "Views" folder in "MotiTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Calendar/CalendarComponents.swift,
+				Common/AboutView.swift,
+				Common/FeedbackView.swift,
+				Common/PremiumView.swift,
+				Common/PrivacyPolicyView.swift,
+				Common/RewardedAdView.swift,
+				Main/ContentView.swift,
+				Main/MoreView.swift,
+				Streak/StreakCelebrationView.swift,
+				Streak/StreakDetailsView.swift,
+				Widgets/WidgetsShowcaseView.swift,
+			);
+			target = 1E41834F2D8EC71300AAEC12 /* MotiTests */;
+		};
+		1EDF7FBF2D9CA2D300228E56 /* Exceptions for "Views" folder in "MotiUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Calendar/CalendarComponents.swift,
+				Common/AboutView.swift,
+				Common/FeedbackView.swift,
+				Common/PremiumView.swift,
+				Common/PrivacyPolicyView.swift,
+				Common/RewardedAdView.swift,
+				Main/ContentView.swift,
+				Main/MoreView.swift,
+				Streak/StreakCelebrationView.swift,
+				Streak/StreakDetailsView.swift,
+				Widgets/WidgetsShowcaseView.swift,
+			);
+			target = 1E4183592D8EC71300AAEC12 /* MotiUITests */;
+		};
+		1EDF7FC02D9CA2D300228E56 /* Exceptions for "Views" folder in "MotiWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Calendar/CalendarComponents.swift,
+				Common/AboutView.swift,
+				Common/FeedbackView.swift,
+				Common/PremiumView.swift,
+				Common/PrivacyPolicyView.swift,
+				Common/RewardedAdView.swift,
+				Main/ContentView.swift,
+				Main/MoreView.swift,
+				Streak/StreakCelebrationView.swift,
+				Streak/StreakDetailsView.swift,
+				Widgets/WidgetsShowcaseView.swift,
+			);
+			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
+		};
+		1EDF7FFD2D9CA41500228E56 /* Exceptions for "Services" folder in "MotiTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Ads/AdManager.swift,
+				Ads/BannerAdView.swift,
+				Ads/InterstitualAdCoordinator.swift,
+				Ads/NativeAdView.swift,
+				FeedbackService.swift,
+				NotificationManager.swift,
+				StreakManager.swift,
+			);
+			target = 1E41834F2D8EC71300AAEC12 /* MotiTests */;
+		};
+		1EDF7FFE2D9CA41500228E56 /* Exceptions for "Services" folder in "MotiUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Ads/AdManager.swift,
+				Ads/BannerAdView.swift,
+				Ads/InterstitualAdCoordinator.swift,
+				Ads/NativeAdView.swift,
+				FeedbackService.swift,
+				NotificationManager.swift,
+				StreakManager.swift,
+			);
+			target = 1E4183592D8EC71300AAEC12 /* MotiUITests */;
+		};
+		1EDF7FFF2D9CA41500228E56 /* Exceptions for "Services" folder in "MotiWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Ads/AdManager.swift,
+				Ads/BannerAdView.swift,
+				Ads/InterstitualAdCoordinator.swift,
+				Ads/NativeAdView.swift,
+				FeedbackService.swift,
+				NotificationManager.swift,
+				StreakManager.swift,
 			);
 			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
 		};
@@ -116,6 +222,46 @@
 		1E41835D2D8EC71300AAEC12 /* MotiAppUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = MotiAppUITests;
+			sourceTree = "<group>";
+		};
+		1EDF7FA92D9CA25000228E56 /* Models */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				1EDF7FB32D9CA27C00228E56 /* Exceptions for "Models" folder in "MotiTests" target */,
+				1EDF7FB42D9CA27C00228E56 /* Exceptions for "Models" folder in "MotiUITests" target */,
+				1EDF7FB52D9CA27C00228E56 /* Exceptions for "Models" folder in "MotiWidgetExtension" target */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		1EDF7FBC2D9CA2BD00228E56 /* Views */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				1EDF7FBE2D9CA2D300228E56 /* Exceptions for "Views" folder in "MotiTests" target */,
+				1EDF7FBF2D9CA2D300228E56 /* Exceptions for "Views" folder in "MotiUITests" target */,
+				1EDF7FC02D9CA2D300228E56 /* Exceptions for "Views" folder in "MotiWidgetExtension" target */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		1EDF7FEA2D9CA3E800228E56 /* Services */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				1EDF7FFD2D9CA41500228E56 /* Exceptions for "Services" folder in "MotiTests" target */,
+				1EDF7FFE2D9CA41500228E56 /* Exceptions for "Services" folder in "MotiUITests" target */,
+				1EDF7FFF2D9CA41500228E56 /* Exceptions for "Services" folder in "MotiWidgetExtension" target */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		1EDF80032D9CA46A00228E56 /* Resources */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		1EDF80042D9CAB9A00228E56 /* Utilities */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Utilities;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -163,12 +309,16 @@
 		1E4183372D8EC71100AAEC12 = {
 			isa = PBXGroup;
 			children = (
+				1EDF80042D9CAB9A00228E56 /* Utilities */,
+				1EDF80032D9CA46A00228E56 /* Resources */,
+				1EDF7FEA2D9CA3E800228E56 /* Services */,
+				1EDF7FBC2D9CA2BD00228E56 /* Views */,
+				1EDF7FA92D9CA25000228E56 /* Models */,
 				1E0498D42D9BC86B00EE04EC /* index.md */,
 				1E6A60302D95103200AD9399 /* Info.plist */,
 				1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */,
 				1E21CE062D937197000F7451 /* MotiWidgetExtension.entitlements */,
 				1E61DA2F2D92870E006A63EA /* Moti.entitlements */,
-				1EB90A062D910709004C0A32 /* SharedQuotes.swift */,
 				1E4183422D8EC71100AAEC12 /* MotiApp */,
 				1E4183532D8EC71300AAEC12 /* MotiAppTests */,
 				1E41835D2D8EC71300AAEC12 /* MotiAppUITests */,
@@ -216,6 +366,11 @@
 			);
 			fileSystemSynchronizedGroups = (
 				1E21CDF12D93715B000F7451 /* MotiWidget */,
+				1EDF7FA92D9CA25000228E56 /* Models */,
+				1EDF7FBC2D9CA2BD00228E56 /* Views */,
+				1EDF7FEA2D9CA3E800228E56 /* Services */,
+				1EDF80032D9CA46A00228E56 /* Resources */,
+				1EDF80042D9CAB9A00228E56 /* Utilities */,
 			);
 			name = MotiWidgetExtension;
 			packageProductDependencies = (
@@ -240,6 +395,11 @@
 			);
 			fileSystemSynchronizedGroups = (
 				1E4183422D8EC71100AAEC12 /* MotiApp */,
+				1EDF7FA92D9CA25000228E56 /* Models */,
+				1EDF7FBC2D9CA2BD00228E56 /* Views */,
+				1EDF7FEA2D9CA3E800228E56 /* Services */,
+				1EDF80032D9CA46A00228E56 /* Resources */,
+				1EDF80042D9CAB9A00228E56 /* Utilities */,
 			);
 			name = Moti;
 			packageProductDependencies = (
@@ -268,6 +428,11 @@
 			);
 			fileSystemSynchronizedGroups = (
 				1E4183532D8EC71300AAEC12 /* MotiAppTests */,
+				1EDF7FA92D9CA25000228E56 /* Models */,
+				1EDF7FBC2D9CA2BD00228E56 /* Views */,
+				1EDF7FEA2D9CA3E800228E56 /* Services */,
+				1EDF80032D9CA46A00228E56 /* Resources */,
+				1EDF80042D9CAB9A00228E56 /* Utilities */,
 			);
 			name = MotiTests;
 			packageProductDependencies = (
@@ -291,6 +456,11 @@
 			);
 			fileSystemSynchronizedGroups = (
 				1E41835D2D8EC71300AAEC12 /* MotiAppUITests */,
+				1EDF7FA92D9CA25000228E56 /* Models */,
+				1EDF7FBC2D9CA2BD00228E56 /* Views */,
+				1EDF7FEA2D9CA3E800228E56 /* Services */,
+				1EDF80032D9CA46A00228E56 /* Resources */,
+				1EDF80042D9CAB9A00228E56 /* Utilities */,
 			);
 			name = MotiUITests;
 			packageProductDependencies = (
@@ -395,7 +565,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1E21CE072D9374A0000F7451 /* SharedQuotes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -403,7 +572,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1EB90A072D91070E004C0A32 /* SharedQuotes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -411,7 +579,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1EB90A082D9107C6004C0A32 /* SharedQuotes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -419,7 +586,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1EB90A092D9107C6004C0A32 /* SharedQuotes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

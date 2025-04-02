@@ -2,11 +2,16 @@ import Foundation
 import SwiftUI
 import UserNotifications
 
-// Streak Manager to handle app usage streak logic with comprehensive error handling
+/// Service responsible for managing app usage streak logic with comprehensive error handling
 class StreakManager: ObservableObject {
+    // MARK: - Singleton
+    
+    /// Shared instance for singleton access
     static let shared = StreakManager()
     
-    // Error types for streak operations
+    // MARK: - Error Types
+    
+    /// Error types for streak operations
     enum StreakError: Error {
         case dateCalculationFailed(String)
         case saveDataFailed(String)
@@ -36,26 +41,36 @@ class StreakManager: ObservableObject {
         }
     }
     
-    // Published properties that will update the UI when changed
+    // MARK: - Published Properties
+    
+    /// Current streak count, updates UI when changed
     @Published var currentStreak: Int = 0
+    
+    /// Longest achieved streak
     @Published var longestStreak: Int = 0
+    
+    /// Last date the app was opened
     @Published var lastOpenDate: Date? = nil
     
-    // Keys for UserDefaults
+    // MARK: - Private Properties
+    
+    /// Keys for UserDefaults
     private let lastOpenDateKey = "streak_lastOpenDate"
     private let currentStreakKey = "streak_currentStreak"
     private let longestStreakKey = "streak_longestStreak"
     private let streakDaysKey = "streak_daysRecord"
     private let backupSuffix = "_backup"
     
-    // UserDefaults instance - using the shared group for widget access
+    /// UserDefaults instance - using the shared group for widget access
     private var defaults: UserDefaults
     
-    // Days record to track which days the app was opened (stored as timestamps)
+    /// Days record to track which days the app was opened (stored as timestamps)
     private var streakDays: [TimeInterval] = []
     
-    // Flag to track if data was corrupted on load
+    /// Flag to track if data was corrupted on load
     private var dataWasCorrupted = false
+    
+    // MARK: - Initialization
     
     private init() {
         // Initialize with UserDefaults access error handling
@@ -88,7 +103,7 @@ class StreakManager: ObservableObject {
     
     // MARK: - Data Management
     
-    // Load saved streak data from UserDefaults with error handling
+    /// Load saved streak data from UserDefaults with error handling
     private func loadStreakData() throws {
         do {
             // First, check if we have backup data if regular data is corrupted
@@ -127,7 +142,7 @@ class StreakManager: ObservableObject {
         }
     }
     
-    // Save streak data to UserDefaults with error handling
+    /// Save streak data to UserDefaults with error handling
     private func saveStreakData() throws {
         do {
             // Validate data before saving
@@ -164,7 +179,7 @@ class StreakManager: ObservableObject {
     
     // MARK: - Streak Logic
     
-    // Check and possibly update the streak counter with error handling
+    /// Check and possibly update the streak counter with error handling
     private func checkStreak() throws {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
@@ -183,7 +198,6 @@ class StreakManager: ObservableObject {
             return
         }
 
-        // To this:
         let lastOpenDay = calendar.startOfDay(for: lastDate)
         
         // If the app was already opened today, no streak update needed
@@ -244,7 +258,7 @@ class StreakManager: ObservableObject {
         }
     }
     
-    // Record a day in the streak days array with validation
+    /// Record a day in the streak days array with validation
     private func recordDay(_ day: Date) {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: day)
@@ -266,7 +280,7 @@ class StreakManager: ObservableObject {
         }
     }
     
-    // Clear previous streak days when streak is broken
+    /// Clear previous streak days when streak is broken
     private func clearOldStreakDays() {
         let previousCount = streakDays.count
         streakDays.removeAll()
@@ -275,7 +289,7 @@ class StreakManager: ObservableObject {
     
     // MARK: - Public Methods
     
-    // Public method to check in daily when app opens with error handling
+    /// Public method to check in daily when app opens with error handling
     func checkInToday() {
         do {
             let calendar = Calendar.current
@@ -295,12 +309,12 @@ class StreakManager: ObservableObject {
         }
     }
     
-    // Get streak days for calendar visualization
+    /// Get streak days for calendar visualization
     func getStreakDays() -> [Date] {
         return streakDays.map { Date(timeIntervalSince1970: $0) }
     }
 
-    // Check if a specific date is part of the streak
+    /// Check if a specific date is part of the streak
     func isDateInStreak(_ date: Date) -> Bool {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
@@ -317,7 +331,7 @@ class StreakManager: ObservableObject {
         })
     }
     
-    // Method to reset streak data (for testing or if needed)
+    /// Method to reset streak data (for testing or if needed)
     func resetStreakData() {
         print("Resetting streak data")
         currentStreak = 0
@@ -332,7 +346,7 @@ class StreakManager: ObservableObject {
         }
     }
     
-    // Get the current streak's start date with error handling
+    /// Get the current streak's start date with error handling
     func getStreakStartDate() -> Date? {
         guard currentStreak > 0, let lastDate = lastOpenDate else {
             return nil
@@ -354,7 +368,7 @@ class StreakManager: ObservableObject {
     
     // MARK: - Error Recovery
     
-    // Check if data appears to be corrupted
+    /// Check if data appears to be corrupted
     private func isDataCorrupted() -> Bool {
         // Check for inconsistent streak values
         if currentStreak < 0 || longestStreak < 0 ||
@@ -376,7 +390,7 @@ class StreakManager: ObservableObject {
         return false
     }
     
-    // Validate that streak data makes sense
+    /// Validate that streak data makes sense
     private func isStreakDataValid() -> Bool {
         // Check streak values are consistent
         if currentStreak < 0 || longestStreak < 0 {
@@ -395,7 +409,7 @@ class StreakManager: ObservableObject {
         return true
     }
     
-    // Attempt to repair corrupted streak data
+    /// Attempt to repair corrupted streak data
     private func repairStreakData() {
         print("Attempting to repair streak data")
         
@@ -437,7 +451,7 @@ class StreakManager: ObservableObject {
         }
     }
     
-    // Ensure today is recorded in the streak (for error recovery)
+    /// Ensure today is recorded in the streak (for error recovery)
     private func ensureTodayIsRecorded() {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
@@ -463,7 +477,7 @@ class StreakManager: ObservableObject {
         }
     }
     
-    // Create backup of streak data
+    /// Create backup of streak data
     private func createBackup() {
         do {
             // Only backup if we have valid data
@@ -483,12 +497,12 @@ class StreakManager: ObservableObject {
         }
     }
     
-    // Check if backup is available
+    /// Check if backup is available
     private func isBackupAvailable() -> Bool {
         return defaults.object(forKey: lastOpenDateKey + backupSuffix) != nil
     }
     
-    // Restore from backup
+    /// Restore from backup
     private func restoreFromBackup() throws {
         guard isBackupAvailable() else {
             throw StreakError.dataCorruption("No backup available to restore from")
@@ -519,7 +533,7 @@ class StreakManager: ObservableObject {
     
     // MARK: - Notifications
     
-    // Check for streak milestones and send notifications
+    /// Check for streak milestones and send notifications
     private func checkForStreakMilestone() {
         // Define milestones to celebrate
         let milestones = [3, 7, 14, 21, 30, 50, 100, 365]
@@ -530,7 +544,7 @@ class StreakManager: ObservableObject {
         }
     }
     
-    // Send a notification for reaching a streak milestone with error handling
+    /// Send a notification for reaching a streak milestone with error handling
     private func sendStreakMilestoneNotification(_ streakDays: Int) {
         let notificationCenter = UNUserNotificationCenter.current()
         
@@ -574,7 +588,7 @@ class StreakManager: ObservableObject {
     
     // MARK: - Debugging
     
-    // Diagnostic method to print streak status (for debugging)
+    /// Diagnostic method to print streak status (for debugging)
     func printStreakDiagnostics() {
         print("=== STREAK DIAGNOSTICS ===")
         print("Current streak: \(currentStreak)")

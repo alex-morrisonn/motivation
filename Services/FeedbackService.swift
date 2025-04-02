@@ -3,7 +3,8 @@ import FirebaseFirestore
 import UIKit
 import Network
 
-// Custom error types for better error handling
+// MARK: - Error Types
+/// Custom error types for better error handling in feedback operations
 enum FeedbackError: Error, LocalizedError {
     case emptyFeedbackText
     case invalidEmail
@@ -36,7 +37,8 @@ enum FeedbackError: Error, LocalizedError {
     }
 }
 
-// Result type for feedback submission
+// MARK: - Result Model
+/// Result type for feedback submission
 struct FeedbackResult {
     let success: Bool
     let documentID: String?
@@ -52,21 +54,48 @@ struct FeedbackResult {
     }
 }
 
+// MARK: - Feedback Model
+/// Model to represent feedback items
+struct Feedback: Identifiable {
+    var id: String
+    var text: String
+    var type: String
+    var email: String
+    var timestamp: Date
+    
+    // Helper property to format the date
+    var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: timestamp)
+    }
+}
+
+// MARK: - FeedbackService
+/// Service responsible for handling user feedback submission and management
 class FeedbackService {
-    // Get a reference to the Firestore database
+    // MARK: - Properties
+    
+    /// Reference to the Firestore database
     static let db = Firestore.firestore()
     
-    // Network monitor for connectivity checks
+    /// Network monitor for connectivity checks
     private static let networkMonitor = NWPathMonitor()
     private static var isNetworkAvailable = true
     private static var isMonitoringStarted = false
     
-    // Rate limiting properties
+    /// Rate limiting properties
     private static let feedbackRateLimit = 5 // Max submissions in rate limit window
     private static let rateLimitWindow: TimeInterval = 60 * 10 // 10 minutes
     private static var recentSubmissions: [Date] = []
     
-    // Start network monitoring
+    /// Key for UserDefaults to store cached feedback
+    private static let cachedFeedbackKey = "com.alexmorrison.moti.cachedFeedback"
+    
+    // MARK: - Initialization & Setup
+    
+    /// Start network monitoring
     static func startNetworkMonitoring() {
         if isMonitoringStarted { return }
         
@@ -85,8 +114,7 @@ class FeedbackService {
         isMonitoringStarted = true
     }
     
-    // Key for UserDefaults to store cached feedback
-    private static let cachedFeedbackKey = "com.alexmorrison.moti.cachedFeedback"
+    // MARK: - Public Methods
     
     /// Sends user feedback to Firebase Firestore with enhanced error handling
     /// - Parameters:
@@ -237,7 +265,12 @@ class FeedbackService {
         }
     }
     
-    // MARK: - Helper methods
+    /// Clear all cached feedback (e.g., for privacy purposes)
+    static func clearCachedFeedback() {
+        UserDefaults.standard.removeObject(forKey: cachedFeedbackKey)
+    }
+    
+    // MARK: - Private Helper Methods
     
     /// Validate email format
     private static func isValidEmail(_ email: String) -> Bool {
@@ -280,13 +313,6 @@ class FeedbackService {
         }.value
     }
     
-    // Custom timeout error
-    private struct TimeoutError: Error, LocalizedError {
-        var errorDescription: String? {
-            return "The operation timed out"
-        }
-    }
-    
     /// Get device screen size for additional device info
     private static func getScreenSize() -> String {
         let screenBounds = UIScreen.main.bounds
@@ -306,7 +332,7 @@ class FeedbackService {
         // Crashlytics.crashlytics().record(error: error)
     }
     
-    // MARK: - Rate limiting methods
+    // MARK: - Rate Limiting Methods
     
     /// Check if submissions are being rate limited
     private static func isRateLimited() -> Bool {
@@ -326,7 +352,7 @@ class FeedbackService {
         recentSubmissions.append(Date())
     }
     
-    // MARK: - Offline caching methods
+    // MARK: - Offline Caching Methods
     
     /// Cache feedback for later submission when online
     private static func cacheFeedback(_ feedbackData: [String: Any]) {
@@ -382,29 +408,18 @@ class FeedbackService {
         // Update the cache with any feedback that couldn't be uploaded
         defaults.set(remainingFeedback, forKey: cachedFeedbackKey)
     }
-    
-    /// Clear all cached feedback (e.g., for privacy purposes)
-    static func clearCachedFeedback() {
-        UserDefaults.standard.removeObject(forKey: cachedFeedbackKey)
+}
+
+// MARK: - Error Types
+
+// Custom timeout error
+private struct TimeoutError: Error, LocalizedError {
+    var errorDescription: String? {
+        return "The operation timed out"
     }
 }
 
-// Model to represent feedback items
-struct Feedback: Identifiable {
-    var id: String
-    var text: String
-    var type: String
-    var email: String
-    var timestamp: Date
-    
-    // Helper property to format the date
-    var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: timestamp)
-    }
-}
+// MARK: - Extensions
 
 // Extension to get a description for UIUserInterfaceIdiom
 extension UIUserInterfaceIdiom {

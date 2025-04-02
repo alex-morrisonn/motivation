@@ -1,12 +1,16 @@
 import SwiftUI
 
-// Calendar day cell
+// MARK: - Calendar Day View Component
+
+/// A view representing a single day cell in the calendar
 struct CalendarDayView: View {
+    // MARK: Properties
     let date: Date
     let hasEvents: Bool
     let isSelected: Bool
     let isToday: Bool
     
+    // MARK: Initializer
     init(date: Date, hasEvents: Bool, isSelected: Bool, isToday: Bool) {
         self.date = date
         self.hasEvents = hasEvents
@@ -14,12 +18,15 @@ struct CalendarDayView: View {
         self.isToday = isToday
     }
     
+    // MARK: View Body
     var body: some View {
         VStack {
+            // Day of week label (Mon, Tue, etc.)
             Text(dayFormatter.string(from: date))
                 .font(.caption)
                 .foregroundColor(isToday ? .white : .gray)
             
+            // Date number with selection indicator
             ZStack {
                 Circle()
                     .fill(isSelected ? Color.white : Color.clear)
@@ -41,13 +48,16 @@ struct CalendarDayView: View {
         .contentShape(Rectangle())
     }
     
-    // Date formatters
+    // MARK: Formatters
+    
+    /// Formatter for day of week (e.g., "Mon")
     var dayFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.dateFormat = "E"
         return formatter
     }
     
+    /// Formatter for day number (e.g., "15")
     var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.dateFormat = "d"
@@ -55,19 +65,24 @@ struct CalendarDayView: View {
     }
 }
 
-// Calendar week view
+// MARK: - Calendar Week View Component
+
+/// A horizontal week view showing 7 days with event indicators
 struct CalendarWeekView: View {
+    // MARK: Properties
     @ObservedObject var eventService: EventService
     @Binding var selectedDate: Date
     
     let calendar = Calendar.current
     let daysInWeek = 7
     
+    // MARK: Initializer
     init(eventService: EventService = EventService.shared, selectedDate: Binding<Date>) {
         self.eventService = eventService
         self._selectedDate = selectedDate
     }
     
+    // MARK: View Body
     var body: some View {
         HStack(spacing: 5) {
             ForEach(0..<daysInWeek, id: \.self) { index in
@@ -90,21 +105,28 @@ struct CalendarWeekView: View {
         .padding(.horizontal)
     }
     
-    // Get date for the index in the week view
+    // MARK: Helper Methods
+    
+    /// Calculate the date for each index in the week view
+    /// - Parameter index: The index position (0-6)
+    /// - Returns: The corresponding date
     func getDateForIndex(_ index: Int) -> Date {
-        let today = calendar.startOfDay(for: Date())
         let firstDayOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedDate))!
         return calendar.date(byAdding: .day, value: index, to: firstDayOfWeek)!
     }
 }
 
-// Event list item for a specific date
+// MARK: - Event List Item Component
+
+/// A list item representing a single event with action buttons
 struct EventListItem: View {
+    // MARK: Properties
     let event: Event
     var onComplete: () -> Void
     var onDelete: () -> Void
     var onEdit: () -> Void
     
+    // MARK: Initializer
     init(event: Event, onComplete: @escaping () -> Void, onDelete: @escaping () -> Void, onEdit: @escaping () -> Void) {
         self.event = event
         self.onComplete = onComplete
@@ -112,12 +134,14 @@ struct EventListItem: View {
         self.onEdit = onEdit
     }
     
+    // MARK: Time Formatter
     var timeFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
         return formatter
     }
     
+    // MARK: View Body
     var body: some View {
         HStack {
             // Completion checkbox
@@ -181,8 +205,11 @@ struct EventListItem: View {
     }
 }
 
-// Event Editor View
+// MARK: - Event Editor View
+
+/// A form for creating and editing events
 struct EventEditorView: View {
+    // MARK: Environment & State
     @Environment(\.presentationMode) var presentationMode
     @ObservedObject var eventService: EventService
     
@@ -191,10 +218,16 @@ struct EventEditorView: View {
     @State private var notes: String
     @State private var isCompleted: Bool
     
+    // MARK: Properties
     private let isNew: Bool
     private var event: Event?
     
-    // For new event - now accepts initialDate parameter to use selected date
+    // MARK: Initializers
+    
+    /// Initialize for creating a new event
+    /// - Parameters:
+    ///   - eventService: The event service
+    ///   - initialDate: The initial date to use (defaults to current date)
     init(eventService: EventService = EventService.shared, initialDate: Date = Date()) {
         self.eventService = eventService
         _title = State(initialValue: "")
@@ -205,7 +238,10 @@ struct EventEditorView: View {
         event = nil
     }
     
-    // For editing existing event
+    /// Initialize for editing an existing event
+    /// - Parameters:
+    ///   - event: The event to edit
+    ///   - eventService: The event service
     init(event: Event, eventService: EventService = EventService.shared) {
         self.eventService = eventService
         _title = State(initialValue: event.title)
@@ -216,18 +252,21 @@ struct EventEditorView: View {
         self.event = event
     }
     
+    // MARK: View Body
     var body: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
             
             ScrollView {
                 VStack(spacing: 20) {
+                    // Form header
                     Text(isNew ? "Add New Event" : "Edit Event")
                         .font(.title)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .padding(.top, 20)
                     
+                    // Title field
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Event Title")
                             .font(.headline)
@@ -241,6 +280,7 @@ struct EventEditorView: View {
                     }
                     .padding(.horizontal)
                     
+                    // Date & time picker
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Date & Time")
                             .font(.headline)
@@ -254,6 +294,7 @@ struct EventEditorView: View {
                     }
                     .padding(.horizontal)
                     
+                    // Notes field
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Notes")
                             .font(.headline)
@@ -278,13 +319,16 @@ struct EventEditorView: View {
                     }
                     .padding(.horizontal)
                     
+                    // Completed toggle
                     Toggle(isOn: $isCompleted) {
                         Text("Completed")
                             .foregroundColor(.white)
                     }
                     .padding(.horizontal)
                     
+                    // Action buttons
                     HStack {
+                        // Cancel button
                         Button(action: {
                             presentationMode.wrappedValue.dismiss()
                         }) {
@@ -297,6 +341,7 @@ struct EventEditorView: View {
                                 .cornerRadius(10)
                         }
                         
+                        // Save button
                         Button(action: {
                             saveEvent()
                             presentationMode.wrappedValue.dismiss()
@@ -322,6 +367,9 @@ struct EventEditorView: View {
         }
     }
     
+    // MARK: Helper Methods
+    
+    /// Save the current event data
     private func saveEvent() {
         let newEvent = Event(
             id: event?.id ?? UUID(),
@@ -336,5 +384,60 @@ struct EventEditorView: View {
         } else {
             eventService.updateEvent(newEvent)
         }
+    }
+}
+
+// MARK: - Preview Providers
+
+struct CalendarDayView_Previews: PreviewProvider {
+    static var previews: some View {
+        ZStack {
+            Color.black
+            CalendarDayView(
+                date: Date(),
+                hasEvents: true,
+                isSelected: true,
+                isToday: true
+            )
+        }
+        .previewLayout(.sizeThatFits)
+    }
+}
+
+struct CalendarWeekView_Previews: PreviewProvider {
+    static var previews: some View {
+        ZStack {
+            Color.black
+            CalendarWeekView(
+                selectedDate: .constant(Date())
+            )
+        }
+        .previewLayout(.sizeThatFits)
+    }
+}
+
+struct EventListItem_Previews: PreviewProvider {
+    static var previews: some View {
+        ZStack {
+            Color.black
+            EventListItem(
+                event: Event(
+                    title: "Team Meeting",
+                    date: Date(),
+                    notes: "Discuss project timeline",
+                    isCompleted: false
+                ),
+                onComplete: {},
+                onDelete: {},
+                onEdit: {}
+            )
+        }
+        .previewLayout(.sizeThatFits)
+    }
+}
+
+struct EventEditorView_Previews: PreviewProvider {
+    static var previews: some View {
+        EventEditorView()
     }
 }

@@ -3,17 +3,26 @@ import GoogleMobileAds
 import UIKit
 
 /// A centralized manager for handling all ad-related functionality
+/// This class follows the Singleton pattern for app-wide ad management
 class AdManager: NSObject, ObservableObject {
-    // Singleton instance
+    // MARK: - Singleton Instance
+    
+    /// Shared instance for app-wide access
     static let shared = AdManager()
     
-    // Published properties for reactivity in SwiftUI
-    @Published var isBannerAdReady = true // Initialize to true
+    // MARK: - Published Properties
+    
+    /// Indicates whether banner ads are ready to be displayed
+    @Published var isBannerAdReady = true
+    
+    /// Indicates whether interstitial ads are ready to be displayed
     @Published var isInterstitialReady = false
+    
+    /// Indicates whether rewarded ads are ready to be displayed
     @Published var isRewardedAdReady = false
     
-    // Premium status property - always false in current version
-    // We keep this property for UI conditionals, but premium features are disabled
+    /// Premium status property (always false in current version)
+    /// Used for UI conditionals, but premium features are disabled
     @Published var isPremiumUser = false {
         didSet {
             // Always reset to false since premium is unavailable
@@ -26,15 +35,29 @@ class AdManager: NSObject, ObservableObject {
         }
     }
     
-    // Ad frequency control
-    private var lastInterstitialTime: Date?
-    private let minInterstitialInterval: TimeInterval = 180 // 3 minutes between interstitials
+    // MARK: - Private Properties
     
-    // Impression counter for frequency capping
+    /// Timestamp of the last shown interstitial ad for frequency capping
+    private var lastInterstitialTime: Date?
+    
+    /// Minimum time interval between interstitial ads in seconds (3 minutes)
+    private let minInterstitialInterval: TimeInterval = 180
+    
+    /// Counter for ad impressions (for frequency capping)
     private var sessionImpressions = 0
+    
+    /// Maximum number of ad impressions allowed per day
     private let maxDailyImpressions = 10
     
-    // Ad Units - TestIDs for now, replace with real IDs for production
+    /// Reference to loaded interstitial ad
+    private var interstitialAd: InterstitialAd?
+    
+    /// Reference to loaded rewarded ad
+    private var rewardedAd: RewardedAd?
+    
+    // MARK: - Ad Unit IDs
+    
+    /// Ad Unit IDs - Configured for test or production based on build configuration
     #if DEBUG
     let bannerAdUnitID = "ca-app-pub-3940256099942544/2934735716" // Test banner ID
     let interstitialAdUnitID = "ca-app-pub-3940256099942544/4411468910" // Test interstitial ID
@@ -48,13 +71,9 @@ class AdManager: NSObject, ObservableObject {
     let nativeAdUnitID = "ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY"
     #endif
     
-    // Interstitial ad reference
-    private var interstitialAd: InterstitialAd?
+    // MARK: - Initialization
     
-    // Rewarded ad reference
-    private var rewardedAd: RewardedAd?
-    
-    // Private initializer for singleton
+    /// Private initializer for singleton
     private override init() {
         super.init()
         
@@ -117,6 +136,11 @@ class AdManager: NSObject, ObservableObject {
     /// - Parameter viewController: The view controller to present the ad from
     /// - Returns: Boolean indicating if the ad was shown
     func showInterstitialAd(from viewController: UIViewController) -> Bool {
+        // Skip if user is premium
+        if isPremiumUser {
+            return false
+        }
+        
         // Check if we've shown too many ads today
         if sessionImpressions >= maxDailyImpressions {
             print("Ad impression limit reached for today")
@@ -209,7 +233,7 @@ class AdManager: NSObject, ObservableObject {
         print("Daily impression counter reset")
     }
     
-    // MARK: - Premium Placeholders (Inactive in current version)
+    // MARK: - Premium Features Management (Inactive in current version)
     
     /// Placeholder for premium activation (non-functional in current version)
     /// Premium features are coming in a future update
@@ -267,10 +291,14 @@ extension AdManager: FullScreenContentDelegate {
 
 // MARK: - UIViewController Extension for showing ads
 extension UIViewController {
+    /// Convenience method to show an interstitial ad from any view controller
+    /// - Returns: Boolean indicating if the ad was shown
     func showInterstitialAd() -> Bool {
         return AdManager.shared.showInterstitialAd(from: self)
     }
     
+    /// Convenience method to show a rewarded ad from any view controller
+    /// - Parameter completion: Callback with success flag and reward amount
     func showRewardedAd(completion: @escaping (Bool, Int) -> Void) {
         AdManager.shared.showRewardedAd(from: self, completion: completion)
     }

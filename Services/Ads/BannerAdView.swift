@@ -2,8 +2,10 @@ import SwiftUI
 import GoogleMobileAds
 import UIKit
 
-// An enhanced banner ad with better positioning to avoid blocking navigation
+/// An enhanced banner ad view with better positioning and user control
 struct EnhancedBannerAdView: View {
+    // MARK: - Properties
+    
     @ObservedObject private var adManager = AdManager.shared
     @State private var adLoaded = false
     @State private var adHeight: CGFloat = 50
@@ -13,10 +15,18 @@ struct EnhancedBannerAdView: View {
     let screenName: String
     let adaptiveHeight: Bool
     
+    // MARK: - Initialization
+    
+    /// Initialize with screen name and optional adaptive height
+    /// - Parameters:
+    ///   - screenName: The name of the screen where this ad appears (for filtering)
+    ///   - adaptiveHeight: Whether the ad should adjust its height to content
     init(screenName: String, adaptiveHeight: Bool = false) {
         self.screenName = screenName
         self.adaptiveHeight = adaptiveHeight
     }
+    
+    // MARK: - View Body
     
     var body: some View {
         VStack(spacing: 0) {
@@ -75,11 +85,15 @@ struct EnhancedBannerAdView: View {
     }
 }
 
-// UIViewRepresentable for BannerView from GoogleMobileAds
+/// UIViewRepresentable wrapper for Google's BannerView
 struct BannerAdContent: UIViewRepresentable {
+    // MARK: - Properties
+    
     let adUnitID: String
     @Binding var adLoaded: Bool
     @Binding var adHeight: CGFloat
+    
+    // MARK: - UIViewRepresentable Methods
     
     func makeUIView(context: Context) -> BannerView {
         let bannerView = BannerView()
@@ -114,6 +128,8 @@ struct BannerAdContent: UIViewRepresentable {
         Coordinator(self)
     }
     
+    // MARK: - Coordinator Class
+    
     class Coordinator: NSObject, BannerViewDelegate {
         var parent: BannerAdContent
         
@@ -142,7 +158,9 @@ struct BannerAdContent: UIViewRepresentable {
         }
     }
     
-    // Helper function to get the root view controller
+    // MARK: - Helper Methods
+    
+    /// Helper function to get the root view controller
     private func getWindowRootViewController() -> UIViewController? {
         return UIApplication.shared.connectedScenes
             .filter { $0.activationState == .foregroundActive }
@@ -153,10 +171,15 @@ struct BannerAdContent: UIViewRepresentable {
     }
 }
 
-// Extension to easily add enhanced banner ads to any view
+// MARK: - View Extensions for Banner Ads
+
+/// Extension to easily add enhanced banner ads to any view
 extension View {
+    /// Add a banner ad at the top of the view
+    /// - Parameter screenName: Name of the screen for banner filtering
+    /// - Returns: View with banner ad added at the top
     func withEnhancedBannerAd(screenName: String = "Default") -> some View {
-        ZStack(alignment: .top) { // Changed to top alignment
+        ZStack(alignment: .top) {
             self
             
             VStack(spacing: 0) {
@@ -165,10 +188,12 @@ extension View {
             }
         }
     }
-}
-
-// Alternative extension that positions the ad at the bottom but above the tab bar
-extension View {
+    
+    /// Add a banner ad at the bottom of the view, optionally above the tab bar
+    /// - Parameters:
+    ///   - screenName: Name of the screen for banner filtering
+    ///   - aboveTabBar: Whether to position the ad above the tab bar
+    /// - Returns: View with banner ad added at the bottom
     func withBottomBannerAd(screenName: String = "Default", aboveTabBar: Bool = true) -> some View {
         ZStack(alignment: .bottom) {
             self
