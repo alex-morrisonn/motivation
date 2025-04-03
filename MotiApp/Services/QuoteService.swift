@@ -46,14 +46,9 @@ class QuoteService: ObservableObject {
     
     init() {
         // Initialize quotes with error handling
-        do {
-            quotes = SharedQuotes.all.map { Quote(from: $0) }
-            if quotes.isEmpty {
-                print("Warning: No quotes loaded from SharedQuotes")
-            }
-        } catch {
-            print("Error initializing quotes: \(error.localizedDescription)")
-            quotes = [] // Initialize with empty array on error
+        quotes = SharedQuotes.all.map { Quote(from: $0) }
+        if quotes.isEmpty {
+            print("Warning: No quotes loaded from SharedQuotes")
         }
         
         // Load saved favorites
@@ -132,23 +127,18 @@ class QuoteService: ObservableObject {
             return getFallbackQuote()
         }
         
-        do {
-            let calendar = Calendar.current
-            let today = calendar.startOfDay(for: Date())
-            
-            // Use the day of the year to pick a quote
-            guard let dayOfYear = calendar.ordinality(of: .day, in: .year, for: today) else {
-                print("Warning: Could not determine day of year, using first quote")
-                return quotes[0]
-            }
-            
-            // Use modulo to ensure we always get a valid index
-            let index = (dayOfYear - 1) % quotes.count
-            return quotes[index]
-        } catch {
-            print("Error retrieving today's quote: \(error.localizedDescription)")
-            return getFallbackQuote()
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        
+        // Use the day of the year to pick a quote
+        guard let dayOfYear = calendar.ordinality(of: .day, in: .year, for: today) else {
+            print("Warning: Could not determine day of year, using first quote")
+            return quotes[0]
         }
+        
+        // Use modulo to ensure we always get a valid index
+        let index = (dayOfYear - 1) % quotes.count
+        return quotes[index]
     }
     
     /// Get a random quote
@@ -200,11 +190,10 @@ class QuoteService: ObservableObject {
         var encodableFavorites: [Quote] = []
         
         for favorite in favorites {
-            do {
-                // Test if each favorite can be encoded individually
-                let _ = try JSONEncoder().encode(favorite)
+            // Test if each favorite can be encoded individually
+            if let _ = try? JSONEncoder().encode(favorite) {
                 encodableFavorites.append(favorite)
-            } catch {
+            } else {
                 print("Skipping non-encodable favorite: \(favorite.text)")
             }
         }
@@ -245,18 +234,16 @@ class QuoteService: ObservableObject {
         
         // First, try to load from backup if it exists
         if let backupData = UserDefaults.standard.data(forKey: backupFavoritesKey) {
-            do {
-                let recoveredFavorites = try JSONDecoder().decode([Quote].self, from: backupData)
-                if !recoveredFavorites.isEmpty {
-                    print("Recovered \(recoveredFavorites.count) favorites from backup")
-                    favorites = recoveredFavorites
-                    
-                    // Save to main storage
-                    saveFavorites()
-                    return
-                }
-            } catch {
-                print("Backup recovery failed: \(error.localizedDescription)")
+            if let recoveredFavorites = try? JSONDecoder().decode([Quote].self, from: backupData),
+               !recoveredFavorites.isEmpty {
+                print("Recovered \(recoveredFavorites.count) favorites from backup")
+                favorites = recoveredFavorites
+                
+                // Save to main storage
+                saveFavorites()
+                return
+            } else {
+                print("Backup recovery failed")
             }
         }
         

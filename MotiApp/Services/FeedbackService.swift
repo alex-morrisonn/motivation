@@ -191,34 +191,32 @@ class FeedbackService {
             // Analytics.logEvent("feedback_submitted", parameters: ["type": type])
             
             return .success(documentID: documentReference.documentID)
-        } catch let timeoutError as TimeoutError {
-            // Handle timeout specifically
-            logError(error: timeoutError, data: feedbackData)
-            return .failure(error: .timeout)
-        } catch let error as NSError {
+        } catch {
             // Handle Firestore-specific errors
-            if error.domain == FirestoreErrorDomain {
-                switch error.code {
-                case FirestoreErrorCode.unavailable.rawValue:
-                    // Store for later submission
-                    cacheFeedback(feedbackData)
-                    return .failure(error: .networkOffline)
-                    
-                case FirestoreErrorCode.cancelled.rawValue,
-                     FirestoreErrorCode.deadlineExceeded.rawValue:
-                    return .failure(error: .timeout)
-                    
-                case FirestoreErrorCode.permissionDenied.rawValue:
-                    return .failure(error: .firebaseError("Permission denied"))
-                    
-                default:
-                    return .failure(error: .firebaseError(error.localizedDescription))
+            if let nsError = error as NSError? {
+                if nsError.domain == FirestoreErrorDomain {
+                    switch nsError.code {
+                    case FirestoreErrorCode.unavailable.rawValue:
+                        // Store for later submission
+                        cacheFeedback(feedbackData)
+                        return .failure(error: .networkOffline)
+                        
+                    case FirestoreErrorCode.cancelled.rawValue,
+                         FirestoreErrorCode.deadlineExceeded.rawValue:
+                        return .failure(error: .timeout)
+                        
+                    case FirestoreErrorCode.permissionDenied.rawValue:
+                        return .failure(error: .firebaseError("Permission denied"))
+                        
+                    default:
+                        return .failure(error: .firebaseError(nsError.localizedDescription))
+                    }
                 }
-            } else {
-                // Generic error handling
-                logError(error: error, data: feedbackData)
-                return .failure(error: .unknownError(error))
             }
+            
+            // Generic error handling
+            logError(error: error, data: feedbackData)
+            return .failure(error: .unknownError(error))
         }
     }
     
@@ -254,11 +252,9 @@ class FeedbackService {
                     timestamp: timestamp
                 )
             }
-        } catch let timeoutError as TimeoutError {
-            throw FeedbackError.timeout
-        } catch let error as NSError {
-            if error.domain == FirestoreErrorDomain {
-                throw FeedbackError.firebaseError(error.localizedDescription)
+        } catch {
+            if let nsError = error as NSError?, nsError.domain == FirestoreErrorDomain {
+                throw FeedbackError.firebaseError(nsError.localizedDescription)
             } else {
                 throw FeedbackError.unknownError(error)
             }

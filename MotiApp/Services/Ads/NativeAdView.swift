@@ -224,8 +224,9 @@ struct NativeAdController: UIViewControllerRepresentable {
                 callToActionButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -8)
             ])
             
-            // Set up native ad view if available
-            if let nativeAdView = try? createNativeAdView() {
+            // Set up native ad view
+            let nativeAdView = createNativeAdView()
+            if let nativeAdView = nativeAdView {
                 // Replace containerView with nativeAdView
                 for subview in containerView.subviews {
                     nativeAdView.addSubview(subview)
@@ -246,10 +247,11 @@ struct NativeAdController: UIViewControllerRepresentable {
                 ]
                 
                 for (key, view) in viewsDict {
-                    do {
-                        try nativeAdView.setValue(view, forKey: key + "View")
-                    } catch {
-                        print("Could not set \(key)View: \(error)")
+                    // Use optional approach to avoid runtime crashes if the key doesn't exist
+                    if nativeAdView.responds(to: Selector(key + "View")) {
+                        nativeAdView.setValue(view, forKey: key + "View")
+                    } else {
+                        print("Key not found: \(key)View")
                     }
                 }
                 
@@ -260,8 +262,9 @@ struct NativeAdController: UIViewControllerRepresentable {
             return containerView
         }
         
-        /// Creates a native ad view safely
-        private func createNativeAdView() throws -> GoogleMobileAds.NativeAdView? {
+        /// Creates a native ad view
+        private func createNativeAdView() -> GoogleMobileAds.NativeAdView? {
+            // Create a native ad view without a try-catch since it doesn't throw
             let nativeAdView = GoogleMobileAds.NativeAdView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 40, height: 300))
             return nativeAdView
         }

@@ -68,8 +68,8 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Update streak when app becomes active
         updateStreak()
         
-        // Reset badge count
-        UIApplication.shared.applicationIconBadgeNumber = 0
+        // Reset badge count using the new UNUserNotificationCenter API in iOS 17+
+        resetBadgeCount()
         
         // Make sure premium is always disabled since the feature is not available yet
         ensurePremiumDisabled()
@@ -107,92 +107,68 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     // MARK: - Service Initialization
     
     private func initializeFirebase() {
-        do {
-            // Set up App Check before Firebase initialization
-            if #available(iOS 14.0, *) {
-                do {
-                    let providerFactory = DeviceCheckProviderFactory()
-                    AppCheck.setAppCheckProviderFactory(providerFactory)
-                    print("App Check configured successfully")
-                } catch {
-                    print("WARNING: Failed to configure App Check: \(error.localizedDescription)")
-                }
-            }
-            
-            // Initialize Firebase
-            FirebaseApp.configure()
-            print("Firebase core initialized successfully")
-            
-            // Configure Crashlytics
-            Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
-            print("Crashlytics configured successfully")
-            
-            // Configure offline persistence for Firestore
-            configureFirestoreSettings()
-            
-            // Configure analytics - initially disabled until ATT permission is granted
-            configureAnalytics()
-            
-            isFirebaseInitialized = true
-        } catch {
-            print("CRITICAL ERROR: Firebase configuration failed: \(error.localizedDescription)")
-            logError(error, critical: true)
-            attemptFirebaseRecovery()
+        // Set up App Check before Firebase initialization
+        if #available(iOS 14.0, *) {
+            let providerFactory = DeviceCheckProviderFactory()
+            AppCheck.setAppCheckProviderFactory(providerFactory)
+            print("App Check configured successfully")
         }
+        
+        // Initialize Firebase
+        FirebaseApp.configure()
+        print("Firebase core initialized successfully")
+        
+        // Configure Crashlytics
+        Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
+        print("Crashlytics configured successfully")
+        
+        // Configure offline persistence for Firestore
+        configureFirestoreSettings()
+        
+        // Configure analytics - initially disabled until ATT permission is granted
+        configureAnalytics()
+        
+        isFirebaseInitialized = true
     }
     
     private func configureFirestoreSettings() {
-        do {
-            let settings = FirestoreSettings()
-            settings.isPersistenceEnabled = true
-            // Use a reasonable cache size (100MB)
-            settings.cacheSizeBytes = 100 * 1024 * 1024
-            Firestore.firestore().settings = settings
-            print("Firestore offline persistence configured successfully")
-        } catch {
-            print("WARNING: Failed to configure Firestore settings: \(error.localizedDescription)")
-        }
+        let settings = FirestoreSettings()
+        settings.cacheSettings = PersistentCacheSettings()
+        
+        Firestore.firestore().settings = settings
+        print("Firestore offline persistence configured successfully")
     }
     
     private func configureAnalytics() {
-        do {
-            // Initially disable analytics until ATT permission is granted
-            Analytics.setAnalyticsCollectionEnabled(false)
-            
-            // Set user properties for analytics
-            if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String {
-                Analytics.setUserProperty(version, forName: "app_version")
-            } else {
-                print("WARNING: Could not retrieve app version for analytics")
-            }
-            
-            // Log app open event
-            Analytics.logEvent(AnalyticsEventAppOpen, parameters: nil)
-            print("Analytics initially configured (disabled until permission)")
-        } catch {
-            print("WARNING: Failed to configure Analytics: \(error.localizedDescription)")
+        // Initially disable analytics until ATT permission is granted
+        Analytics.setAnalyticsCollectionEnabled(false)
+        
+        // Set user properties for analytics
+        if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String {
+            Analytics.setUserProperty(version, forName: "app_version")
+        } else {
+            print("WARNING: Could not retrieve app version for analytics")
         }
+        
+        // Log app open event
+        Analytics.logEvent(AnalyticsEventAppOpen, parameters: nil)
+        print("Analytics initially configured (disabled until permission)")
     }
     
     private func initializeAdMob() {
-        do {
-            // Initialize Google Mobile Ads SDK
-            MobileAds.initialize()
-            print("AdMob successfully initialized")
-            
-            // For test devices (remove in production or use your test device IDs)
-            #if DEBUG
-            MobileAds.shared.requestConfiguration.testDeviceIdentifiers = ["GAD_SIMULATOR_ID"]
-            #endif
-            
-            // Set content rating
-            MobileAds.shared.requestConfiguration.maxAdContentRating = GADMaxAdContentRating.general
-            
-            isAdMobInitialized = true
-        } catch {
-            print("ERROR: Failed to initialize AdMob: \(error.localizedDescription)")
-            logError(error)
-        }
+        // Initialize Google Mobile Ads SDK
+        MobileAds.initialize()
+        print("AdMob successfully initialized")
+        
+        // For test devices (remove in production or use your test device IDs)
+        #if DEBUG
+        MobileAds.shared.requestConfiguration.testDeviceIdentifiers = ["GAD_SIMULATOR_ID"]
+        #endif
+        
+        // Set content rating
+        MobileAds.shared.requestConfiguration.maxAdContentRating = GADMaxAdContentRating.general
+        
+        isAdMobInitialized = true
     }
     
     private func configureNotifications(_ application: UIApplication) {
@@ -207,33 +183,40 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     }
     
     private func configureAppGroup() {
-        do {
-            // Standardize app group name across app and widget extensions
-            guard let sharedDefaults = UserDefaults(suiteName: "group.com.alexmorrison.moti.shared") else {
-                print("ERROR: Could not access shared app group")
-                throw AppDelegateError.appGroupAccessFailed
-            }
-            
-            // Verify we can write to and read from the shared UserDefaults
-            let testKey = "app_group_verification_test"
-            let testValue = "test_\(Date().timeIntervalSince1970)"
-            
-            // Write a test value
-            sharedDefaults.set(testValue, forKey: testKey)
-            
-            // Immediately read it back to verify
-            if let verificationValue = sharedDefaults.string(forKey: testKey), verificationValue == testValue {
-                // Clean up test value
-                sharedDefaults.removeObject(forKey: testKey)
-                print("App group access verified successfully")
-                isAppGroupConfigured = true
-            } else {
-                print("ERROR: App group verification failed - could not read back test value")
-                createLocalFallbackStorage()
-            }
-        } catch {
-            print("ERROR: App group configuration failed: \(error.localizedDescription)")
+        // Standardize app group name across app and widget extensions
+        guard let sharedDefaults = UserDefaults(suiteName: "group.com.alexmorrison.moti.shared") else {
+            print("ERROR: Could not access shared app group")
             createLocalFallbackStorage()
+            return
+        }
+        
+        // Verify we can write to and read from the shared UserDefaults
+        let testKey = "app_group_verification_test"
+        let testValue = "test_\(Date().timeIntervalSince1970)"
+        
+        // Write a test value
+        sharedDefaults.set(testValue, forKey: testKey)
+        
+        // Immediately read it back to verify
+        if let verificationValue = sharedDefaults.string(forKey: testKey), verificationValue == testValue {
+            // Clean up test value
+            sharedDefaults.removeObject(forKey: testKey)
+            print("App group access verified successfully")
+            isAppGroupConfigured = true
+        } else {
+            print("ERROR: App group verification failed - could not read back test value")
+            createLocalFallbackStorage()
+        }
+    }
+    
+    // MARK: - Badge Count Management
+    
+    /// Reset the application badge count using the recommended API for iOS 17+
+    private func resetBadgeCount() {
+        UNUserNotificationCenter.current().setBadgeCount(0) { error in
+            if let error = error {
+                print("Error resetting badge count: \(error.localizedDescription)")
+            }
         }
     }
     
@@ -256,20 +239,12 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     // MARK: - Streak Management
     
     private func initializeStreakManager() {
-        do {
-            StreakManager.shared.checkInToday()
-            print("Streak manager initialized successfully")
-        } catch {
-            print("WARNING: Streak initialization failed: \(error.localizedDescription)")
-        }
+        StreakManager.shared.checkInToday()
+        print("Streak manager initialized successfully")
     }
     
     private func updateStreak() {
-        do {
-            StreakManager.shared.checkInToday()
-        } catch {
-            print("WARNING: Streak update failed: \(error.localizedDescription)")
-        }
+        StreakManager.shared.checkInToday()
     }
     
     // MARK: - App State Management
@@ -365,22 +340,18 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
                 // Update analytics collection based on authorization status
                 let isEnabled = status == .authorized
                 DispatchQueue.main.async {
-                    do {
-                        Analytics.setAnalyticsCollectionEnabled(isEnabled)
-                        print("App Tracking Transparency status: \(status.rawValue)")
-                        
-                        if isEnabled {
-                            print("User allowed tracking - analytics enabled")
-                        } else {
-                            print("User denied tracking or status is not determined - limited analytics only")
-                        }
-                        
-                        // Log the tracking status if Firebase is initialized
-                        if self?.isFirebaseInitialized == true {
-                            Analytics.logEvent("tracking_status", parameters: ["status": status.rawValue])
-                        }
-                    } catch {
-                        print("ERROR: Failed to update analytics collection status: \(error.localizedDescription)")
+                    Analytics.setAnalyticsCollectionEnabled(isEnabled)
+                    print("App Tracking Transparency status: \(status.rawValue)")
+                    
+                    if isEnabled {
+                        print("User allowed tracking - analytics enabled")
+                    } else {
+                        print("User denied tracking or status is not determined - limited analytics only")
+                    }
+                    
+                    // Log the tracking status if Firebase is initialized
+                    if self?.isFirebaseInitialized == true {
+                        Analytics.logEvent("tracking_status", parameters: ["status": status.rawValue])
                     }
                 }
             }
@@ -422,31 +393,27 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Handle notification tap - can be used to navigate to a specific part of the app
         let identifier = response.notification.request.identifier
         
-        do {
-            if identifier == "com.alexmorrison.moti.dailyReminder" {
-                // Open the quotes tab
-                NotificationCenter.default.post(name: NSNotification.Name("OpenQuotesTab"), object: nil)
-                
-                // Log the event if Firebase is initialized
-                if isFirebaseInitialized {
-                    Analytics.logEvent("notification_opened", parameters: ["type": "daily_reminder"])
-                }
-            } else if identifier.contains("streak") {
-                // Open streak details
-                NotificationCenter.default.post(name: NSNotification.Name("OpenStreakDetails"), object: nil)
-                
-                // Log the event if Firebase is initialized
-                if isFirebaseInitialized {
-                    Analytics.logEvent("notification_opened", parameters: ["type": "streak_milestone"])
-                }
-            } else {
-                // Default handling
-                if isFirebaseInitialized {
-                    Analytics.logEvent("notification_opened", parameters: ["type": "other", "identifier": identifier])
-                }
+        if identifier == "com.alexmorrison.moti.dailyReminder" {
+            // Open the quotes tab
+            NotificationCenter.default.post(name: NSNotification.Name("OpenQuotesTab"), object: nil)
+            
+            // Log the event if Firebase is initialized
+            if isFirebaseInitialized {
+                Analytics.logEvent("notification_opened", parameters: ["type": "daily_reminder"])
             }
-        } catch {
-            print("Error handling notification response: \(error.localizedDescription)")
+        } else if identifier.contains("streak") {
+            // Open streak details
+            NotificationCenter.default.post(name: NSNotification.Name("OpenStreakDetails"), object: nil)
+            
+            // Log the event if Firebase is initialized
+            if isFirebaseInitialized {
+                Analytics.logEvent("notification_opened", parameters: ["type": "streak_milestone"])
+            }
+        } else {
+            // Default handling
+            if isFirebaseInitialized {
+                Analytics.logEvent("notification_opened", parameters: ["type": "other", "identifier": identifier])
+            }
         }
         
         completionHandler()
