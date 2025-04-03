@@ -122,15 +122,31 @@ class InterstitialAdCoordinator: ObservableObject {
     // MARK: - Private Methods
     
     /// Private helper to attempt showing an interstitial
-    private func tryShowingInterstitial() {
-        // Get the root controller to present the ad
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootController = windowScene.windows.first?.rootViewController {
+        /// Helper method to show interstitial ad that works across app and extension targets
+        private func tryShowingInterstitial() {
+            // Use a more robust method to get the root view controller
+            func getRootViewController() -> UIViewController? {
+                #if !WIDGET_EXTENSION
+                // For main app, use UIApplication scenes
+                return UIApplication.shared.connectedScenes
+                    .filter { $0.activationState == .foregroundActive }
+                    .compactMap { $0 as? UIWindowScene }
+                    .first?.windows
+                    .filter { $0.isKeyWindow }
+                    .first?.rootViewController
+                #else
+                // For widget extension, return nil or handle differently
+                return nil
+                #endif
+            }
             
-            // Try showing the ad through AdManager
-            _ = adManager.showInterstitialAd(from: rootController)
+            // Only attempt to show ad in the main app context
+            #if !WIDGET_EXTENSION
+            if let rootController = getRootViewController() {
+                _ = adManager.showInterstitialAd(from: rootController)
+            }
+            #endif
         }
-    }
     
     // MARK: - Notification Handlers
     

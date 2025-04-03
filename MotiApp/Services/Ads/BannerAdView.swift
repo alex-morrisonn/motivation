@@ -161,20 +161,29 @@ struct BannerAdContent: UIViewRepresentable {
     // MARK: - Helper Methods
     
     /// Helper function to get the root view controller
-    private func getWindowRootViewController() -> UIViewController? {
-        return UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .foregroundActive }
-            .compactMap { $0 as? UIWindowScene }
-            .first?.windows
-            .filter { $0.isKeyWindow }
-            .first?.rootViewController
-    }
-}
+    func getWindowRootViewController() -> UIViewController? {
+            #if !WIDGET_EXTENSION
+            // Use UIApplication scenes only in the main app
+            guard let windowScene = UIApplication.shared.connectedScenes
+                .filter({ $0.activationState == .foregroundActive })
+                .compactMap({ $0 as? UIWindowScene })
+                .first,
+                let rootViewController = windowScene.windows
+                    .filter({ $0.isKeyWindow })
+                    .first?.rootViewController else {
+                return nil
+            }
+            
+            return rootViewController
+            #else
+            // Return nil for widget extensions
+            return nil
+            #endif
+        }
 
 // MARK: - View Extensions for Banner Ads
 
 /// Extension to easily add enhanced banner ads to any view
-extension View {
     /// Add a banner ad at the top of the view
     /// - Parameter screenName: Name of the screen for banner filtering
     /// - Returns: View with banner ad added at the top

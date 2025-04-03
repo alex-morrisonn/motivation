@@ -31,6 +31,8 @@
 		1E6A602D2D94DA3B00AD9399 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 1E6A602C2D94DA3B00AD9399 /* FirebaseAppCheck */; };
 		1E6A602F2D94DA6200AD9399 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1E6A602E2D94DA6200AD9399 /* FirebaseCrashlytics */; };
 		1E6A60322D9511A600AD9399 /* AppTrackingTransparency.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E6A60312D9511A600AD9399 /* AppTrackingTransparency.framework */; };
+		1EED66DE2D9E255900E04C7B /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 1EED66DD2D9E255900E04C7B /* AsyncAlgorithms */; };
+		1EED66E02D9E256100E04C7B /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 1EED66DF2D9E256100E04C7B /* AsyncAlgorithms */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -92,9 +94,39 @@
 			membershipExceptions = (
 				AppDelegate.swift,
 				Assets.xcassets,
+				Models/EventModel.swift,
+				Models/QuoteModel.swift,
 				MotiApp.swift,
 				"Preview Content/Preview Assets.xcassets",
+				Resources/SharedQuotes.swift,
+				Services/Ads/AdManager.swift,
+				Services/Ads/BannerAdView.swift,
+				Services/Ads/InterstitualAdCoordinator.swift,
+				Services/Ads/NativeAdView.swift,
+				Services/EventService.swift,
+				Services/FeedbackService.swift,
+				Services/NotificationManager.swift,
+				Services/QuoteService.swift,
+				Services/StreakManager.swift,
 				SplashScreenView.swift,
+				Utilities/Constants/SharedConstants.swift,
+				Utilities/UI/ShareSheet.swift,
+				Views/Calendar/CalendarComponents.swift,
+				Views/Calendar/EventEditorView.swift,
+				Views/Common/AboutView.swift,
+				Views/Common/FeedbackView.swift,
+				Views/Common/PremiumView.swift,
+				Views/Common/PrivacyPolicyView.swift,
+				Views/Common/RewardedAdView.swift,
+				Views/Main/CategoriesView.swift,
+				Views/Main/ContentView.swift,
+				Views/Main/FavouritesView.swift,
+				Views/Main/HomeQuoteView.swift,
+				Views/Main/MoreView.swift,
+				Views/Quotes/QuoteCardView.swift,
+				Views/Streak/StreakCelebrationView.swift,
+				Views/Streak/StreakDetailsView.swift,
+				Views/Widgets/WidgetsShowcaseView.swift,
 			);
 			target = 1E41834F2D8EC71300AAEC12 /* MotiTests */;
 		};
@@ -103,9 +135,39 @@
 			membershipExceptions = (
 				AppDelegate.swift,
 				Assets.xcassets,
+				Models/EventModel.swift,
+				Models/QuoteModel.swift,
 				MotiApp.swift,
 				"Preview Content/Preview Assets.xcassets",
+				Resources/SharedQuotes.swift,
+				Services/Ads/AdManager.swift,
+				Services/Ads/BannerAdView.swift,
+				Services/Ads/InterstitualAdCoordinator.swift,
+				Services/Ads/NativeAdView.swift,
+				Services/EventService.swift,
+				Services/FeedbackService.swift,
+				Services/NotificationManager.swift,
+				Services/QuoteService.swift,
+				Services/StreakManager.swift,
 				SplashScreenView.swift,
+				Utilities/Constants/SharedConstants.swift,
+				Utilities/UI/ShareSheet.swift,
+				Views/Calendar/CalendarComponents.swift,
+				Views/Calendar/EventEditorView.swift,
+				Views/Common/AboutView.swift,
+				Views/Common/FeedbackView.swift,
+				Views/Common/PremiumView.swift,
+				Views/Common/PrivacyPolicyView.swift,
+				Views/Common/RewardedAdView.swift,
+				Views/Main/CategoriesView.swift,
+				Views/Main/ContentView.swift,
+				Views/Main/FavouritesView.swift,
+				Views/Main/HomeQuoteView.swift,
+				Views/Main/MoreView.swift,
+				Views/Quotes/QuoteCardView.swift,
+				Views/Streak/StreakCelebrationView.swift,
+				Views/Streak/StreakDetailsView.swift,
+				Views/Widgets/WidgetsShowcaseView.swift,
 			);
 			target = 1E4183592D8EC71300AAEC12 /* MotiUITests */;
 		};
@@ -113,8 +175,37 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Assets.xcassets,
+				Models/EventModel.swift,
+				Models/QuoteModel.swift,
 				"Preview Content/Preview Assets.xcassets",
-				SplashScreenView.swift,
+				Resources/SharedQuotes.swift,
+				Services/Ads/AdManager.swift,
+				Services/Ads/BannerAdView.swift,
+				Services/Ads/InterstitualAdCoordinator.swift,
+				Services/Ads/NativeAdView.swift,
+				Services/EventService.swift,
+				Services/FeedbackService.swift,
+				Services/NotificationManager.swift,
+				Services/QuoteService.swift,
+				Services/StreakManager.swift,
+				Utilities/Constants/SharedConstants.swift,
+				Utilities/UI/ShareSheet.swift,
+				Views/Calendar/CalendarComponents.swift,
+				Views/Calendar/EventEditorView.swift,
+				Views/Common/AboutView.swift,
+				Views/Common/FeedbackView.swift,
+				Views/Common/PremiumView.swift,
+				Views/Common/PrivacyPolicyView.swift,
+				Views/Common/RewardedAdView.swift,
+				Views/Main/CategoriesView.swift,
+				Views/Main/ContentView.swift,
+				Views/Main/FavouritesView.swift,
+				Views/Main/HomeQuoteView.swift,
+				Views/Main/MoreView.swift,
+				Views/Quotes/QuoteCardView.swift,
+				Views/Streak/StreakCelebrationView.swift,
+				Views/Streak/StreakDetailsView.swift,
+				Views/Widgets/WidgetsShowcaseView.swift,
 			);
 			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
 		};
@@ -192,14 +283,6 @@
 			);
 			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
 		};
-		1E0DA7522D9E1FAC00AE0D31 /* Exceptions for "Services" folder in "MotiWidgetExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Ads/BannerAdView.swift,
-				Ads/NativeAdView.swift,
-			);
-			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
-		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -243,34 +326,6 @@
 			path = MotiAppUITests;
 			sourceTree = "<group>";
 		};
-		1EDF7FA92D9CA25000228E56 /* Models */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Models;
-			sourceTree = "<group>";
-		};
-		1EDF7FBC2D9CA2BD00228E56 /* Views */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Views;
-			sourceTree = "<group>";
-		};
-		1EDF7FEA2D9CA3E800228E56 /* Services */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				1E0DA7522D9E1FAC00AE0D31 /* Exceptions for "Services" folder in "MotiWidgetExtension" target */,
-			);
-			path = Services;
-			sourceTree = "<group>";
-		};
-		1EDF80032D9CA46A00228E56 /* Resources */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Resources;
-			sourceTree = "<group>";
-		};
-		1EDF80042D9CAB9A00228E56 /* Utilities */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Utilities;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -299,6 +354,7 @@
 				1E0DA7462D9E1D2200AE0D31 /* FirebaseCore in Frameworks */,
 				1E6A602D2D94DA3B00AD9399 /* FirebaseAppCheck in Frameworks */,
 				1E6A60282D94CE8900AD9399 /* FirebaseFirestore in Frameworks */,
+				1EED66E02D9E256100E04C7B /* AsyncAlgorithms in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -306,6 +362,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1EED66DE2D9E255900E04C7B /* AsyncAlgorithms in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -323,11 +380,6 @@
 		1E4183372D8EC71100AAEC12 = {
 			isa = PBXGroup;
 			children = (
-				1EDF80042D9CAB9A00228E56 /* Utilities */,
-				1EDF80032D9CA46A00228E56 /* Resources */,
-				1EDF7FEA2D9CA3E800228E56 /* Services */,
-				1EDF7FBC2D9CA2BD00228E56 /* Views */,
-				1EDF7FA92D9CA25000228E56 /* Models */,
 				1E0498D42D9BC86B00EE04EC /* index.md */,
 				1E6A60302D95103200AD9399 /* Info.plist */,
 				1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */,
@@ -380,11 +432,6 @@
 			);
 			fileSystemSynchronizedGroups = (
 				1E21CDF12D93715B000F7451 /* MotiWidget */,
-				1EDF7FA92D9CA25000228E56 /* Models */,
-				1EDF7FBC2D9CA2BD00228E56 /* Views */,
-				1EDF7FEA2D9CA3E800228E56 /* Services */,
-				1EDF80032D9CA46A00228E56 /* Resources */,
-				1EDF80042D9CAB9A00228E56 /* Utilities */,
 			);
 			name = MotiWidgetExtension;
 			packageProductDependencies = (
@@ -414,11 +461,6 @@
 			);
 			fileSystemSynchronizedGroups = (
 				1E4183422D8EC71100AAEC12 /* MotiApp */,
-				1EDF7FA92D9CA25000228E56 /* Models */,
-				1EDF7FBC2D9CA2BD00228E56 /* Views */,
-				1EDF7FEA2D9CA3E800228E56 /* Services */,
-				1EDF80032D9CA46A00228E56 /* Resources */,
-				1EDF80042D9CAB9A00228E56 /* Utilities */,
 			);
 			name = Moti;
 			packageProductDependencies = (
@@ -428,6 +470,7 @@
 				1E6A602E2D94DA6200AD9399 /* FirebaseCrashlytics */,
 				1E0921C92D97ADC800852F14 /* GoogleMobileAds */,
 				1E0DA7452D9E1D2200AE0D31 /* FirebaseCore */,
+				1EED66DF2D9E256100E04C7B /* AsyncAlgorithms */,
 			);
 			productName = motivationalQuotes;
 			productReference = 1E4183402D8EC71100AAEC12 /* Moti.app */;
@@ -448,14 +491,10 @@
 			);
 			fileSystemSynchronizedGroups = (
 				1E4183532D8EC71300AAEC12 /* MotiAppTests */,
-				1EDF7FA92D9CA25000228E56 /* Models */,
-				1EDF7FBC2D9CA2BD00228E56 /* Views */,
-				1EDF7FEA2D9CA3E800228E56 /* Services */,
-				1EDF80032D9CA46A00228E56 /* Resources */,
-				1EDF80042D9CAB9A00228E56 /* Utilities */,
 			);
 			name = MotiTests;
 			packageProductDependencies = (
+				1EED66DD2D9E255900E04C7B /* AsyncAlgorithms */,
 			);
 			productName = motivationalQuotesTests;
 			productReference = 1E4183502D8EC71300AAEC12 /* MotiTests.xctest */;
@@ -476,11 +515,6 @@
 			);
 			fileSystemSynchronizedGroups = (
 				1E41835D2D8EC71300AAEC12 /* MotiAppUITests */,
-				1EDF7FA92D9CA25000228E56 /* Models */,
-				1EDF7FBC2D9CA2BD00228E56 /* Views */,
-				1EDF7FEA2D9CA3E800228E56 /* Services */,
-				1EDF80032D9CA46A00228E56 /* Resources */,
-				1EDF80042D9CAB9A00228E56 /* Utilities */,
 			);
 			name = MotiUITests;
 			packageProductDependencies = (
@@ -1070,6 +1104,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1E6A60242D94CE8900AD9399 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCrashlytics;
+		};
+		1EED66DD2D9E255900E04C7B /* AsyncAlgorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1E0DA7422D9E1CB000AE0D31 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
+			productName = AsyncAlgorithms;
+		};
+		1EED66DF2D9E256100E04C7B /* AsyncAlgorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1E0DA7422D9E1CB000AE0D31 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
+			productName = AsyncAlgorithms;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

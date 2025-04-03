@@ -169,21 +169,40 @@ struct ContentView: View {
     }
     
     // Helper to get the safe area top inset
-    private func getSafeAreaTopInset() -> CGFloat {
-        // Get the top safe area inset
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first {
-            return window.safeAreaInsets.top
+        private func getSafeAreaTopInset() -> CGFloat {
+#if !WIDGET_EXTENSION
+            // For main app, use UIApplication scenes
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first {
+                return window.safeAreaInsets.top
+            }
+#endif
+            
+            // Fallback to 0 or a default value
+            return 0
         }
-        return 0
     }
-}
+    
+        /// Cross-platform safe area top inset helper
+        func getSafeAreaTopInset() -> CGFloat {
+#if !WIDGET_EXTENSION
+            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let window = windowScene.windows.first else {
+                return 0
+            }
+            return window.safeAreaInsets.top
+#else
+            return 0
+#endif
+        }
+    
+    
+    // SwiftUI Preview
+    struct ContentView_Previews: PreviewProvider {
+        static var previews: some View {
+            ContentView()
+                .environmentObject(NotificationManager.shared)
+                .preferredColorScheme(.dark)
+        }
+    }
 
-// SwiftUI Preview
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-            .environmentObject(NotificationManager.shared)
-            .preferredColorScheme(.dark)
-    }
-}
