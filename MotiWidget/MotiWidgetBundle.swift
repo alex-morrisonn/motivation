@@ -6,8 +6,37 @@ import SwiftUI
 struct MotiWidgetBundle: WidgetBundle {
     @WidgetBundleBuilder
     var body: some Widget {
-        // Daily quote widgets
-        QuoteWidget()          // Standard home screen widget
-        CompactQuoteWidget()   // Lock screen widget
+        // Home screen widgets
+        QuoteWidget()
+        
+        // Lock screen widgets (iOS 16+ only)
+        if #available(iOS 16.0, *) {
+            CompactQuoteWidget()
+        }
+        
+        // Debug fallback widget
+        #if DEBUG
+        FallbackWidget()
+        #endif
     }
 }
+
+// A minimal fallback widget for debugging purposes
+#if DEBUG
+struct FallbackWidget: Widget {
+    let kind: String = "FallbackWidget"
+    
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: QuoteTimelineProvider()) { entry in
+            ZStack {
+                Color.black
+                Text("Moti Widget")
+                    .foregroundColor(.white)
+            }
+        }
+        .configurationDisplayName("Moti Quote")
+        .description("Daily inspirational quotes")
+        .supportedFamilies([.systemSmall])
+    }
+}
+#endif

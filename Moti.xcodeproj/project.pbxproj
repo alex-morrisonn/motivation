@@ -232,7 +232,7 @@
 			);
 			target = 1E4183592D8EC71300AAEC12 /* MotiUITests */;
 		};
-		1E0DA7412D9E1B9D00AE0D31 /* Exceptions for "MotiWidget" folder in "MotiWidgetExtension" target */ = {
+		1E5EB2E92D9EAD4E00E56C10 /* Exceptions for "MotiWidget" folder in "MotiWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -248,7 +248,7 @@
 				1E0DA7312D9E1AE600AE0D31 /* Exceptions for "MotiWidget" folder in "Moti" target */,
 				1E0DA7322D9E1AE600AE0D31 /* Exceptions for "MotiWidget" folder in "MotiTests" target */,
 				1E0DA7332D9E1AE600AE0D31 /* Exceptions for "MotiWidget" folder in "MotiUITests" target */,
-				1E0DA7412D9E1B9D00AE0D31 /* Exceptions for "MotiWidget" folder in "MotiWidgetExtension" target */,
+				1E5EB2E92D9EAD4E00E56C10 /* Exceptions for "MotiWidget" folder in "MotiWidgetExtension" target */,
 			);
 			path = MotiWidget;
 			sourceTree = "<group>";
@@ -628,6 +628,7 @@
 				INFOPLIST_FILE = MotiWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Moti;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -656,6 +657,7 @@
 				INFOPLIST_FILE = MotiWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Moti;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -808,6 +810,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -839,6 +842,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -859,7 +863,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.motivationalQuotesTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -877,7 +881,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.motivationalQuotesTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -894,6 +898,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.motivationalQuotesUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -910,6 +915,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.motivationalQuotesUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";

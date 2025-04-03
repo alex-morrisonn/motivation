@@ -2,54 +2,88 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <!-- App Configuration -->
+    <key>CFBundleDevelopmentRegion</key>
+    <string>$(DEVELOPMENT_LANGUAGE)</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
     
-    <!-- Your AdMob app ID -->
-        <key>GADApplicationIdentifier</key>
-        <string>ca-app-pub-3940256099942544~1458002511</string>
-        
-        <!-- Required for iOS 14+ -->
-        <key>SKAdNetworkItems</key>
-        <array>
-            <dict>
-                <key>SKAdNetworkIdentifier</key>
-                <string>cstr6suwn9.skadnetwork</string>
-            </dict>
-            <!-- Add other SKAdNetworkIdentifier entries as recommended by Google -->
-        </array>
-        
-        <!-- User tracking permission request (required for iOS 14+) -->
-        <key>NSUserTrackingUsageDescription</key>
-        <string>This identifier will be used to deliver personalized ads to you.</string>
-        
-        <!-- Privacy manifest entries (newer iOS versions) -->
-        <key>NSPrivacyCollectedDataTypes</key>
-        <array>
-            <dict>
-                <key>NSPrivacyCollectedDataType</key>
-                <string>NSPrivacyCollectedDataTypeOtherDataTypes</string>
-                <key>NSPrivacyCollectedDataTypeLinked</key>
-                <true/>
-                <key>NSPrivacyCollectedDataTypeTracking</key>
-                <true/>
-            </dict>
-        </array>
-        
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Viewer</string>
-			<key>CFBundleURLName</key>
-			<string>com.alexmorrison.moti</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>moti</string>
-			</array>
-		</dict>
-	</array>
-	<key>NSUserNotificationsUsageDescription</key>
-	<string>Moti would like to send you daily motivational quotes and streak milestone notifications.</string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>This identifier helps us personalize your daily quotes based on what inspires you most and improve app features you use frequently.</string>
+    <!-- Deep Linking -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>CFBundleURLName</key>
+            <string>com.alexmorrison.moti</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>moti</string>
+            </array>
+        </dict>
+    </array>
+    
+    <!-- UI Requirements -->
+    <key>UILaunchStoryboardName</key>
+    <string>LaunchScreen</string>
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>armv7</string>
+    </array>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    
+    <!-- AdMob Configuration -->
+    <key>GADApplicationIdentifier</key>
+    <string>ca-app-pub-3940256099942544~1458002511</string>
+    <key>SKAdNetworkItems</key>
+    <array>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>cstr6suwn9.skadnetwork</string>
+        </dict>
+    </array>
+    
+    <!-- Privacy Permissions -->
+    <key>NSUserTrackingUsageDescription</key>
+    <string>This identifier helps us personalize your daily quotes based on what inspires you most and improve app features you use frequently.</string>
+    <key>NSUserNotificationsUsageDescription</key>
+    <string>Moti would like to send you daily motivational quotes and streak milestone notifications.</string>
+    
+    <!-- Privacy Declarations -->
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array>
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeOtherDataTypes</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <true/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <true/>
+        </dict>
+    </array>
 </dict>
 </plist>
