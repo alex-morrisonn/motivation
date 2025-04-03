@@ -14,15 +14,9 @@
 		1E0921CA2D97ADC800852F14 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0921C92D97ADC800852F14 /* GoogleMobileAds */; };
 		1E0DA7442D9E1CB000AE0D31 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA7432D9E1CB000AE0D31 /* AsyncAlgorithms */; };
 		1E0DA7462D9E1D2200AE0D31 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA7452D9E1D2200AE0D31 /* FirebaseCore */; };
-		1E0DA7482D9E1D5100AE0D31 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA7472D9E1D5100AE0D31 /* FirebaseCore */; };
-		1E0DA74A2D9E1D5100AE0D31 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA7492D9E1D5100AE0D31 /* FirebaseFirestore */; };
-		1E0DA74C2D9E1D6000AE0D31 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA74B2D9E1D6000AE0D31 /* AsyncAlgorithms */; };
-		1E0DA74E2D9E1D9600AE0D31 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA74D2D9E1D9600AE0D31 /* FirebaseAppCheck */; };
-		1E0DA7502D9E1D9600AE0D31 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA74F2D9E1D9600AE0D31 /* FirebaseCrashlytics */; };
 		1E21CDEF2D93715B000F7451 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */; };
 		1E21CDF02D93715B000F7451 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */; };
 		1E21CE012D93715C000F7451 /* MotiWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E21CDEE2D93715B000F7451 /* MotiWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		1E5EB2EB2D9EB11A00E56C10 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E6A60302D95103200AD9399 /* Info.plist */; };
 		1E6A60202D94CC2800AD9399 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */; };
 		1E6A60212D94CC2800AD9399 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */; };
 		1E6A60222D94CC2800AD9399 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */; };
@@ -32,7 +26,6 @@
 		1E6A602D2D94DA3B00AD9399 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 1E6A602C2D94DA3B00AD9399 /* FirebaseAppCheck */; };
 		1E6A602F2D94DA6200AD9399 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1E6A602E2D94DA6200AD9399 /* FirebaseCrashlytics */; };
 		1E6A60322D9511A600AD9399 /* AppTrackingTransparency.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E6A60312D9511A600AD9399 /* AppTrackingTransparency.framework */; };
-		1E9307502D9E445A00B0C441 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E93074F2D9E445A00B0C441 /* XCTest.framework */; };
 		1EED66DE2D9E255900E04C7B /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 1EED66DD2D9E255900E04C7B /* AsyncAlgorithms */; };
 		1EED66E02D9E256100E04C7B /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 1EED66DF2D9E256100E04C7B /* AsyncAlgorithms */; };
 /* End PBXBuildFile section */
@@ -95,82 +88,22 @@
 		1E0DA7102D9E1AB600AE0D31 /* Exceptions for "MotiApp" folder in "MotiTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				AppDelegate.swift,
 				Assets.xcassets,
-				Models/EventModel.swift,
-				Models/QuoteModel.swift,
-				MotiApp.swift,
 				"Preview Content/Preview Assets.xcassets",
 				Resources/SharedQuotes.swift,
-				Services/Ads/AdManager.swift,
-				Services/Ads/BannerAdView.swift,
-				Services/Ads/InterstitualAdCoordinator.swift,
-				Services/Ads/NativeAdView.swift,
-				Services/EventService.swift,
-				Services/FeedbackService.swift,
-				Services/NotificationManager.swift,
-				Services/QuoteService.swift,
-				Services/StreakManager.swift,
-				SplashScreenView.swift,
 				Utilities/Constants/SharedConstants.swift,
 				Utilities/UI/ShareSheet.swift,
-				Views/Calendar/CalendarComponents.swift,
-				Views/Calendar/EventEditorView.swift,
-				Views/Common/AboutView.swift,
-				Views/Common/FeedbackView.swift,
-				Views/Common/PremiumView.swift,
-				Views/Common/PrivacyPolicyView.swift,
-				Views/Common/RewardedAdView.swift,
-				Views/Main/CategoriesView.swift,
-				Views/Main/ContentView.swift,
-				Views/Main/FavouritesView.swift,
-				Views/Main/HomeQuoteView.swift,
-				Views/Main/MoreView.swift,
-				Views/Quotes/QuoteCardView.swift,
-				Views/Streak/StreakCelebrationView.swift,
-				Views/Streak/StreakDetailsView.swift,
-				Views/Widgets/WidgetsShowcaseView.swift,
 			);
 			target = 1E41834F2D8EC71300AAEC12 /* MotiTests */;
 		};
 		1E0DA7112D9E1AB600AE0D31 /* Exceptions for "MotiApp" folder in "MotiUITests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				AppDelegate.swift,
 				Assets.xcassets,
-				Models/EventModel.swift,
-				Models/QuoteModel.swift,
-				MotiApp.swift,
 				"Preview Content/Preview Assets.xcassets",
 				Resources/SharedQuotes.swift,
-				Services/Ads/AdManager.swift,
-				Services/Ads/BannerAdView.swift,
-				Services/Ads/InterstitualAdCoordinator.swift,
-				Services/Ads/NativeAdView.swift,
-				Services/EventService.swift,
-				Services/FeedbackService.swift,
-				Services/NotificationManager.swift,
-				Services/QuoteService.swift,
-				Services/StreakManager.swift,
-				SplashScreenView.swift,
 				Utilities/Constants/SharedConstants.swift,
 				Utilities/UI/ShareSheet.swift,
-				Views/Calendar/CalendarComponents.swift,
-				Views/Calendar/EventEditorView.swift,
-				Views/Common/AboutView.swift,
-				Views/Common/FeedbackView.swift,
-				Views/Common/PremiumView.swift,
-				Views/Common/PrivacyPolicyView.swift,
-				Views/Common/RewardedAdView.swift,
-				Views/Main/CategoriesView.swift,
-				Views/Main/ContentView.swift,
-				Views/Main/FavouritesView.swift,
-				Views/Main/HomeQuoteView.swift,
-				Views/Main/MoreView.swift,
-				Views/Quotes/QuoteCardView.swift,
-				Views/Streak/StreakCelebrationView.swift,
-				Views/Streak/StreakDetailsView.swift,
-				Views/Widgets/WidgetsShowcaseView.swift,
 			);
 			target = 1E4183592D8EC71300AAEC12 /* MotiUITests */;
 		};
@@ -178,60 +111,40 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Assets.xcassets,
-				Models/EventModel.swift,
-				Models/QuoteModel.swift,
 				"Preview Content/Preview Assets.xcassets",
 				Resources/SharedQuotes.swift,
-				Services/EventService.swift,
-				Services/FeedbackService.swift,
-				Services/NotificationManager.swift,
-				Services/QuoteService.swift,
-				Services/StreakManager.swift,
 				Utilities/Constants/SharedConstants.swift,
 				Utilities/UI/ShareSheet.swift,
-				Views/Calendar/CalendarComponents.swift,
-				Views/Calendar/EventEditorView.swift,
-				Views/Common/AboutView.swift,
-				Views/Common/FeedbackView.swift,
-				Views/Common/PrivacyPolicyView.swift,
-				Views/Main/FavouritesView.swift,
-				Views/Main/HomeQuoteView.swift,
-				Views/Quotes/QuoteCardView.swift,
-				Views/Streak/StreakCelebrationView.swift,
-				Views/Streak/StreakDetailsView.swift,
-				Views/Widgets/WidgetsShowcaseView.swift,
 			);
 			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
 		};
 		1E0DA7312D9E1AE600AE0D31 /* Exceptions for "MotiWidget" folder in "Moti" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				AppIntent.swift,
 				Assets.xcassets,
-				MotiWidget.swift,
-				MotiWidgetLiveActivity.swift,
 			);
 			target = 1E41833F2D8EC71100AAEC12 /* Moti */;
 		};
 		1E0DA7322D9E1AE600AE0D31 /* Exceptions for "MotiWidget" folder in "MotiTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				AppIntent.swift,
 				Assets.xcassets,
-				MotiWidget.swift,
-				MotiWidgetLiveActivity.swift,
 			);
 			target = 1E41834F2D8EC71300AAEC12 /* MotiTests */;
 		};
 		1E0DA7332D9E1AE600AE0D31 /* Exceptions for "MotiWidget" folder in "MotiUITests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				AppIntent.swift,
 				Assets.xcassets,
-				MotiWidget.swift,
-				MotiWidgetLiveActivity.swift,
 			);
 			target = 1E4183592D8EC71300AAEC12 /* MotiUITests */;
+		};
+		1E5EB3BE2D9F49F800E56C10 /* Exceptions for "MotiWidget" folder in "MotiWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -242,6 +155,7 @@
 				1E0DA7312D9E1AE600AE0D31 /* Exceptions for "MotiWidget" folder in "Moti" target */,
 				1E0DA7322D9E1AE600AE0D31 /* Exceptions for "MotiWidget" folder in "MotiTests" target */,
 				1E0DA7332D9E1AE600AE0D31 /* Exceptions for "MotiWidget" folder in "MotiUITests" target */,
+				1E5EB3BE2D9F49F800E56C10 /* Exceptions for "MotiWidget" folder in "MotiWidgetExtension" target */,
 			);
 			path = MotiWidget;
 			sourceTree = "<group>";
@@ -273,14 +187,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1E9307502D9E445A00B0C441 /* XCTest.framework in Frameworks */,
 				1E21CDF02D93715B000F7451 /* SwiftUI.framework in Frameworks */,
-				1E0DA74A2D9E1D5100AE0D31 /* FirebaseFirestore in Frameworks */,
-				1E0DA7482D9E1D5100AE0D31 /* FirebaseCore in Frameworks */,
-				1E0DA7502D9E1D9600AE0D31 /* FirebaseCrashlytics in Frameworks */,
 				1E21CDEF2D93715B000F7451 /* WidgetKit.framework in Frameworks */,
-				1E0DA74E2D9E1D9600AE0D31 /* FirebaseAppCheck in Frameworks */,
-				1E0DA74C2D9E1D6000AE0D31 /* AsyncAlgorithms in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -535,7 +443,6 @@
 			files = (
 				1E6A60222D94CC2800AD9399 /* GoogleService-Info.plist in Resources */,
 				1E0498D72D9BC87400EE04EC /* index.md in Resources */,
-				1E5EB2EB2D9EB11A00E56C10 /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
