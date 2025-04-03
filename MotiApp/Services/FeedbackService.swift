@@ -159,7 +159,7 @@ class FeedbackService {
         
         // Add device info if requested
         if includeDeviceInfo {
-            feedbackData["deviceInfo"] = [
+            await feedbackData["deviceInfo"] = [
                 "device": UIDevice.current.model,
                 "os": UIDevice.current.systemName,
                 "osVersion": UIDevice.current.systemVersion,

@@ -228,7 +228,8 @@ struct FeedbackView: View {
                                 text: $feedbackText,
                                 placeholder: "Share your experience, suggestions, or report issues here..."
                             )
-                            .onChange(of: feedbackText) { newValue in
+                            // Updated to use the new onChange API syntax with two parameters
+                            .onChange(of: feedbackText) { oldValue, newValue in
                                 if newValue.count > 500 {
                                     feedbackText = String(newValue.prefix(500))
                                 }

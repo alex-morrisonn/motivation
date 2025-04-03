@@ -182,28 +182,24 @@ class WidgetQuoteService {
 struct WidgetEventService {
     /// Get all events saved by the main app
     static func getEvents() -> [WidgetEvent] {
+        // Fixed: Removed outer do-catch block that had no try statements
+        guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
+            print("Widget Error: Could not access shared UserDefaults")
+            return []
+        }
+        
+        guard let savedEvents = sharedDefaults.data(forKey: "savedEvents") else {
+            // No events found, but this is not an error condition
+            print("Widget Info: No saved events found in shared storage")
+            return []
+        }
+        
         do {
-            guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
-                print("Widget Error: Could not access shared UserDefaults")
-                return []
-            }
-            
-            guard let savedEvents = sharedDefaults.data(forKey: "savedEvents") else {
-                // No events found, but this is not an error condition
-                print("Widget Info: No saved events found in shared storage")
-                return []
-            }
-            
-            do {
-                let decodedEvents = try JSONDecoder().decode([WidgetEvent].self, from: savedEvents)
-                return decodedEvents
-            } catch {
-                print("Widget Error: Failed to decode events: \(error.localizedDescription)")
-                return []
-            }
+            let decodedEvents = try JSONDecoder().decode([WidgetEvent].self, from: savedEvents)
+            return decodedEvents
         } catch {
-            print("Widget Error: \(error.localizedDescription)")
-            return [] // Return empty array on error for graceful degradation
+            print("Widget Error: Failed to decode events: \(error.localizedDescription)")
+            return []
         }
     }
     

@@ -92,7 +92,7 @@ struct CategoriesView: View {
                                 selectedCategory = nil
                                 
                                 // Check if we should show an interstitial ad when exiting category
-                                _ = InterstitialAdCoordinator.shared.checkForExitInterstitial(from: "CategoriesView")
+                                InterstitialAdCoordinator.shared.checkForExitInterstitial(from: "CategoriesView")
                             }) {
                                 Image(systemName: "chevron.left")
                                     .foregroundColor(.white)
