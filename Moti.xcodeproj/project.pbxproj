@@ -179,10 +179,6 @@
 				Models/QuoteModel.swift,
 				"Preview Content/Preview Assets.xcassets",
 				Resources/SharedQuotes.swift,
-				Services/Ads/AdManager.swift,
-				Services/Ads/BannerAdView.swift,
-				Services/Ads/InterstitualAdCoordinator.swift,
-				Services/Ads/NativeAdView.swift,
 				Services/EventService.swift,
 				Services/FeedbackService.swift,
 				Services/NotificationManager.swift,
@@ -194,14 +190,9 @@
 				Views/Calendar/EventEditorView.swift,
 				Views/Common/AboutView.swift,
 				Views/Common/FeedbackView.swift,
-				Views/Common/PremiumView.swift,
 				Views/Common/PrivacyPolicyView.swift,
-				Views/Common/RewardedAdView.swift,
-				Views/Main/CategoriesView.swift,
-				Views/Main/ContentView.swift,
 				Views/Main/FavouritesView.swift,
 				Views/Main/HomeQuoteView.swift,
-				Views/Main/MoreView.swift,
 				Views/Quotes/QuoteCardView.swift,
 				Views/Streak/StreakCelebrationView.swift,
 				Views/Streak/StreakDetailsView.swift,
@@ -238,13 +229,6 @@
 				MotiAppUITestsLaunchTests.swift,
 			);
 			target = 1E41834F2D8EC71300AAEC12 /* MotiTests */;
-		};
-		1E0DA72A2D9E1ADB00AE0D31 /* Exceptions for "MotiAppUITests" folder in "MotiWidgetExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				MotiAppUITestsLaunchTests.swift,
-			);
-			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
 		};
 		1E0DA7312D9E1AE600AE0D31 /* Exceptions for "MotiWidget" folder in "Moti" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -321,7 +305,6 @@
 			exceptions = (
 				1E0DA7282D9E1ADB00AE0D31 /* Exceptions for "MotiAppUITests" folder in "Moti" target */,
 				1E0DA7292D9E1ADB00AE0D31 /* Exceptions for "MotiAppUITests" folder in "MotiTests" target */,
-				1E0DA72A2D9E1ADB00AE0D31 /* Exceptions for "MotiAppUITests" folder in "MotiWidgetExtension" target */,
 			);
 			path = MotiAppUITests;
 			sourceTree = "<group>";
