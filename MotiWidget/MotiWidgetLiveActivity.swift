@@ -25,69 +25,37 @@ struct MotiWidgetLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: MotiWidgetAttributes.self) { context in
             // Lock screen/banner UI
-            ZStack {
-                // Background gradient
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color(red: 0.1, green: 0.1, blue: 0.3),
-                        Color(red: 0.05, green: 0.05, blue: 0.2)
-                    ]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                
-                VStack(spacing: 12) {
-                    // Session status indicator
-                    HStack {
-                        Label {
-                            Text("Motivation Session")
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.9))
-                        } icon: {
-                            Image(systemName: "quote.bubble.fill")
-                                .foregroundColor(.white)
-                        }
-                        
-                        Spacer()
-                        
-                        // Show elapsed time
-                        Label {
-                            Text(formatTime(context.state.timePassed))
-                                .font(.caption)
-                                .monospacedDigit()
-                                .foregroundColor(.white)
-                        } icon: {
-                            Image(systemName: "timer")
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    // Quote content
-                    VStack(spacing: 8) {
-                        Text(context.state.quote)
-                            .font(.callout)
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(.white)
-                            .lineLimit(3)
-                            .padding(.horizontal)
-                        
-                        Text("— \(context.state.author)")
+            VStack(spacing: 12) {
+                // Session status indicator
+                HStack {
+                    Label {
+                        Text("Motivation Session")
                             .font(.caption)
-                            .foregroundColor(.white.opacity(0.7))
+                    } icon: {
+                        Image(systemName: "quote.bubble.fill")
                     }
-                    .padding(.bottom, 8)
                     
-                    // Category chip
-                    Text(context.attributes.category)
-                        .font(.caption2)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(Color.white.opacity(0.15))
-                        .cornerRadius(12)
+                    Spacer()
+                    
+                    // Show elapsed time
+                    Label {
+                        Text(formatTime(context.state.timePassed))
+                            .font(.caption)
+                            .monospacedDigit()
+                    } icon: {
+                        Image(systemName: "timer")
+                    }
                 }
-                .padding(.vertical, 16)
+                .padding(.horizontal)
+                
+                // Quote content - simplified to match our minimal design
+                Text(context.state.quote)
+                    .font(.callout)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(3)
+                    .padding(.horizontal)
             }
+            .padding(.vertical, 16)
             .activityBackgroundTint(Color.black.opacity(0.8))
             .activitySystemActionForegroundColor(Color.white)
 
@@ -98,10 +66,8 @@ struct MotiWidgetLiveActivity: Widget {
                     Label {
                         Text(context.attributes.category)
                             .font(.caption2)
-                            .foregroundColor(.white.opacity(0.7))
                     } icon: {
                         Image(systemName: getCategoryIcon(context.attributes.category))
-                            .foregroundColor(.white.opacity(0.7))
                     }
                     .font(.caption)
                 }
@@ -112,43 +78,30 @@ struct MotiWidgetLiveActivity: Widget {
                         Text(formatTime(context.state.timePassed))
                             .font(.caption)
                             .monospacedDigit()
-                            .foregroundColor(.white.opacity(0.7))
                     } icon: {
                         Image(systemName: "timer")
-                            .foregroundColor(.white.opacity(0.7))
                     }
                     .font(.caption)
                 }
                 
                 DynamicIslandExpandedRegion(.bottom) {
-                    // Quote content in expanded view
-                    VStack(alignment: .center, spacing: 4) {
-                        Text(context.state.quote)
-                            .font(.callout)
-                            .lineLimit(3)
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(.white)
-                        
-                        Text("— \(context.state.author)")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.7))
-                    }
-                    .padding(.top, 8)
+                    // Quote content in expanded view - simplified to match our minimal design
+                    Text(context.state.quote)
+                        .font(.callout)
+                        .lineLimit(3)
+                        .multilineTextAlignment(.center)
                 }
             } compactLeading: {
                 // Leading part of compact view
                 Image(systemName: "quote.bubble.fill")
-                    .foregroundColor(.white)
             } compactTrailing: {
                 // Trailing part of compact view
                 Text(formatTime(context.state.timePassed))
                     .font(.caption2)
                     .monospacedDigit()
-                    .foregroundColor(.white)
             } minimal: {
                 // Minimal view (just icon)
                 Image(systemName: "quote.bubble.fill")
-                    .foregroundColor(.white)
             }
             .widgetURL(URL(string: "moti://quotes"))
             .keylineTint(Color.cyan)

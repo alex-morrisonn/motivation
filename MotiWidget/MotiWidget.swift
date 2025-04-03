@@ -182,7 +182,6 @@ class WidgetQuoteService {
 struct WidgetEventService {
     /// Get all events saved by the main app
     static func getEvents() -> [WidgetEvent] {
-        // Fixed: Removed outer do-catch block that had no try statements
         guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
             print("Widget Error: Could not access shared UserDefaults")
             return []
@@ -416,19 +415,7 @@ struct CalendarWidgetView: View {
     }
 }
 
-// Preview provider
-struct CalendarWidgetView_Previews: PreviewProvider {
-    static var previews: some View {
-        CalendarWidgetView(
-            date: Date(),
-            eventDays: [1: true, 15: true, 20: true]
-        )
-        .background(Color.black)
-        .previewLayout(.sizeThatFits)
-    }
-}
-
-/// Widget content view that handles different widget families
+/// Home screen quote widget content view
 struct QuoteWidgetContent: View {
     var entry: QuoteEntry
     @Environment(\.widgetFamily) var widgetFamily
@@ -453,7 +440,7 @@ struct QuoteWidgetContent: View {
     
     var body: some View {
         ZStack {
-            // Unified gradient background
+            // Unified gradient background for all home screen widgets
             LinearGradient(
                 gradient: Gradient(colors: [Color.black, Color(red: 0.1, green: 0.1, blue: 0.3)]),
                 startPoint: .topLeading,
@@ -503,43 +490,6 @@ struct QuoteWidgetContent: View {
                     CalendarWidgetView(date: entry.date, eventDays: entry.eventDays)
                 }
                 .padding(12)
-            } else if widgetFamily == .accessoryRectangular {
-                // Rectangular Lock Screen widget
-                VStack(spacing: 6) {
-                    let shortQuote = shortenQuote(entry.quote.text, maxLength: 80)
-                    Text(shortQuote)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(4)
-                    
-                    if shortQuote.count < 80 {
-                        Text("— \(entry.quote.author)")
-                            .font(.system(size: 10, weight: .light))
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                }
-                .padding(.horizontal, 8)
-            } else if widgetFamily == .accessoryCircular {
-                // Circular Lock Screen widget
-                VStack(spacing: 2) {
-                    Text("\"")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.white)
-                    
-                    let shortQuote = shortenQuote(entry.quote.text, maxLength: 20)
-                    Text(shortQuote)
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                }
-            } else if widgetFamily == .accessoryInline {
-                // Inline Lock Screen widget
-                Text(shortenQuote(entry.quote.text, maxLength: 40))
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white)
-                    .lineLimit(1)
             } else {
                 // Small or medium widget with just the quote
                 VStack(alignment: .center, spacing: widgetFamily == .systemSmall ? 6 : 10) {
@@ -573,56 +523,32 @@ struct QuoteWidgetContent: View {
             }
         }
     }
-    
-    // Helper to shorten quotes for smaller widgets
-    private func shortenQuote(_ quote: String, maxLength: Int) -> String {
-        if quote.count <= maxLength {
-            return quote
-        }
-        return String(quote.prefix(maxLength - 3)) + "..."
-    }
 }
 
-/// Widget Entry View with Container Background
-struct QuoteWidgetEntryView: View {
+/// Inline lock screen widget content view
+struct InlineQuoteContent: View {
     var entry: QuoteEntry
-    @Environment(\.widgetFamily) var widgetFamily
     
     var body: some View {
-        QuoteWidgetContent(entry: entry)
-            .containerBackground(for: .widget) {
-                LinearGradient(
-                    gradient: Gradient(colors: [Color.black, Color(red: 0.1, green: 0.1, blue: 0.3)]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            }
+        // Minimal inline widget - just the quote text
+        Text(entry.quote.text)
+            .font(.system(size: 12, weight: .regular))
+            .lineLimit(1)
     }
-}
-
-// MARK: - App Intent Configuration
-
-/// App Intent configuration for widget customization
-struct ConfigurationAppIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource { "Quote Configuration" }
-    static var description: IntentDescription { "Customize your daily quote widget." }
-
-    @Parameter(title: "Preferred Category", default: "All")
-    var preferredCategory: String
-    
-    @Parameter(title: "Show Author", default: true)
-    var showAuthor: Bool
 }
 
 // MARK: - Widget Definitions
 
-/// Standard Quote Widget for home screen
+/// Quote Widget for home screen
 struct QuoteWidget: Widget {
     let kind: String = "DailyQuoteWidget"
     
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: QuoteTimelineProvider()) { entry in
-            QuoteWidgetEntryView(entry: entry)
+            QuoteWidgetContent(entry: entry)
+                .containerBackground(for: .widget) {
+                    Color.clear // Remove white border by setting clear background
+                }
         }
         .configurationDisplayName("Daily Quote")
         .description("Displays a new inspirational quote each day.")
@@ -630,66 +556,20 @@ struct QuoteWidget: Widget {
     }
 }
 
-/// Compact Quote Widget for Lock Screen
-struct CompactQuoteWidget: Widget {
-    let kind: String = "CompactQuoteWidget"
+/// Inline lock screen widget
+@available(iOS 16.0, *)
+struct InlineQuoteWidget: Widget {
+    let kind: String = "InlineQuoteWidget"
     
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: QuoteTimelineProvider()) { entry in
-            QuoteWidgetEntryView(entry: entry)
+            InlineQuoteContent(entry: entry)
+                .containerBackground(for: .widget) {
+                    Color.clear // Clear background for minimal look
+                }
         }
-        .configurationDisplayName("Compact Quote")
-        .description("A compact inspirational quote for your Lock Screen.")
-        .supportedFamilies([.accessoryRectangular, .accessoryCircular, .accessoryInline])
+        .configurationDisplayName("Inline Quote")
+        .description("A minimal text-only quote for your Lock Screen.")
+        .supportedFamilies([.accessoryInline])
     }
-}
-
-// MARK: - Preview Support
-
-#Preview("Small Widget", as: .systemSmall) {
-    QuoteWidget()
-} timeline: {
-    let sampleQuote = WidgetQuote(
-        text: "The only way to do great work is to love what you do.",
-        author: "Steve Jobs",
-        category: "Success & Achievement"
-    )
-    
-    QuoteEntry(
-        date: Date(),
-        quote: sampleQuote,
-        eventDays: [5: true, 10: true, 15: true]
-    )
-}
-
-#Preview("Medium Widget", as: .systemMedium) {
-    QuoteWidget()
-} timeline: {
-    let sampleQuote = WidgetQuote(
-        text: "The future belongs to those who believe in the beauty of their dreams.",
-        author: "Eleanor Roosevelt",
-        category: "Dreams & Goals"
-    )
-    
-    QuoteEntry(
-        date: Date(),
-        quote: sampleQuote,
-        eventDays: [5: true, 10: true, 15: true]
-    )
-}
-
-#Preview("Large Widget", as: .systemLarge) {
-    QuoteWidget()
-} timeline: {
-    let sampleQuote = WidgetQuote(
-        text: "Whether you think you can or you think you can't, you're right.",
-        author: "Henry Ford",
-        category: "Mindset & Attitude"
-    )
-    
-    QuoteEntry(
-        date: Date(),
-        quote: sampleQuote,
-        eventDays: [5: true, 10: true, 15: true, 20: true, 25: true]
-    )
 }
