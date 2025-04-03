@@ -31,6 +31,7 @@
 		1E6A602D2D94DA3B00AD9399 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 1E6A602C2D94DA3B00AD9399 /* FirebaseAppCheck */; };
 		1E6A602F2D94DA6200AD9399 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1E6A602E2D94DA6200AD9399 /* FirebaseCrashlytics */; };
 		1E6A60322D9511A600AD9399 /* AppTrackingTransparency.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E6A60312D9511A600AD9399 /* AppTrackingTransparency.framework */; };
+		1E9307502D9E445A00B0C441 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E93074F2D9E445A00B0C441 /* XCTest.framework */; };
 		1EED66DE2D9E255900E04C7B /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 1EED66DD2D9E255900E04C7B /* AsyncAlgorithms */; };
 		1EED66E02D9E256100E04C7B /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 1EED66DF2D9E256100E04C7B /* AsyncAlgorithms */; };
 /* End PBXBuildFile section */
@@ -84,6 +85,7 @@
 		1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		1E6A60302D95103200AD9399 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; name = Info.plist; path = Moti/Info.plist; sourceTree = "<group>"; };
 		1E6A60312D9511A600AD9399 /* AppTrackingTransparency.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppTrackingTransparency.framework; path = System/Library/Frameworks/AppTrackingTransparency.framework; sourceTree = SDKROOT; };
+		1E93074F2D9E445A00B0C441 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -200,36 +202,6 @@
 			);
 			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
 		};
-		1E0DA7222D9E1AD500AE0D31 /* Exceptions for "MotiAppTests" folder in "Moti" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				MotiAppTests.swift,
-			);
-			target = 1E41833F2D8EC71100AAEC12 /* Moti */;
-		};
-		1E0DA7232D9E1AD500AE0D31 /* Exceptions for "MotiAppTests" folder in "MotiUITests" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				MotiAppTests.swift,
-			);
-			target = 1E4183592D8EC71300AAEC12 /* MotiUITests */;
-		};
-		1E0DA7282D9E1ADB00AE0D31 /* Exceptions for "MotiAppUITests" folder in "Moti" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				MotiAppUITests.swift,
-				MotiAppUITestsLaunchTests.swift,
-			);
-			target = 1E41833F2D8EC71100AAEC12 /* Moti */;
-		};
-		1E0DA7292D9E1ADB00AE0D31 /* Exceptions for "MotiAppUITests" folder in "MotiTests" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				MotiAppUITests.swift,
-				MotiAppUITestsLaunchTests.swift,
-			);
-			target = 1E41834F2D8EC71300AAEC12 /* MotiTests */;
-		};
 		1E0DA7312D9E1AE600AE0D31 /* Exceptions for "MotiWidget" folder in "Moti" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -293,19 +265,11 @@
 		};
 		1E4183532D8EC71300AAEC12 /* MotiAppTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				1E0DA7222D9E1AD500AE0D31 /* Exceptions for "MotiAppTests" folder in "Moti" target */,
-				1E0DA7232D9E1AD500AE0D31 /* Exceptions for "MotiAppTests" folder in "MotiUITests" target */,
-			);
 			path = MotiAppTests;
 			sourceTree = "<group>";
 		};
 		1E41835D2D8EC71300AAEC12 /* MotiAppUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				1E0DA7282D9E1ADB00AE0D31 /* Exceptions for "MotiAppUITests" folder in "Moti" target */,
-				1E0DA7292D9E1ADB00AE0D31 /* Exceptions for "MotiAppUITests" folder in "MotiTests" target */,
-			);
 			path = MotiAppUITests;
 			sourceTree = "<group>";
 		};
@@ -316,6 +280,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1E9307502D9E445A00B0C441 /* XCTest.framework in Frameworks */,
 				1E21CDF02D93715B000F7451 /* SwiftUI.framework in Frameworks */,
 				1E0DA74A2D9E1D5100AE0D31 /* FirebaseFirestore in Frameworks */,
 				1E0DA7482D9E1D5100AE0D31 /* FirebaseCore in Frameworks */,
@@ -391,6 +356,7 @@
 		1ECDCF7F2D8ECF3600123E99 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				1E93074F2D9E445A00B0C441 /* XCTest.framework */,
 				1E6A60312D9511A600AD9399 /* AppTrackingTransparency.framework */,
 				1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */,
 				1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */,
