@@ -88,7 +88,7 @@ struct MotiWidgetLiveActivity: Widget {
                 }
                 .padding(.vertical, 16)
             }
-            .activityBackgroundTint(Color(red: 0.1, green: 0.1, blue: 0.3))
+            .activityBackgroundTint(Color.black.opacity(0.8))
             .activitySystemActionForegroundColor(Color.white)
 
         } dynamicIsland: { context in
@@ -139,7 +139,6 @@ struct MotiWidgetLiveActivity: Widget {
                 // Leading part of compact view
                 Image(systemName: "quote.bubble.fill")
                     .foregroundColor(.white)
-                    .font(.caption2)
             } compactTrailing: {
                 // Trailing part of compact view
                 Text(formatTime(context.state.timePassed))
@@ -182,20 +181,10 @@ struct MotiWidgetLiveActivity: Widget {
     }
 }
 
-// MARK: - Previews
-
-#Preview("Live Activity", as: .content) {
-    MotiWidgetLiveActivity()
-} contentState: {
-    MotiWidgetAttributes.ContentState(
-        quote: "Whether you think you can or you think you can't, you're right.",
-        author: "Henry Ford",
-        timePassed: 325
-    )
-}
+// MARK: - Helper Types for Testing
 
 extension MotiWidgetAttributes {
-    static var preview: MotiWidgetAttributes {
+    static var sample: MotiWidgetAttributes {
         MotiWidgetAttributes(
             category: "Mindset & Attitude",
             startTime: Date()
@@ -204,19 +193,11 @@ extension MotiWidgetAttributes {
 }
 
 extension MotiWidgetAttributes.ContentState {
-    static var initial: MotiWidgetAttributes.ContentState {
+    static var sample: MotiWidgetAttributes.ContentState {
         MotiWidgetAttributes.ContentState(
-            quote: "The way to get started is to quit talking and begin doing.",
-            author: "Walt Disney",
-            timePassed: 0
-        )
-    }
-     
-    static var updated: MotiWidgetAttributes.ContentState {
-        MotiWidgetAttributes.ContentState(
-            quote: "It always seems impossible until it's done.",
-            author: "Nelson Mandela",
-            timePassed: 180
+            quote: "Whether you think you can or you think you can't, you're right.",
+            author: "Henry Ford",
+            timePassed: 325
         )
     }
 }

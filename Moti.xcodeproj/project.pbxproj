@@ -87,31 +87,9 @@
 			);
 			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
 		};
-		1EDF7FB32D9CA27C00228E56 /* Exceptions for "Models" folder in "MotiTests" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				EventModel.swift,
-			);
-			target = 1E41834F2D8EC71300AAEC12 /* MotiTests */;
-		};
-		1EDF7FB42D9CA27C00228E56 /* Exceptions for "Models" folder in "MotiUITests" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				EventModel.swift,
-			);
-			target = 1E4183592D8EC71300AAEC12 /* MotiUITests */;
-		};
-		1EDF7FB52D9CA27C00228E56 /* Exceptions for "Models" folder in "MotiWidgetExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				EventModel.swift,
-			);
-			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
-		};
 		1EDF7FBE2D9CA2D300228E56 /* Exceptions for "Views" folder in "MotiTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Calendar/CalendarComponents.swift,
 				Common/AboutView.swift,
 				Common/FeedbackView.swift,
 				Common/PremiumView.swift,
@@ -128,7 +106,6 @@
 		1EDF7FBF2D9CA2D300228E56 /* Exceptions for "Views" folder in "MotiUITests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Calendar/CalendarComponents.swift,
 				Common/AboutView.swift,
 				Common/FeedbackView.swift,
 				Common/PremiumView.swift,
@@ -145,7 +122,6 @@
 		1EDF7FC02D9CA2D300228E56 /* Exceptions for "Views" folder in "MotiWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Calendar/CalendarComponents.swift,
 				Common/AboutView.swift,
 				Common/FeedbackView.swift,
 				Common/PremiumView.swift,
@@ -226,11 +202,6 @@
 		};
 		1EDF7FA92D9CA25000228E56 /* Models */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				1EDF7FB32D9CA27C00228E56 /* Exceptions for "Models" folder in "MotiTests" target */,
-				1EDF7FB42D9CA27C00228E56 /* Exceptions for "Models" folder in "MotiUITests" target */,
-				1EDF7FB52D9CA27C00228E56 /* Exceptions for "Models" folder in "MotiWidgetExtension" target */,
-			);
 			path = Models;
 			sourceTree = "<group>";
 		};

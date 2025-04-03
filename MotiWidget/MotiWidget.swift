@@ -322,6 +322,13 @@ struct CalendarWidgetView: View {
     let date: Date
     let eventDays: [Int: Bool]
     
+    // Create formatters as computed properties outside the body
+    private var monthFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter
+    }
+    
     // Calculate calendar information
     var calendarInfo: (firstDay: Int, totalDays: Int, currentDay: Int) {
         let calendar = Calendar.current
@@ -350,9 +357,7 @@ struct CalendarWidgetView: View {
     var body: some View {
         VStack(alignment: .center, spacing: 4) {
             // Month title
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMMM yyyy"
-            Text(formatter.string(from: date))
+            Text(monthFormatter.string(from: date))
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(.white)
                 .padding(.top, 4)
@@ -412,6 +417,18 @@ struct CalendarWidgetView: View {
             }
         }
         .padding(.horizontal, 8)
+    }
+}
+
+// Preview provider
+struct CalendarWidgetView_Previews: PreviewProvider {
+    static var previews: some View {
+        CalendarWidgetView(
+            date: Date(),
+            eventDays: [1: true, 15: true, 20: true]
+        )
+        .background(Color.black)
+        .previewLayout(.sizeThatFits)
     }
 }
 
