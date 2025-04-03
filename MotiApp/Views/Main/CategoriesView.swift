@@ -92,7 +92,7 @@ struct CategoriesView: View {
                                 selectedCategory = nil
                                 
                                 // Check if we should show an interstitial ad when exiting category
-                                InterstitialAdCoordinator.shared.checkForExitInterstitial(from: "CategoriesView")
+                                _ = InterstitialAdCoordinator.shared.checkForExitInterstitial(from: "CategoriesView")
                             }) {
                                 Image(systemName: "chevron.left")
                                     .foregroundColor(.white)
@@ -175,7 +175,7 @@ struct CategoriesView: View {
         }
         .onAppear {
             // Track screen view for ad rotation
-            InterstitialAdCoordinator.shared.trackNavigation()
+            _ = InterstitialAdCoordinator.shared.trackNavigation()
         }
     }
     

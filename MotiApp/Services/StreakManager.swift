@@ -105,76 +105,60 @@ class StreakManager: ObservableObject {
     
     /// Load saved streak data from UserDefaults with error handling
     private func loadStreakData() throws {
-        do {
-            // First, check if we have backup data if regular data is corrupted
-            if isDataCorrupted() && isBackupAvailable() {
-                print("Primary streak data appears corrupted, attempting to restore from backup")
-                try restoreFromBackup()
-                return
+        // First, check if we have backup data if regular data is corrupted
+        if isDataCorrupted() && isBackupAvailable() {
+            print("Primary streak data appears corrupted, attempting to restore from backup")
+            try restoreFromBackup()
+            return
+        }
+        
+        // Regular loading
+        if let lastDate = defaults.object(forKey: lastOpenDateKey) as? Date {
+            lastOpenDate = lastDate
+            currentStreak = defaults.integer(forKey: currentStreakKey)
+            longestStreak = defaults.integer(forKey: longestStreakKey)
+            
+            if let savedDays = defaults.array(forKey: streakDaysKey) as? [TimeInterval] {
+                streakDays = savedDays
+            } else {
+                print("Warning: No streak days found, initializing empty array")
+                streakDays = []
             }
             
-            // Regular loading
-            if let lastDate = defaults.object(forKey: lastOpenDateKey) as? Date {
-                lastOpenDate = lastDate
-                currentStreak = defaults.integer(forKey: currentStreakKey)
-                longestStreak = defaults.integer(forKey: longestStreakKey)
-                
-                if let savedDays = defaults.array(forKey: streakDaysKey) as? [TimeInterval] {
-                    streakDays = savedDays
-                } else {
-                    print("Warning: No streak days found, initializing empty array")
-                    streakDays = []
-                }
-                
-                // Check if we need to update since last open
-                try checkStreak()
-            } else {
-                // First app open ever - initialize with 0
-                print("No previous streak data found, initializing new streak")
-                resetStreakData()
-            }
-        } catch let streakError as StreakError {
-            print("Streak error in loadStreakData: \(streakError.description)")
-            throw streakError
-        } catch {
-            print("Unexpected error in loadStreakData: \(error.localizedDescription)")
-            throw StreakError.loadDataFailed("Unexpected error: \(error.localizedDescription)")
+            // Check if we need to update since last open
+            try checkStreak()
+        } else {
+            // First app open ever - initialize with 0
+            print("No previous streak data found, initializing new streak")
+            resetStreakData()
         }
     }
     
     /// Save streak data to UserDefaults with error handling
     private func saveStreakData() throws {
-        do {
-            // Validate data before saving
-            guard currentStreak >= 0, longestStreak >= 0,
-                  currentStreak <= 1000, longestStreak <= 1000 else { // Reasonable upper limits
-                throw StreakError.invalidStreak
-            }
-            
-            // Create backup before saving new data
-            createBackup()
-            
-            // Save the data
-            defaults.set(lastOpenDate, forKey: lastOpenDateKey)
-            defaults.set(currentStreak, forKey: currentStreakKey)
-            defaults.set(longestStreak, forKey: longestStreakKey)
-            defaults.set(streakDays, forKey: streakDaysKey)
-            
-            // Verify data was saved correctly
-            if defaults.integer(forKey: currentStreakKey) != currentStreak ||
-               defaults.integer(forKey: longestStreakKey) != longestStreak {
-                print("ERROR: Streak data verification failed after save")
-                throw StreakError.saveDataFailed("Verification failed")
-            }
-            
-            print("Streak data saved successfully: current=\(currentStreak), longest=\(longestStreak)")
-        } catch let streakError as StreakError {
-            print("Failed to save streak data: \(streakError.description)")
-            throw streakError
-        } catch {
-            print("Unexpected error saving streak data: \(error.localizedDescription)")
-            throw StreakError.saveDataFailed(error.localizedDescription)
+        // Validate data before saving
+        guard currentStreak >= 0, longestStreak >= 0,
+              currentStreak <= 1000, longestStreak <= 1000 else { // Reasonable upper limits
+            throw StreakError.invalidStreak
         }
+        
+        // Create backup before saving new data
+        createBackup()
+        
+        // Save the data
+        defaults.set(lastOpenDate, forKey: lastOpenDateKey)
+        defaults.set(currentStreak, forKey: currentStreakKey)
+        defaults.set(longestStreak, forKey: longestStreakKey)
+        defaults.set(streakDays, forKey: streakDaysKey)
+        
+        // Verify data was saved correctly
+        if defaults.integer(forKey: currentStreakKey) != currentStreak ||
+           defaults.integer(forKey: longestStreakKey) != longestStreak {
+            print("ERROR: Streak data verification failed after save")
+            throw StreakError.saveDataFailed("Verification failed")
+        }
+        
+        print("Streak data saved successfully: current=\(currentStreak), longest=\(longestStreak)")
     }
     
     // MARK: - Streak Logic
@@ -353,17 +337,12 @@ class StreakManager: ObservableObject {
         }
         
         let calendar = Calendar.current
-        do {
-            // Calculate streak start date
-            guard let startDate = calendar.date(byAdding: .day, value: -(currentStreak - 1), to: lastDate) else {
-                print("Warning: Could not calculate streak start date")
-                return nil
-            }
-            return startDate
-        } catch {
-            print("Error getting streak start date: \(error.localizedDescription)")
+        // Calculate streak start date
+        guard let startDate = calendar.date(byAdding: .day, value: -(currentStreak - 1), to: lastDate) else {
+            print("Warning: Could not calculate streak start date")
             return nil
         }
+        return startDate
     }
     
     // MARK: - Error Recovery
@@ -479,21 +458,17 @@ class StreakManager: ObservableObject {
     
     /// Create backup of streak data
     private func createBackup() {
-        do {
-            // Only backup if we have valid data
-            if lastOpenDate != nil {
-                defaults.set(lastOpenDate, forKey: lastOpenDateKey + backupSuffix)
-                defaults.set(currentStreak, forKey: currentStreakKey + backupSuffix)
-                defaults.set(longestStreak, forKey: longestStreakKey + backupSuffix)
-                defaults.set(streakDays, forKey: streakDaysKey + backupSuffix)
-                
-                // Add timestamp of backup
-                defaults.set(Date(), forKey: "streak_backup_timestamp")
-                
-                print("Streak data backup created")
-            }
-        } catch {
-            print("Error creating streak data backup: \(error.localizedDescription)")
+        // Only backup if we have valid data
+        if lastOpenDate != nil {
+            defaults.set(lastOpenDate, forKey: lastOpenDateKey + backupSuffix)
+            defaults.set(currentStreak, forKey: currentStreakKey + backupSuffix)
+            defaults.set(longestStreak, forKey: longestStreakKey + backupSuffix)
+            defaults.set(streakDays, forKey: streakDaysKey + backupSuffix)
+            
+            // Add timestamp of backup
+            defaults.set(Date(), forKey: "streak_backup_timestamp")
+            
+            print("Streak data backup created")
         }
     }
     

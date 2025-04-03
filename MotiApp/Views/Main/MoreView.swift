@@ -140,8 +140,8 @@ struct MoreView: View {
                                         .labelsHidden()
                                         .frame(width: 100)
                                         .colorScheme(.dark)
-                                        .onChange(of: notificationManager.reminderTime) { newValue in
-                                            notificationManager.updateReminderTime(newValue)
+                                        .onChange(of: notificationManager.reminderTime) { _ in
+                                            notificationManager.updateReminderTime(notificationManager.reminderTime)
                                         }
                                 }
                                 .padding(.vertical, 16)
