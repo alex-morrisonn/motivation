@@ -1,0 +1,15 @@
+{
+  "" : {
+    "const-values" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/swift-package-manager-google-mobile-ads/build/GoogleMobileAds.build/Release-iphoneos/GoogleMobileAdsTarget.build/Objects-normal/arm64/GoogleMobileAdsTarget-master.swiftconstvalues",
+    "dependencies" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/swift-package-manager-google-mobile-ads/build/GoogleMobileAds.build/Release-iphoneos/GoogleMobileAdsTarget.build/Objects-normal/arm64/GoogleMobileAdsTarget-master.d",
+    "diagnostics" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/swift-package-manager-google-mobile-ads/build/GoogleMobileAds.build/Release-iphoneos/GoogleMobileAdsTarget.build/Objects-normal/arm64/GoogleMobileAdsTarget-master.dia",
+    "emit-module-dependencies" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/swift-package-manager-google-mobile-ads/build/GoogleMobileAds.build/Release-iphoneos/GoogleMobileAdsTarget.build/Objects-normal/arm64/GoogleMobileAdsTarget-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/swift-package-manager-google-mobile-ads/build/GoogleMobileAds.build/Release-iphoneos/GoogleMobileAdsTarget.build/Objects-normal/arm64/GoogleMobileAdsTarget-master-emit-module.dia",
+    "swift-dependencies" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/swift-package-manager-google-mobile-ads/build/GoogleMobileAds.build/Release-iphoneos/GoogleMobileAdsTarget.build/Objects-normal/arm64/GoogleMobileAdsTarget-master.swiftdeps"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/swift-package-manager-google-mobile-ads/GoogleMobileAdsTarget/placeholder.swift" : {
+    "index-unit-output-path" : "/GoogleMobileAds.build/Release-iphoneos/GoogleMobileAdsTarget.build/Objects-normal/arm64/placeholder.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/swift-package-manager-google-mobile-ads/build/GoogleMobileAds.build/Release-iphoneos/GoogleMobileAdsTarget.build/Objects-normal/arm64/placeholder.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/swift-package-manager-google-mobile-ads/build/GoogleMobileAds.build/Release-iphoneos/GoogleMobileAdsTarget.build/Objects-normal/arm64/placeholder.o"
+  }
+}

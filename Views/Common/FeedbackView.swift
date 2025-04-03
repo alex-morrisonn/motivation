@@ -1,4 +1,5 @@
 import SwiftUI
+import Firebase
 import FirebaseFirestore
 
 // Break down into smaller components to reduce compile-time complexity

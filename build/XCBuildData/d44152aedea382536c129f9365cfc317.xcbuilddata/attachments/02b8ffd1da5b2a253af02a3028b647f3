@@ -1,0 +1,180 @@
+{
+  "" : {
+    "const-values" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/Moti-master.swiftconstvalues",
+    "dependencies" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/Moti-master.d",
+    "diagnostics" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/Moti-master.dia",
+    "emit-module-dependencies" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/Moti-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/Moti-master-emit-module.dia",
+    "swift-dependencies" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/Moti-master.swiftdeps"
+  },
+  "/Users/alexmorrison/motivation/Models/EventModel.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/EventModel.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/EventModel.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/EventModel.o"
+  },
+  "/Users/alexmorrison/motivation/Models/QuoteModel.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/QuoteModel.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/QuoteModel.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/QuoteModel.o"
+  },
+  "/Users/alexmorrison/motivation/MotiApp/AppDelegate.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/AppDelegate.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/AppDelegate.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/AppDelegate.o"
+  },
+  "/Users/alexmorrison/motivation/MotiApp/MotiApp.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/MotiApp.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/MotiApp.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/MotiApp.o"
+  },
+  "/Users/alexmorrison/motivation/MotiApp/SplashScreenView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/SplashScreenView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/SplashScreenView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/SplashScreenView.o"
+  },
+  "/Users/alexmorrison/motivation/Resources/SharedQuotes.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/SharedQuotes.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/SharedQuotes.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/SharedQuotes.o"
+  },
+  "/Users/alexmorrison/motivation/Services/Ads/AdManager.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/AdManager.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/AdManager.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/AdManager.o"
+  },
+  "/Users/alexmorrison/motivation/Services/Ads/BannerAdView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/BannerAdView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/BannerAdView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/BannerAdView.o"
+  },
+  "/Users/alexmorrison/motivation/Services/Ads/InterstitualAdCoordinator.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/InterstitualAdCoordinator.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/InterstitualAdCoordinator.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/InterstitualAdCoordinator.o"
+  },
+  "/Users/alexmorrison/motivation/Services/Ads/NativeAdView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/NativeAdView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/NativeAdView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/NativeAdView.o"
+  },
+  "/Users/alexmorrison/motivation/Services/EventService.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/EventService.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/EventService.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/EventService.o"
+  },
+  "/Users/alexmorrison/motivation/Services/FeedbackService.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/FeedbackService.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/FeedbackService.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/FeedbackService.o"
+  },
+  "/Users/alexmorrison/motivation/Services/NotificationManager.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/NotificationManager.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/NotificationManager.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/NotificationManager.o"
+  },
+  "/Users/alexmorrison/motivation/Services/QuoteService.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/QuoteService.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/QuoteService.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/QuoteService.o"
+  },
+  "/Users/alexmorrison/motivation/Services/StreakManager.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/StreakManager.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/StreakManager.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/StreakManager.o"
+  },
+  "/Users/alexmorrison/motivation/Utilities/Constants/SharedConstants.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/SharedConstants.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/SharedConstants.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/SharedConstants.o"
+  },
+  "/Users/alexmorrison/motivation/Utilities/UI/ShareSheet.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/ShareSheet.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/ShareSheet.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/ShareSheet.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Calendar/CalendarComponents.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/CalendarComponents.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/CalendarComponents.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/CalendarComponents.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Calendar/EventEditorView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/EventEditorView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/EventEditorView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/EventEditorView.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Common/AboutView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/AboutView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/AboutView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/AboutView.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Common/FeedbackView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/FeedbackView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/FeedbackView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/FeedbackView.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Common/PremiumView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/PremiumView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/PremiumView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/PremiumView.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Common/PrivacyPolicyView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/PrivacyPolicyView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/PrivacyPolicyView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/PrivacyPolicyView.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Common/RewardedAdView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/RewardedAdView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/RewardedAdView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/RewardedAdView.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Main/CategoriesView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/CategoriesView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/CategoriesView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/CategoriesView.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Main/ContentView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/ContentView.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Main/FavouritesView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/FavouritesView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/FavouritesView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/FavouritesView.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Main/HomeQuoteView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/HomeQuoteView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/HomeQuoteView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/HomeQuoteView.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Main/MoreView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/MoreView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/MoreView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/MoreView.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Quotes/QuoteCardView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/QuoteCardView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/QuoteCardView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/QuoteCardView.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Streak/StreakCelebrationView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/StreakCelebrationView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/StreakCelebrationView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/StreakCelebrationView.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Streak/StreakDetailsView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/StreakDetailsView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/StreakDetailsView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/StreakDetailsView.o"
+  },
+  "/Users/alexmorrison/motivation/Views/Widgets/WidgetsShowcaseView.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/WidgetsShowcaseView.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/WidgetsShowcaseView.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/WidgetsShowcaseView.o"
+  },
+  "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "index-unit-output-path" : "/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/alexmorrison/motivation/build/Moti.build/Release-iphoneos/Moti.build/Objects-normal/arm64/GeneratedAssetSymbols.o"
+  }
+}

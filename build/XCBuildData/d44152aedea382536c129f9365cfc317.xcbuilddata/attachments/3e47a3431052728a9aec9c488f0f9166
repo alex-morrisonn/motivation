@@ -1,0 +1,25 @@
+{
+  "" : {
+    "const-values" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseCrashlyticsSwift.build/Objects-normal/arm64/FirebaseCrashlyticsSwift-master.swiftconstvalues",
+    "dependencies" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseCrashlyticsSwift.build/Objects-normal/arm64/FirebaseCrashlyticsSwift-master.d",
+    "diagnostics" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseCrashlyticsSwift.build/Objects-normal/arm64/FirebaseCrashlyticsSwift-master.dia",
+    "emit-module-dependencies" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseCrashlyticsSwift.build/Objects-normal/arm64/FirebaseCrashlyticsSwift-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseCrashlyticsSwift.build/Objects-normal/arm64/FirebaseCrashlyticsSwift-master-emit-module.dia",
+    "swift-dependencies" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseCrashlyticsSwift.build/Objects-normal/arm64/FirebaseCrashlyticsSwift-master.swiftdeps"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/Crashlytics/Rollouts/CrashlyticsRemoteConfigManager.swift" : {
+    "index-unit-output-path" : "/Firebase.build/Release-iphoneos/FirebaseCrashlyticsSwift.build/Objects-normal/arm64/CrashlyticsRemoteConfigManager.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseCrashlyticsSwift.build/Objects-normal/arm64/CrashlyticsRemoteConfigManager.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseCrashlyticsSwift.build/Objects-normal/arm64/CrashlyticsRemoteConfigManager.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/Crashlytics/Rollouts/EncodedRolloutAssignment.swift" : {
+    "index-unit-output-path" : "/Firebase.build/Release-iphoneos/FirebaseCrashlyticsSwift.build/Objects-normal/arm64/EncodedRolloutAssignment.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseCrashlyticsSwift.build/Objects-normal/arm64/EncodedRolloutAssignment.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseCrashlyticsSwift.build/Objects-normal/arm64/EncodedRolloutAssignment.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/Crashlytics/Rollouts/StringToHexConverter.swift" : {
+    "index-unit-output-path" : "/Firebase.build/Release-iphoneos/FirebaseCrashlyticsSwift.build/Objects-normal/arm64/StringToHexConverter.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseCrashlyticsSwift.build/Objects-normal/arm64/StringToHexConverter.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseCrashlyticsSwift.build/Objects-normal/arm64/StringToHexConverter.o"
+  }
+}

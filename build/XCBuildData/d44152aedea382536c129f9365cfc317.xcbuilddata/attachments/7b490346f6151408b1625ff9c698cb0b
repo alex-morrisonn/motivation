@@ -1,0 +1,110 @@
+{
+  "" : {
+    "const-values" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promises-master.swiftconstvalues",
+    "dependencies" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promises-master.d",
+    "diagnostics" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promises-master.dia",
+    "emit-module-dependencies" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promises-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promises-master-emit-module.dia",
+    "swift-dependencies" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promises-master.swiftdeps"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+All.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+All.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+All.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+All.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Always.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Always.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Always.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Always.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Any.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Any.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Any.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Any.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Async.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Async.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Async.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Async.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Await.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Await.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Await.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Await.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Catch.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Catch.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Catch.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Catch.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Delay.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Delay.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Delay.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Delay.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Do.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Do.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Do.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Do.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Race.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Race.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Race.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Race.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Recover.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Recover.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Recover.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Recover.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Reduce.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Reduce.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Reduce.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Reduce.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Retry.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Retry.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Retry.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Retry.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Testing.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Testing.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Testing.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Testing.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Then.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Then.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Then.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Then.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Timeout.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Timeout.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Timeout.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Timeout.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Validate.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Validate.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Validate.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Validate.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise+Wrap.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Wrap.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Wrap.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise+Wrap.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/Promise.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/Promise.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/Sources/Promises/PromiseError.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/PromiseError.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/PromiseError.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/PromiseError.o"
+  },
+  "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/DerivedSources/resource_bundle_accessor.swift" : {
+    "index-unit-output-path" : "/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/resource_bundle_accessor.o",
+    "llvm-bc" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/resource_bundle_accessor.bc",
+    "object" : "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/promises/build/Promises.build/Release-iphoneos/Promises.build/Objects-normal/arm64/resource_bundle_accessor.o"
+  }
+}

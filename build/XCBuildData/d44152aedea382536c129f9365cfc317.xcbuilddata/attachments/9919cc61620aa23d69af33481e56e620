@@ -1,0 +1,4 @@
+module UserMessagingPlatformTarget {
+umbrella "/Users/alexmorrison/Library/Developer/Xcode/DerivedData/Moti-dyrmheolskuegbapnmvbmbcbvgox/SourcePackages/checkouts/swift-package-manager-google-user-messaging-platform/UserMessagingPlatformTarget/include"
+export *
+}
