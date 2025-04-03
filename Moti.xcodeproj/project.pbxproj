@@ -22,6 +22,7 @@
 		1E21CDEF2D93715B000F7451 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */; };
 		1E21CDF02D93715B000F7451 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */; };
 		1E21CE012D93715C000F7451 /* MotiWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E21CDEE2D93715B000F7451 /* MotiWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		1E5EB2EB2D9EB11A00E56C10 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E6A60302D95103200AD9399 /* Info.plist */; };
 		1E6A60202D94CC2800AD9399 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */; };
 		1E6A60212D94CC2800AD9399 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */; };
 		1E6A60222D94CC2800AD9399 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */; };
@@ -232,13 +233,6 @@
 			);
 			target = 1E4183592D8EC71300AAEC12 /* MotiUITests */;
 		};
-		1E5EB2E92D9EAD4E00E56C10 /* Exceptions for "MotiWidget" folder in "MotiWidgetExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
-		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -248,7 +242,6 @@
 				1E0DA7312D9E1AE600AE0D31 /* Exceptions for "MotiWidget" folder in "Moti" target */,
 				1E0DA7322D9E1AE600AE0D31 /* Exceptions for "MotiWidget" folder in "MotiTests" target */,
 				1E0DA7332D9E1AE600AE0D31 /* Exceptions for "MotiWidget" folder in "MotiUITests" target */,
-				1E5EB2E92D9EAD4E00E56C10 /* Exceptions for "MotiWidget" folder in "MotiWidgetExtension" target */,
 			);
 			path = MotiWidget;
 			sourceTree = "<group>";
@@ -481,7 +474,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1620;
-				LastUpgradeCheck = 1620;
+				LastUpgradeCheck = 1630;
 				TargetAttributes = {
 					1E21CDED2D93715B000F7451 = {
 						CreatedOnToolsVersion = 16.2;
@@ -542,6 +535,7 @@
 			files = (
 				1E6A60222D94CC2800AD9399 /* GoogleService-Info.plist in Resources */,
 				1E0498D72D9BC87400EE04EC /* index.md in Resources */,
+				1E5EB2EB2D9EB11A00E56C10 /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
