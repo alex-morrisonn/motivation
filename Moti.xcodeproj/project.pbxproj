@@ -17,6 +17,11 @@
 		1E21CDEF2D93715B000F7451 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */; };
 		1E21CDF02D93715B000F7451 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */; };
 		1E21CE012D93715C000F7451 /* MotiWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E21CDEE2D93715B000F7451 /* MotiWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		1E5EB4042D9FCA5100E56C10 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA7472D9E1D5100AE0D31 /* FirebaseCore */; };
+		1E5EB4052D9FCA5100E56C10 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA7492D9E1D5100AE0D31 /* FirebaseFirestore */; };
+		1E5EB4062D9FCA5100E56C10 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA74B2D9E1D6000AE0D31 /* AsyncAlgorithms */; };
+		1E5EB4072D9FCA5100E56C10 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA74D2D9E1D9600AE0D31 /* FirebaseAppCheck */; };
+		1E5EB4082D9FCA5100E56C10 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA74F2D9E1D9600AE0D31 /* FirebaseCrashlytics */; };
 		1E6A60202D94CC2800AD9399 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */; };
 		1E6A60212D94CC2800AD9399 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */; };
 		1E6A60222D94CC2800AD9399 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E6A601F2D94CC2800AD9399 /* GoogleService-Info.plist */; };
@@ -187,6 +192,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1E5EB4082D9FCA5100E56C10 /* FirebaseCrashlytics in Frameworks */,
+				1E5EB4072D9FCA5100E56C10 /* FirebaseAppCheck in Frameworks */,
+				1E5EB4062D9FCA5100E56C10 /* AsyncAlgorithms in Frameworks */,
+				1E5EB4052D9FCA5100E56C10 /* FirebaseFirestore in Frameworks */,
+				1E5EB4042D9FCA5100E56C10 /* FirebaseCore in Frameworks */,
 				1E21CDF02D93715B000F7451 /* SwiftUI.framework in Frameworks */,
 				1E21CDEF2D93715B000F7451 /* WidgetKit.framework in Frameworks */,
 			);
