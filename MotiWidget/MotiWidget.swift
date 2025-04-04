@@ -42,16 +42,6 @@ struct Quote: Identifiable, Codable, Equatable {
     }
 }
 
-// Shared App Group identifier
-let appGroupIdentifier = "group.com.alexmorrison.moti.shared"
-
-// Access shared UserDefaults
-extension UserDefaults {
-    static var shared: UserDefaults {
-        return UserDefaults(suiteName: appGroupIdentifier) ?? .standard
-    }
-}
-
 // Widget Event Service to access events
 struct WidgetEventService {
     // Defined error types for better error handling
