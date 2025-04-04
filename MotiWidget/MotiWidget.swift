@@ -63,108 +63,91 @@ struct WidgetEventService {
     
     // Get all events saved by the main app with robust error handling
     static func getEvents() -> [Event] {
+        // Check for app group access
+        guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
+            print("Widget Error: Could not access shared UserDefaults")
+            return []
+        }
+        
+        // Check for saved events
+        guard let savedEvents = sharedDefaults.data(forKey: "savedEvents") else {
+            print("Widget Info: No saved events found in shared storage")
+            return []
+        }
+        
+        // Try to decode events
         do {
-            guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
-                print("Widget Error: Could not access shared UserDefaults")
-                throw WidgetServiceError.appGroupAccessFailed
+            let decodedEvents = try JSONDecoder().decode([Event].self, from: savedEvents)
+            print("Widget Info: Successfully loaded \(decodedEvents.count) events")
+            return decodedEvents
+        } catch let decodingError as DecodingError {
+            // Handle specific JSON decoding errors
+            switch decodingError {
+            case .dataCorrupted(let context):
+                print("Widget Error: Data corrupted: \(context.debugDescription)")
+            case .keyNotFound(let key, let context):
+                print("Widget Error: Key '\(key.stringValue)' not found: \(context.debugDescription)")
+            case .typeMismatch(let type, let context):
+                print("Widget Error: Type mismatch for type \(type): \(context.debugDescription)")
+            case .valueNotFound(let type, let context):
+                print("Widget Error: Value of type \(type) not found: \(context.debugDescription)")
+            @unknown default:
+                print("Widget Error: Unknown decoding error: \(decodingError)")
             }
-            
-            guard let savedEvents = sharedDefaults.data(forKey: "savedEvents") else {
-                // No events found, but this is not an error condition
-                print("Widget Info: No saved events found in shared storage")
-                return []
-            }
-            
-            do {
-                let decodedEvents = try JSONDecoder().decode([Event].self, from: savedEvents)
-                print("Widget Info: Successfully loaded \(decodedEvents.count) events")
-                return decodedEvents
-            } catch let decodingError as DecodingError {
-                // Handle specific JSON decoding errors
-                switch decodingError {
-                case .dataCorrupted(let context):
-                    print("Widget Error: Data corrupted: \(context.debugDescription)")
-                case .keyNotFound(let key, let context):
-                    print("Widget Error: Key '\(key.stringValue)' not found: \(context.debugDescription)")
-                case .typeMismatch(let type, let context):
-                    print("Widget Error: Type mismatch for type \(type): \(context.debugDescription)")
-                case .valueNotFound(let type, let context):
-                    print("Widget Error: Value of type \(type) not found: \(context.debugDescription)")
-                @unknown default:
-                    print("Widget Error: Unknown decoding error: \(decodingError)")
-                }
-                throw WidgetServiceError.decodingFailed
-            } catch {
-                print("Widget Error: Failed to decode events: \(error.localizedDescription)")
-                throw WidgetServiceError.decodingFailed
-            }
+            return []
         } catch {
-            print("Widget Error: \(error.localizedDescription)")
-            return [] // Return empty array on error for graceful degradation
+            print("Widget Error: Failed to decode events: \(error.localizedDescription)")
+            return []
         }
     }
     
     // Get days in current month that have events with error handling
     static func getEventDaysForCurrentMonth() -> [Int: Bool] {
-        do {
-            let events = getEvents()
-            
-            // Early return if no events available
-            if events.isEmpty {
-                print("Widget Info: No events available to calculate event days")
-                return [:]
-            }
-            
-            let calendar = Calendar.current
-            let currentDate = Date()
-            
-            // Safely extract month and year components
-            guard let currentMonth = calendar.dateComponents([.month], from: currentDate).month,
-                  let currentYear = calendar.dateComponents([.year], from: currentDate).year else {
-                print("Widget Error: Failed to determine current month/year")
-                return [:]
-            }
-            
-            var eventDays = [Int: Bool]()
-            var processedEventsCount = 0
-            
-            for event in events {
-                do {
-                    let eventComponents = calendar.dateComponents([.year, .month, .day], from: event.date)
-                    
-                    guard let eventMonth = eventComponents.month,
-                          let eventYear = eventComponents.year,
-                          let day = eventComponents.day else {
-                        print("Widget Warning: Invalid date components in event '\(event.title)'")
-                        continue
-                    }
-                    
-                    // Only include events from current month and year
-                    if eventMonth == currentMonth && eventYear == currentYear {
-                        eventDays[day] = true
-                        processedEventsCount += 1
-                    }
-                } catch {
-                    print("Widget Warning: Failed to process event date: \(error.localizedDescription)")
-                    // Continue processing other events
-                    continue
-                }
-            }
-            
-            print("Widget Info: Found \(processedEventsCount) events for current month")
-            return eventDays
-        } catch {
-            print("Widget Error getting event days: \(error.localizedDescription)")
-            return [:] // Return empty dictionary on error for graceful degradation
+        let events = getEvents()
+        
+        // Early return if no events available
+        if events.isEmpty {
+            print("Widget Info: No events available to calculate event days")
+            return [:]
         }
+        
+        let calendar = Calendar.current
+        let currentDate = Date()
+        
+        // Safely extract month and year components
+        guard let currentMonth = calendar.dateComponents([.month], from: currentDate).month,
+              let currentYear = calendar.dateComponents([.year], from: currentDate).year else {
+            print("Widget Error: Failed to determine current month/year")
+            return [:]
+        }
+        
+        var eventDays = [Int: Bool]()
+        var processedEventsCount = 0
+        
+        for event in events {
+            let eventComponents = calendar.dateComponents([.year, .month, .day], from: event.date)
+            
+            guard let eventMonth = eventComponents.month,
+                  let eventYear = eventComponents.year,
+                  let day = eventComponents.day else {
+                print("Widget Warning: Invalid date components in event '\(event.title)'")
+                continue
+            }
+            
+            // Only include events from current month and year
+            if eventMonth == currentMonth && eventYear == currentYear {
+                eventDays[day] = true
+                processedEventsCount += 1
+            }
+        }
+        
+        print("Widget Info: Found \(processedEventsCount) events for current month")
+        return eventDays
     }
     
-    // New helper method to check if app group is accessible
+    // Helper method to check if app group is accessible
     static func isAppGroupAccessible() -> Bool {
-        guard let _ = UserDefaults(suiteName: appGroupIdentifier) else {
-            return false
-        }
-        return true
+        return UserDefaults(suiteName: appGroupIdentifier) != nil
     }
 }
 
@@ -209,50 +192,57 @@ class QuoteService {
     }
     
     // Function to get today's quote with error handling
-    func getTodaysQuote() -> Quote {
-        do {
-            // Check if quotes array is populated
-            guard !quotes.isEmpty else {
-                print("Widget Error: No quotes available to get today's quote")
-                throw QuoteServiceError.noQuotesAvailable
-            }
-            
-            let calendar = Calendar.current
-            let today = calendar.startOfDay(for: Date())
-            
-            // Use the day of the year to pick a quote with error handling
-            guard let dayOfYear = calendar.ordinality(of: .day, in: .year, for: today) else {
-                print("Widget Warning: Could not determine day of year, using first quote")
-                throw QuoteServiceError.dayCalculationFailed
-            }
-            
-            // Safely calculate index with bounds checking
-            let index = (dayOfYear - 1) % quotes.count
-            return quotes[index]
-        } catch {
-            print("Widget Error retrieving today's quote: \(error.localizedDescription)")
-            return getFallbackQuote()
+    func getTodaysQuote() throws -> Quote {
+        // Check if quotes array is populated
+        guard !quotes.isEmpty else {
+            print("Widget Error: No quotes available to get today's quote")
+            throw QuoteServiceError.noQuotesAvailable
         }
+        
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        
+        // Use the day of the year to pick a quote with error handling
+        guard let dayOfYear = calendar.ordinality(of: .day, in: .year, for: today) else {
+            print("Widget Warning: Could not determine day of year, using first quote")
+            throw QuoteServiceError.dayCalculationFailed
+        }
+        
+        // Safely calculate index with bounds checking
+        let index = (dayOfYear - 1) % quotes.count
+        return quotes[index]
     }
     
     // Function to get a random quote with error handling
-    func getRandomQuote() -> Quote {
+    func getRandomQuote() throws -> Quote {
+        // Check if quotes array is populated
+        guard !quotes.isEmpty else {
+            print("Widget Error: No quotes available to get random quote")
+            throw QuoteServiceError.noQuotesAvailable
+        }
+        
+        guard let randomIndex = (0..<quotes.count).randomElement() else {
+            print("Widget Error: Failed to generate random index")
+            throw QuoteServiceError.randomGenerationFailed
+        }
+        
+        return quotes[randomIndex]
+    }
+    
+    // Get a quote regardless of whether getTodaysQuote or getRandomQuote succeeds
+    func getQuote() -> Quote {
         do {
-            // Check if quotes array is populated
-            guard !quotes.isEmpty else {
-                print("Widget Error: No quotes available to get random quote")
-                throw QuoteServiceError.noQuotesAvailable
-            }
-            
-            guard let randomIndex = (0..<quotes.count).randomElement() else {
-                print("Widget Error: Failed to generate random index")
-                throw QuoteServiceError.randomGenerationFailed
-            }
-            
-            return quotes[randomIndex]
+            return try getTodaysQuote()
         } catch {
-            print("Widget Error retrieving random quote: \(error.localizedDescription)")
-            return getFallbackQuote()
+            print("Widget Error retrieving today's quote: \(error.localizedDescription)")
+            
+            // Try random quote as fallback
+            do {
+                return try getRandomQuote()
+            } catch {
+                print("Widget Error retrieving random quote: \(error.localizedDescription)")
+                return getFallbackQuote()
+            }
         }
     }
     
@@ -300,116 +290,7 @@ struct QuoteEntry: TimelineEntry {
 
 // Timeline Provider with robust error handling
 struct Provider: TimelineProvider {
-    func placeholder(in context: Context) -> QuoteEntry {
-        // Placeholder for widget gallery - must be reliable
-        return QuoteEntry(
-            date: Date(),
-            quote: createSafePlaceholderQuote(),
-            eventDays: [:]
-        )
-    }
-    
-    func getSnapshot(in context: Context, completion: @escaping (QuoteEntry) -> Void) {
-        // Snapshot for widget gallery or when taking screenshot
-        do {
-            // Check for app group access first
-            if !WidgetEventService.isAppGroupAccessible() {
-                print("Widget Warning: App group not accessible for snapshot, using placeholder data")
-                completion(createSafePlaceholderEntry())
-                return
-            }
-            
-            // Get quote with error handling
-            let quote: Quote
-            do {
-                quote = QuoteService.shared.getTodaysQuote()
-            } catch {
-                print("Widget Error: Failed to get quote for snapshot: \(error.localizedDescription)")
-                quote = createSafePlaceholderQuote()
-            }
-            
-            // Get event days with error handling
-            var eventDays: [Int: Bool] = [:]
-            do {
-                eventDays = WidgetEventService.getEventDaysForCurrentMonth()
-            } catch {
-                print("Widget Warning: Could not retrieve event days for snapshot: \(error.localizedDescription)")
-                // Continue with empty event days
-            }
-            
-            let entry = QuoteEntry(
-                date: Date(),
-                quote: quote,
-                eventDays: eventDays
-            )
-            completion(entry)
-        } catch {
-            // Global error handler
-            print("Widget Error creating snapshot: \(error.localizedDescription)")
-            
-            // Provide a reliable fallback
-            completion(createSafePlaceholderEntry())
-        }
-    }
-    
-    func getTimeline(in context: Context, completion: @escaping (Timeline<QuoteEntry>) -> Void) {
-        do {
-            // Check for app group access first
-            if !WidgetEventService.isAppGroupAccessible() {
-                print("Widget Warning: App group not accessible for timeline, using placeholder data")
-                
-                let fallbackEntry = createSafePlaceholderEntry()
-                let fallbackTimeline = Timeline(entries: [fallbackEntry], policy: .after(fallbackRefreshDate()))
-                
-                completion(fallbackTimeline)
-                return
-            }
-            
-            // Get today's quote with error handling
-            let quote: Quote
-            do {
-                quote = QuoteService.shared.getTodaysQuote()
-            } catch {
-                print("Widget Error retrieving quote for timeline: \(error.localizedDescription)")
-                quote = createSafePlaceholderQuote()
-            }
-            
-            // Get real event days from the main app with error handling
-            let eventDays: [Int: Bool]
-            do {
-                eventDays = WidgetEventService.getEventDaysForCurrentMonth()
-            } catch {
-                print("Widget Error retrieving event days for timeline: \(error.localizedDescription)")
-                eventDays = [:]
-            }
-            
-            // Create entry for current date
-            let currentDate = Date()
-            let entry = QuoteEntry(
-                date: currentDate,
-                quote: quote,
-                eventDays: eventDays
-            )
-            
-            // Set next update to tomorrow's midnight with error handling
-            let refreshDate = nextRefreshDate(currentDate)
-            
-            // Create timeline with single entry and update at next midnight
-            let timeline = Timeline(entries: [entry], policy: .after(refreshDate))
-            completion(timeline)
-        } catch {
-            // Global error handler
-            print("Widget Error creating timeline: \(error.localizedDescription)")
-            
-            // Provide a reliable fallback timeline that updates in 1 hour
-            let fallbackEntry = createSafePlaceholderEntry()
-            let fallbackTimeline = Timeline(entries: [fallbackEntry], policy: .after(fallbackRefreshDate()))
-            
-            completion(fallbackTimeline)
-        }
-    }
-    
-    // Helper method to create a reliable placeholder quote
+    // Creates a safe placeholder quote that always works
     private func createSafePlaceholderQuote() -> Quote {
         return Quote(
             text: "The best way to predict the future is to create it.",
@@ -418,7 +299,7 @@ struct Provider: TimelineProvider {
         )
     }
     
-    // Helper method to create a safe placeholder entry
+    // Creates a safe placeholder entry
     private func createSafePlaceholderEntry() -> QuoteEntry {
         return QuoteEntry(
             date: Date(),
@@ -446,6 +327,74 @@ struct Provider: TimelineProvider {
     // Fallback refresh date (1 hour from now)
     private func fallbackRefreshDate() -> Date {
         return Date(timeIntervalSinceNow: 60 * 60)
+    }
+
+    func placeholder(in context: Context) -> QuoteEntry {
+        // Placeholder for widget gallery - must be reliable
+        return QuoteEntry(
+            date: Date(),
+            quote: createSafePlaceholderQuote(),
+            eventDays: [:]
+        )
+    }
+    
+    func getSnapshot(in context: Context, completion: @escaping (QuoteEntry) -> Void) {
+        // Snapshot for widget gallery or when taking screenshot
+        
+        // Check for app group access first
+        if !WidgetEventService.isAppGroupAccessible() {
+            print("Widget Warning: App group not accessible for snapshot, using placeholder data")
+            completion(createSafePlaceholderEntry())
+            return
+        }
+        
+        // Get quote with error handling
+        let quote = QuoteService.shared.getQuote()
+        
+        // Get event days (non-throwing)
+        let eventDays = WidgetEventService.getEventDaysForCurrentMonth()
+        
+        // Create and return the entry
+        let entry = QuoteEntry(
+            date: Date(),
+            quote: quote,
+            eventDays: eventDays
+        )
+        completion(entry)
+    }
+    
+    func getTimeline(in context: Context, completion: @escaping (Timeline<QuoteEntry>) -> Void) {
+        // Check for app group access first
+        if !WidgetEventService.isAppGroupAccessible() {
+            print("Widget Warning: App group not accessible for timeline, using placeholder data")
+            
+            let fallbackEntry = createSafePlaceholderEntry()
+            let fallbackTimeline = Timeline(entries: [fallbackEntry], policy: .after(fallbackRefreshDate()))
+            
+            completion(fallbackTimeline)
+            return
+        }
+        
+        // Get quote (non-throwing method)
+        let quote = QuoteService.shared.getQuote()
+        
+        // Get event days (non-throwing)
+        let eventDays = WidgetEventService.getEventDaysForCurrentMonth()
+        
+        // Create entry for current date
+        let currentDate = Date()
+        let entry = QuoteEntry(
+            date: currentDate,
+            quote: quote,
+            eventDays: eventDays
+        )
+        
+        // Set next update to tomorrow's midnight
+        let refreshDate = nextRefreshDate(currentDate)
+        
+        // Create timeline with single entry and update at next midnight
+        let timeline = Timeline(entries: [entry], policy: .after(refreshDate))
+        completion(timeline)
     }
 }
 
