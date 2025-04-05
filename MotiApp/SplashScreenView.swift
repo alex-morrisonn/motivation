@@ -1,5 +1,6 @@
 import SwiftUI
 import AppTrackingTransparency
+import FirebaseAnalytics  // Add explicit import
 
 struct SplashScreenView: View {
     // MARK: - Properties
@@ -84,14 +85,15 @@ struct SplashScreenView: View {
         // Only check if we haven't shown consent yet
         if !hasShownTrackingConsent {
             if #available(iOS 14.0, *) {
-                ATTrackingManager.getTrackingAuthorizationStatus { status in
-                    // If status is not determined, we need to show consent
-                    DispatchQueue.main.async {
-                        if status == .notDetermined {
-                            // Slight delay to ensure the content view is fully loaded
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                showingTrackingConsent = true
-                            }
+                // Check current status without requesting
+                let status = ATTrackingManager.trackingAuthorizationStatus
+                
+                // If status is not determined, we need to show consent
+                DispatchQueue.main.async {
+                    if status == .notDetermined {
+                        // Slight delay to ensure the content view is fully loaded
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            showingTrackingConsent = true
                         }
                     }
                 }

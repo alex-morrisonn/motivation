@@ -1,5 +1,6 @@
 import SwiftUI
 import AppTrackingTransparency
+import FirebaseAnalytics  // Add explicit import
 
 /// A dedicated view for requesting app tracking transparency permission
 struct TrackingConsentView: View {
@@ -20,7 +21,7 @@ struct TrackingConsentView: View {
                 
                 // Title
                 Text("Personalize Your Experience")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
@@ -106,7 +107,7 @@ struct TrackingConsentView: View {
                 // Update analytics collection based on authorization status
                 let isEnabled = status == .authorized
                 DispatchQueue.main.async {
-                    Analytics.setAnalyticsCollectionEnabled(isEnabled)
+                    FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(isEnabled)
                     UserDefaults.standard.set(true, forKey: "hasShownTrackingConsent")
                     self.presentationMode.wrappedValue.dismiss()
                 }
@@ -114,7 +115,7 @@ struct TrackingConsentView: View {
         } else {
             // For iOS versions below 14, enable analytics by default
             DispatchQueue.main.async {
-                Analytics.setAnalyticsCollectionEnabled(true)
+                FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(true)
                 UserDefaults.standard.set(true, forKey: "hasShownTrackingConsent")
                 self.presentationMode.wrappedValue.dismiss()
             }

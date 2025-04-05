@@ -1,6 +1,7 @@
 import SwiftUI
 import GoogleMobileAds
 import Firebase
+import FirebaseAnalytics  // Explicit import added
 
 @main
 struct MotiApp: App {
@@ -20,7 +21,7 @@ struct MotiApp: App {
         
         // Log app launch for analytics
         #if !DEBUG
-        Analytics.logEvent("app_launch", parameters: nil)
+        FirebaseAnalytics.Analytics.logEvent("app_launch", parameters: nil)
         #endif
     }
     

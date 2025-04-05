@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 import AppTrackingTransparency
+import FirebaseAnalytics  // Add explicit import
 
 // Main ContentView serving as the tab container for the app
 struct ContentView: View {
@@ -207,13 +208,14 @@ struct ContentView: View {
         // Only check if we haven't shown consent yet
         if !hasShownTrackingConsent {
             if #available(iOS 14.0, *) {
-                ATTrackingManager.getTrackingAuthorizationStatus { status in
-                    DispatchQueue.main.async {
-                        if status == .notDetermined {
-                            // Present tracking consent after a small delay
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                                showingTrackingConsent = true
-                            }
+                // Get the current status directly
+                let status = ATTrackingManager.trackingAuthorizationStatus
+                
+                DispatchQueue.main.async {
+                    if status == .notDetermined {
+                        // Present tracking consent after a small delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            showingTrackingConsent = true
                         }
                     }
                 }
