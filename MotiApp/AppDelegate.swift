@@ -74,8 +74,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Make sure premium is always disabled since the feature is not available yet
         ensurePremiumDisabled()
         
-        // Request tracking authorization with delay to avoid interfering with app launch UX
-        requestTrackingPermissionWithDelay()
+        // Check tracking status without automatically requesting permission
+        // The actual permission request will happen through the TrackingConsentView
+        checkTrackingStatus()
     }
     
     func applicationWillTerminate(_ application: UIApplication) {
@@ -328,25 +329,23 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     
     // MARK: - Privacy and Tracking
     
-    private func requestTrackingPermissionWithDelay() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.requestTrackingAuthorization()
-        }
-    }
-    
-    private func requestTrackingAuthorization() {
+    /// Check the App Tracking Transparency status without requesting permission
+    private func checkTrackingStatus() {
         if #available(iOS 14.0, *) {
-            ATTrackingManager.requestTrackingAuthorization { [weak self] status in
-                // Update analytics collection based on authorization status
+            ATTrackingManager.getTrackingAuthorizationStatus { [weak self] status in
+                // Update analytics collection based on current authorization status
                 let isEnabled = status == .authorized
                 DispatchQueue.main.async {
                     Analytics.setAnalyticsCollectionEnabled(isEnabled)
-                    print("App Tracking Transparency status: \(status.rawValue)")
+                    print("App Tracking Transparency status checked: \(status.rawValue)")
                     
                     if isEnabled {
-                        print("User allowed tracking - analytics enabled")
+                        print("User already allowed tracking - analytics enabled")
+                    } else if status == .notDetermined {
+                        print("Tracking permission not determined - will show consent view")
+                        // Actual permission request will be handled by TrackingConsentView
                     } else {
-                        print("User denied tracking or status is not determined - limited analytics only")
+                        print("User denied tracking or restricted - limited analytics only")
                     }
                     
                     // Log the tracking status if Firebase is initialized
@@ -361,7 +360,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         }
     }
     
-    // MARK: - Error Recovery Methods
+    // MARK: - Error Recovery
     
     private func attemptFirebaseRecovery() {
         // This could try alternative initialization methods or

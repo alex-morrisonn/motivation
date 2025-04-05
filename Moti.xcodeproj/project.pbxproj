@@ -313,6 +313,7 @@
 				1E41833D2D8EC71100AAEC12 /* Frameworks */,
 				1E41833E2D8EC71100AAEC12 /* Resources */,
 				1ECDCF952D8ECF3A00123E99 /* Embed Foundation Extensions */,
+				1E5EB4842DA0A67900E56C10 /* Run Script */,
 			);
 			buildRules = (
 			);
@@ -475,6 +476,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		1E5EB4842DA0A67900E56C10 /* Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Run Script";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Script to extract dSYMs from Firebase frameworks\nTEMP_DIR=$(mktemp -d)\nFIREBASE_SDKS=\"FirebaseAnalytics FirebaseFirestore FirebaseCore FirebaseAppCheck FirebaseCrashlytics GoogleAppMeasurement GoogleMobileAds absl grpc grpcpp UserMessagingPlatform\"\n\necho \"Extracting dSYMs from frameworks...\"\nfor FRAMEWORK in $FIREBASE_SDKS; do\n    FRAMEWORK_PATH=\"$(find \"${CODESIGNING_FOLDER_PATH}\" -name \"$FRAMEWORK.framework\" -type d -maxdepth 1)\"\n    if [ -n \"$FRAMEWORK_PATH\" ]; then\n        echo \"Extracting dSYM for $FRAMEWORK\"\n        DSYM_PATH=\"$FRAMEWORK_PATH.dSYM\"\n        \n        # Remove any existing DSYM\n        rm -rf \"$DSYM_PATH\"\n        \n        # Find the binary inside the framework\n        FRAMEWORK_EXECUTABLE_PATH=\"$(find \"$FRAMEWORK_PATH\" -name \"$FRAMEWORK\" -type f)\"\n        if [ -n \"$FRAMEWORK_EXECUTABLE_PATH\" ]; then\n            # Extract the dSYM\n            dsymutil \"$FRAMEWORK_EXECUTABLE_PATH\" -o \"$DSYM_PATH\"\n        else\n            echo \"Could not find binary for $FRAMEWORK\"\n        fi\n    else\n        echo \"Could not find $FRAMEWORK.framework\"\n    fi\ndone\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		1E21CDEA2D93715B000F7451 /* Sources */ = {
@@ -711,6 +734,7 @@
 				CODE_SIGN_ENTITLEMENTS = Moti/Moti.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"MotiApp/Preview Content\"";
 				DEVELOPMENT_TEAM = 9282G9F23C;
 				ENABLE_PREVIEWS = YES;

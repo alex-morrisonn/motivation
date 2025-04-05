@@ -1,16 +1,30 @@
 import SwiftUI
 import Combine
+import AppTrackingTransparency
 
 // Main ContentView serving as the tab container for the app
 struct ContentView: View {
+    // MARK: - Properties
+    
+    // Tab selection state
     @State private var selectedTab = 0
+    
+    // Environment objects and observable objects
     @EnvironmentObject var notificationManager: NotificationManager
     @ObservedObject var streakManager = StreakManager.shared
     @ObservedObject var adManager = AdManager.shared
+    
+    // UI state properties
     @State private var showingStreakCelebration = false
     @State private var previousStreak = 0
     @State private var showingPremiumOffer = false
     @State private var showingPremiumAlert = false
+    @State private var showingTrackingConsent = false
+    
+    // Track whether tracking consent has been shown
+    @AppStorage("hasShownTrackingConsent") private var hasShownTrackingConsent = false
+    
+    // MARK: - Initialization
     
     init() {
         // Ensure proper dark mode appearance for tab bar
@@ -32,6 +46,8 @@ struct ContentView: View {
         
         print("Tab bar appearance configured with black background")
     }
+    
+    // MARK: - Body
     
     var body: some View {
         ZStack {
@@ -106,6 +122,14 @@ struct ContentView: View {
         .sheet(isPresented: $showingPremiumOffer) {
             PremiumView()
         }
+        .fullScreenCover(isPresented: $showingTrackingConsent) {
+            TrackingConsentView()
+        }
+        .alert("Premium Coming Soon", isPresented: $showingPremiumAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Premium features are currently under development. For now, enjoy the free version with all quotes and widgets available!")
+        }
         .onOpenURL { url in
             if url.scheme == "moti" {
                 if url.host == "calendar" {
@@ -138,25 +162,26 @@ struct ContentView: View {
             // Update previous streak for next comparison
             previousStreak = streakManager.currentStreak
         }
+        .onAppear {
+            // Check for tracking permission status on app appear
+            checkAndShowTrackingConsentIfNeeded()
+        }
         .fullScreenCover(isPresented: $showingStreakCelebration) {
             StreakCelebrationView(
                 streakCount: streakManager.currentStreak,
                 isShowing: $showingStreakCelebration
             )
         }
-        .alert("Premium Coming Soon", isPresented: $showingPremiumAlert) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("Premium features are currently under development. For now, enjoy the free version with all quotes and widgets available!")
-        }
     }
     
-    // Helper to show premium coming soon alert
+    // MARK: - Helper Methods
+    
+    /// Helper to show premium coming soon alert
     private func showPremiumComingSoonAlert() {
         showingPremiumAlert = true
     }
     
-    // Helper to get current screen name for context-aware ads
+    /// Helper to get current screen name for context-aware ads
     private var currentScreenName: String {
         switch selectedTab {
         case 0: return "HomeView"
@@ -168,41 +193,41 @@ struct ContentView: View {
         }
     }
     
-    // Helper to get the safe area top inset
-        private func getSafeAreaTopInset() -> CGFloat {
-#if !WIDGET_EXTENSION
-            // For main app, use UIApplication scenes
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let window = windowScene.windows.first {
-                return window.safeAreaInsets.top
-            }
-#endif
-            
-            // Fallback to 0 or a default value
+    /// Helper to get the safe area top inset
+    private func getSafeAreaTopInset() -> CGFloat {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else {
             return 0
         }
+        return window.safeAreaInsets.top
     }
     
-        /// Cross-platform safe area top inset helper
-        func getSafeAreaTopInset() -> CGFloat {
-#if !WIDGET_EXTENSION
-            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                  let window = windowScene.windows.first else {
-                return 0
+    /// Check tracking status and show consent if needed
+    private func checkAndShowTrackingConsentIfNeeded() {
+        // Only check if we haven't shown consent yet
+        if !hasShownTrackingConsent {
+            if #available(iOS 14.0, *) {
+                ATTrackingManager.getTrackingAuthorizationStatus { status in
+                    DispatchQueue.main.async {
+                        if status == .notDetermined {
+                            // Present tracking consent after a small delay
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                showingTrackingConsent = true
+                            }
+                        }
+                    }
+                }
             }
-            return window.safeAreaInsets.top
-#else
-            return 0
-#endif
-        }
-    
-    
-    // SwiftUI Preview
-    struct ContentView_Previews: PreviewProvider {
-        static var previews: some View {
-            ContentView()
-                .environmentObject(NotificationManager.shared)
-                .preferredColorScheme(.dark)
         }
     }
+}
 
+// MARK: - Preview Provider
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+            .environmentObject(NotificationManager.shared)
+            .preferredColorScheme(.dark)
+    }
+}

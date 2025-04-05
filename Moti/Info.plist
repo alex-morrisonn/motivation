@@ -72,7 +72,9 @@
     <string>This identifier helps us personalize your daily quotes based on what inspires you most and improve app features you use frequently.</string>
     <key>NSUserNotificationsUsageDescription</key>
     <string>Moti would like to send you daily motivational quotes and streak milestone notifications.</string>
-    
+    <key>NSUserTrackingUsageDescription</key>
+    <string>This identifier helps us personalize your daily quotes, improve app features, and deliver relevant content based on your preferences and usage patterns.</string>
+
     <!-- Privacy Declarations -->
     <key>NSPrivacyCollectedDataTypes</key>
     <array>
