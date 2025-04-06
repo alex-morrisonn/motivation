@@ -103,12 +103,14 @@ struct TrackingConsentView: View {
     /// Request tracking permission and dismiss the view
     private func requestTracking() {
         if #available(iOS 14.0, *) {
+            // Set this BEFORE requesting authorization to prevent duplicate prompts
+            UserDefaults.standard.set(true, forKey: "hasShownTrackingConsent")
+            
             ATTrackingManager.requestTrackingAuthorization { status in
                 // Update analytics collection based on authorization status
                 let isEnabled = status == .authorized
                 DispatchQueue.main.async {
                     FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(isEnabled)
-                    UserDefaults.standard.set(true, forKey: "hasShownTrackingConsent")
                     self.presentationMode.wrappedValue.dismiss()
                 }
             }
@@ -121,10 +123,10 @@ struct TrackingConsentView: View {
             }
         }
     }
-}
-
-struct TrackingConsentView_Previews: PreviewProvider {
-    static var previews: some View {
-        TrackingConsentView()
+    
+    struct TrackingConsentView_Previews: PreviewProvider {
+        static var previews: some View {
+            TrackingConsentView()
+        }
     }
 }
