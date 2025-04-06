@@ -1,7 +1,7 @@
 import SwiftUI
 import Combine
 import AppTrackingTransparency
-import FirebaseAnalytics  // Add explicit import
+import FirebaseAnalytics
 
 // Main ContentView serving as the tab container for the app
 struct ContentView: View {
@@ -24,6 +24,9 @@ struct ContentView: View {
     
     // Track whether tracking consent has been shown
     @AppStorage("hasShownTrackingConsent") private var hasShownTrackingConsent = false
+    
+    // Constants for consistent sizing
+    private let contentMaxWidth: CGFloat = 650
     
     // MARK: - Initialization
     
@@ -51,74 +54,80 @@ struct ContentView: View {
     // MARK: - Body
     
     var body: some View {
-        ZStack {
-            TabView(selection: $selectedTab) {
-                // Home Tab (Quotes)
-                HomeQuoteView()
-                    .tabItem {
-                        Image(systemName: "house.fill")
-                        Text("Home")
-                    }
-                    .tag(0)
-                    .trackNavigationForAds() // Track navigation for interstitials
-                
-                // Categories Tab
-                CategoriesView()
-                    .tabItem {
-                        Image(systemName: "list.bullet")
-                        Text("Categories")
-                    }
-                    .tag(1)
-                    .trackNavigationForAds() // Track navigation for interstitials
-                
-                // Favorites Tab
-                FavoritesView()
-                    .tabItem {
-                        Image(systemName: "heart.fill")
-                        Text("Favorites")
-                    }
-                    .tag(2)
-                    .trackNavigationForAds() // Track navigation for interstitials
-                
-                // Widgets Tab
-                WidgetsShowcaseView()
-                    .tabItem {
-                        Image(systemName: "square.grid.2x2.fill")
-                        Text("Widgets")
-                    }
-                    .tag(3)
-                    .trackNavigationForAds() // Track navigation for interstitials
-                
-                // More Tab
-                MoreView()
-                    .tabItem {
-                        Image(systemName: "ellipsis")
-                        Text("More")
-                    }
-                    .tag(4)
-            }
-            .accentColor(.white) // Active tab color
-            
-            // Banner ad at the top - non-intrusive
-            if !adManager.isPremiumUser {
-                VStack {
-                    // Banner ad on top
-                    EnhancedBannerAdView(screenName: currentScreenName)
-                        .padding(.top, getSafeAreaTopInset()) // Add padding for status bar
+        GeometryReader { geometry in
+            // Main container
+            ZStack {
+                // Tab View containing all main screens
+                TabView(selection: $selectedTab) {
+                    // Home Tab (Quotes)
+                    HomeQuoteView()
+                        .tabItem {
+                            Image(systemName: "house.fill")
+                            Text("Home")
+                        }
+                        .tag(0)
+                        .trackNavigationForAds() // Track navigation for interstitials
                     
+                    // Categories Tab
+                    CategoriesView()
+                        .tabItem {
+                            Image(systemName: "list.bullet")
+                            Text("Categories")
+                        }
+                        .tag(1)
+                        .trackNavigationForAds() // Track navigation for interstitials
+                    
+                    // Favorites Tab
+                    FavoritesView()
+                        .tabItem {
+                            Image(systemName: "heart.fill")
+                            Text("Favorites")
+                        }
+                        .tag(2)
+                        .trackNavigationForAds() // Track navigation for interstitials
+                    
+                    // Widgets Tab
+                    WidgetsShowcaseView()
+                        .tabItem {
+                            Image(systemName: "square.grid.2x2.fill")
+                            Text("Widgets")
+                        }
+                        .tag(3)
+                        .trackNavigationForAds() // Track navigation for interstitials
+                    
+                    // More Tab
+                    MoreView()
+                        .tabItem {
+                            Image(systemName: "ellipsis")
+                            Text("More")
+                        }
+                        .tag(4)
+                }
+                .accentColor(.white) // Active tab color
+                
+                // Banner ad at the top - non-intrusive
+                if !adManager.isPremiumUser {
+                    VStack {
+                        // Banner ad on top
+                        EnhancedBannerAdView(screenName: currentScreenName)
+                            .padding(.top, getSafeAreaTopInset()) // Add padding for status bar
+                        
+                        Spacer()
+                    }
+                }
+                
+                // Add a subtle thin line at the top of the tab bar for better visual separation
+                VStack {
                     Spacer()
+                    Rectangle()
+                        .frame(height: 0.5)
+                        .foregroundColor(Color.white.opacity(0.3))
+                        .padding(.bottom, 49) // Tab bar height
                 }
             }
-            
-            // Add a subtle thin line at the top of the tab bar for better visual separation
-            VStack {
-                Spacer()
-                Rectangle()
-                    .frame(height: 0.5)
-                    .foregroundColor(Color.white.opacity(0.3))
-                    .padding(.bottom, 49) // Tab bar height
-            }
         }
+        // Apply the adaptive layout for iPad
+        .adaptiveLayout(maxWidth: contentMaxWidth)
         .edgesIgnoringSafeArea(.top) // Allow the banner ad to extend to the top edge
         .sheet(isPresented: $showingPremiumOffer) {
             PremiumView()
@@ -228,8 +237,18 @@ struct ContentView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
-            .environmentObject(NotificationManager.shared)
-            .preferredColorScheme(.dark)
+        Group {
+            ContentView()
+                .environmentObject(NotificationManager.shared)
+                .previewDevice("iPhone 14 Pro")
+                .preferredColorScheme(.dark)
+                .previewDisplayName("iPhone")
+            
+            ContentView()
+                .environmentObject(NotificationManager.shared)
+                .previewDevice("iPad Pro (11-inch)")
+                .preferredColorScheme(.dark)
+                .previewDisplayName("iPad")
+        }
     }
 }
