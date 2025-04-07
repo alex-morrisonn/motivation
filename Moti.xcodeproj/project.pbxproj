@@ -97,7 +97,6 @@
 				"Preview Content/Preview Assets.xcassets",
 				Resources/SharedQuotes.swift,
 				Utilities/Constants/SharedConstants.swift,
-				Utilities/UI/DeviceResponsiveContainer.swift,
 				Utilities/UI/ShareSheet.swift,
 			);
 			target = 1E41834F2D8EC71300AAEC12 /* MotiTests */;
@@ -109,7 +108,6 @@
 				"Preview Content/Preview Assets.xcassets",
 				Resources/SharedQuotes.swift,
 				Utilities/Constants/SharedConstants.swift,
-				Utilities/UI/DeviceResponsiveContainer.swift,
 				Utilities/UI/ShareSheet.swift,
 			);
 			target = 1E4183592D8EC71300AAEC12 /* MotiUITests */;
@@ -121,7 +119,6 @@
 				"Preview Content/Preview Assets.xcassets",
 				Resources/SharedQuotes.swift,
 				Utilities/Constants/SharedConstants.swift,
-				Utilities/UI/DeviceResponsiveContainer.swift,
 				Utilities/UI/ShareSheet.swift,
 			);
 			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;

@@ -1,7 +1,7 @@
 import SwiftUI
 import GoogleMobileAds
 import Firebase
-import FirebaseAnalytics
+import FirebaseAnalytics  // Explicit import added
 
 @main
 struct MotiApp: App {
@@ -19,9 +19,6 @@ struct MotiApp: App {
         // Setup Google Mobile Ads
         configureAds()
         
-        // Configure iPad-specific UI
-        configureIPadUIIfNeeded()
-        
         // Log app launch for analytics
         #if !DEBUG
         FirebaseAnalytics.Analytics.logEvent("app_launch", parameters: nil)
@@ -30,105 +27,20 @@ struct MotiApp: App {
     
     var body: some Scene {
         WindowGroup {
-            // Use SplashScreenView as entry point
             SplashScreenView()
                 .environmentObject(notificationManager)
                 .onOpenURL { url in
                     handleDeepLink(url)
                 }
-                .environmentObject(AdManager.shared) // Ensure AdManager is accessible everywhere
         }
     }
     
-    // Configure global appearance settings for consistent dark theme
+    // Configure global appearance settings
     private func configureAppearance() {
-        // Set up dark mode UI elements
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .black
-        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
-        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
-        
-        UINavigationBar.appearance().standardAppearance = appearance
-        UINavigationBar.appearance().scrollEdgeAppearance = appearance
-        UINavigationBar.appearance().compactAppearance = appearance
+        // Set up dark mode for UI elements
         UINavigationBar.appearance().tintColor = .white
-        
-        // Tab bar appearance
-        let tabAppearance = UITabBarAppearance()
-        tabAppearance.configureWithOpaqueBackground()
-        tabAppearance.backgroundColor = .black
-        
-        UITabBar.appearance().standardAppearance = tabAppearance
-        if #available(iOS 15.0, *) {
-            UITabBar.appearance().scrollEdgeAppearance = tabAppearance
-        }
-        
-        // Table view appearance
+        UITabBar.appearance().backgroundColor = .black
         UITableView.appearance().backgroundColor = .clear
-        
-        print("Global appearance configured for dark theme")
-    }
-    
-    // Configure iPad-specific UI adjustments
-    private func configureIPadUIIfNeeded() {
-        if UIDevice.isIPad {
-            // For iPads, adjust specific UI elements to maintain proportions
-            
-            // 1. Tab bar adjustments for iPad
-            if let tabBarAppearance = UITabBar.appearance().standardAppearance.copy() as? UITabBarAppearance {
-                // Make sure icons and text are properly sized
-                tabBarAppearance.stackedLayoutAppearance.normal.iconColor = UIColor.lightGray
-                tabBarAppearance.stackedLayoutAppearance.selected.iconColor = UIColor.white
-                
-                // Apply slightly larger font for iPad tab bar titles
-                let fontSize: CGFloat = 12
-                
-                let normalAttributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.systemFont(ofSize: fontSize),
-                    .foregroundColor: UIColor.lightGray
-                ]
-                
-                let selectedAttributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.systemFont(ofSize: fontSize, weight: .medium),
-                    .foregroundColor: UIColor.white
-                ]
-                
-                tabBarAppearance.stackedLayoutAppearance.normal.titleTextAttributes = normalAttributes
-                tabBarAppearance.stackedLayoutAppearance.selected.titleTextAttributes = selectedAttributes
-                
-                // Apply appearance to tab bar
-                UITabBar.appearance().standardAppearance = tabBarAppearance
-                
-                if #available(iOS 15.0, *) {
-                    UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
-                }
-            }
-            
-            // 2. Navigation bar adjustments for iPad
-            if let navBarAppearance = UINavigationBar.appearance().standardAppearance.copy() as? UINavigationBarAppearance {
-                // Use slightly larger fonts for iPad navigation titles
-                let titleFont = UIFont.systemFont(ofSize: 18, weight: .semibold)
-                let largeTitleFont = UIFont.systemFont(ofSize: 34, weight: .bold)
-                
-                navBarAppearance.titleTextAttributes = [
-                    .foregroundColor: UIColor.white,
-                    .font: titleFont
-                ]
-                
-                navBarAppearance.largeTitleTextAttributes = [
-                    .foregroundColor: UIColor.white,
-                    .font: largeTitleFont
-                ]
-                
-                // Apply appearance to navigation bar
-                UINavigationBar.appearance().standardAppearance = navBarAppearance
-                UINavigationBar.appearance().scrollEdgeAppearance = navBarAppearance
-                UINavigationBar.appearance().compactAppearance = navBarAppearance
-            }
-            
-            print("iPad-specific UI adjustments applied")
-        }
     }
     
     private func configureAds() {
@@ -147,15 +59,7 @@ struct MotiApp: App {
         
         // Initialize the Mobile Ads SDK - the newest version doesn't take arguments
         MobileAds.initialize()
-            print("Mobile Ads SDK initialization complete")
-            
-            // Configure ad sizes based on device type
-            if UIDevice.isIPad {
-                // Set iPad-specific ad sizes if needed
-                // This helps ensure ads appear proportionally correct on iPad
-                AdManager.shared.configureForIPad()
-            }
-        }
+        print("Mobile Ads SDK initialization complete")
     }
     
     // Handle deep links
@@ -170,16 +74,5 @@ struct MotiApp: App {
             object: nil,
             userInfo: ["url": url]
         )
-    }
-
-
-
-// MARK: - AdManager Extension
-extension AdManager {
-    /// Configure ads specifically for iPad
-    func configureForIPad() {
-        // No implementation changes needed here - just a placeholder for the method
-        // In a real implementation, you might adjust ad sizes or positions for iPad
-        print("AdManager configured for iPad")
     }
 }
