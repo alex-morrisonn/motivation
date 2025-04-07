@@ -103,11 +103,23 @@ struct TrackingConsentView: View {
     /// Request tracking permission and dismiss the view
     private func requestTracking() {
         if #available(iOS 14.0, *) {
-            ATTrackingManager.requestTrackingAuthorization { status in
-                // Update analytics collection based on authorization status
-                let isEnabled = status == .authorized
+            // Only request if not already determined
+            let currentStatus = ATTrackingManager.trackingAuthorizationStatus
+            if currentStatus == .notDetermined {
+                ATTrackingManager.requestTrackingAuthorization { status in
+                    // Update analytics collection based on authorization status
+                    let isEnabled = status == .authorized
+                    DispatchQueue.main.async {
+                        FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(isEnabled)
+                        // Set flag that we've shown the consent view
+                        UserDefaults.standard.set(true, forKey: "hasShownTrackingConsent")
+                        self.presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            } else {
+                // If status is already determined, just dismiss
                 DispatchQueue.main.async {
-                    FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(isEnabled)
+                    // Still mark as shown
                     UserDefaults.standard.set(true, forKey: "hasShownTrackingConsent")
                     self.presentationMode.wrappedValue.dismiss()
                 }

@@ -205,8 +205,9 @@ struct ContentView: View {
     
     /// Check tracking status and show consent if needed
     private func checkAndShowTrackingConsentIfNeeded() {
-        // Only check if we haven't shown consent yet
-        if !hasShownTrackingConsent {
+        // Skip the check if the tracking consent has already been shown
+        // OR if we're coming from SplashScreenView (which already handles this)
+        if !hasShownTrackingConsent && !UserDefaults.standard.bool(forKey: "isFromSplashScreen") {
             if #available(iOS 14.0, *) {
                 // Get the current status directly
                 let status = ATTrackingManager.trackingAuthorizationStatus
@@ -220,6 +221,9 @@ struct ContentView: View {
                     }
                 }
             }
+        } else {
+            // Reset the flag for next time
+            UserDefaults.standard.removeObject(forKey: "isFromSplashScreen")
         }
     }
 }

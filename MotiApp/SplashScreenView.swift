@@ -62,6 +62,8 @@ struct SplashScreenView: View {
                     // Transition to main app after delay
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                         withAnimation {
+                            // Set a flag to indicate we're coming from SplashScreen
+                            UserDefaults.standard.set(true, forKey: "isFromSplashScreen")
                             self.isActive = true
                             
                             // Check if we need to show tracking consent
