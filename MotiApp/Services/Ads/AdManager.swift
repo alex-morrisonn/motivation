@@ -65,10 +65,10 @@ class AdManager: NSObject, ObservableObject {
     let nativeAdUnitID = "ca-app-pub-3940256099942544/3986624511" // Test native ID
     #else
     // Production Ad Unit IDs - update these with your actual production IDs
-    let bannerAdUnitID = "ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY"
-    let interstitialAdUnitID = "ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY"
-    let rewardedAdUnitID = "ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY"
-    let nativeAdUnitID = "ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY"
+    let bannerAdUnitID = "ca-app-pub-3143440761815563/8342942720"
+    let interstitialAdUnitID = "ca-app-pub-3143440761815563/3510252594"
+    let rewardedAdUnitID = "ca-app-pub-3143440761815563/8107500397"
+    let nativeAdUnitID = "ca-app-pub-3143440761815563/3387087375"
     #endif
     
     // MARK: - Initialization
