@@ -1,7 +1,5 @@
 # Privacy Policy
 
-**Last Updated:** March 2025
-
 ## Introduction
 
 Welcome to Moti! This Privacy Policy explains how we collect, use, and share information about you when you use our mobile application. By using Moti, you agree to the practices described below.
@@ -52,3 +50,5 @@ We may update this Privacy Policy occasionally. All changes will be posted withi
 
 If you have any questions or concerns, please contact us at:
 **motii.team@gmail.com**
+
+**Last Updated:** March 2025
