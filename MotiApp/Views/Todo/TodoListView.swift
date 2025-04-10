@@ -106,6 +106,7 @@ struct TodoListView: View {
                         ringColor: progress >= 1.0 ? .green : .blue
                     )
                     .padding(.vertical, 20)
+                    .animation(.spring(response: 0.5), value: completedTasks)
                     
                     // Show momentum streak message if applicable
                     if todoService.hasMomentumToday {
@@ -305,7 +306,8 @@ struct TodoListView: View {
                                     }
                                 }
                             )
-                            .transition(.opacity)
+                            .transition(.opacity.combined(with: .move(edge: .leading)))
+                            .animation(.spring(response: 0.3), value: todo.isCompleted)
                         }
                     }
                     
@@ -339,6 +341,8 @@ struct TodoListView: View {
                                     }
                                 }
                             )
+                            .transition(.opacity.combined(with: .move(edge: .leading)))
+                            .animation(.spring(response: 0.3), value: todo.isCompleted)
                         }
                     }
                 } else {
@@ -361,8 +365,10 @@ struct TodoListView: View {
                                 todo: todo,
                                 isRecentlyCompleted: false,
                                 onToggle: {
-                                    // Simply toggle the status without the celebration animation
-                                    todoService.toggleCompletionStatus(todo)
+                                    // Simply toggle the status with animation for completed items
+                                    withAnimation {
+                                        todoService.toggleCompletionStatus(todo)
+                                    }
                                 },
                                 onEdit: {
                                     editingTodo = todo
@@ -373,6 +379,8 @@ struct TodoListView: View {
                                     }
                                 }
                             )
+                            .transition(.opacity.combined(with: .move(edge: .leading)))
+                            .animation(.spring(response: 0.3), value: todo.isCompleted)
                         }
                     } else {
                         VStack {
@@ -388,12 +396,17 @@ struct TodoListView: View {
         }
     }
     
-    // Handle task completion with improved feedback
+    // Handle task completion with improved feedback and real-time UI updates
     private func handleTaskCompletion(_ todo: TodoItem) {
         lastCompletedTodoID = todo.id
         successHaptic.notificationOccurred(.success)
         celebrationQuote = CelebrationQuote.randomQuote()
-        todoService.toggleCompletionStatus(todo)
+        
+        // Toggle the completion status with animation to ensure UI updates
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            todoService.toggleCompletionStatus(todo)
+        }
+        
         showCelebrationToast = true
         completionCelebrationOffset = 0
     }
@@ -444,7 +457,9 @@ struct EnhancedTodoItemRow: View {
                             withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
                                 checkboxScale = 1.0
                             }
-                            onToggle()
+                            withAnimation {
+                                onToggle()
+                            }
                         }
                     }) {
                         ZStack {
@@ -468,13 +483,13 @@ struct EnhancedTodoItemRow: View {
                     .buttonStyle(PlainButtonStyle())
                     .padding(.top, 2)
                     
-                    // Todo details content.
+                    // Todo details content
                     VStack(alignment: .leading, spacing: 4) {
-                        // Updated title text with a gray strikethrough when the task is completed.
+                        // Updated title text with a more visible strikethrough when the task is completed
                         Text(todo.title)
                             .font(.headline)
-                            .foregroundColor(.white)
-                            .strikethrough(todo.isCompleted, color: .gray)
+                            .foregroundColor(todo.isCompleted ? .gray : .white)
+                            .strikethrough(todo.isCompleted, color: .white.opacity(0.6))
                             .lineLimit(1)
                         
                         if !todo.notes.isEmpty {
@@ -482,25 +497,27 @@ struct EnhancedTodoItemRow: View {
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
                                 .lineLimit(2)
+                                .strikethrough(todo.isCompleted, color: .gray.opacity(0.6))
                         }
                         
-                        // "Why This Matters" field.
+                        // "Why This Matters" field
                         if !todo.whyThisMatters.isEmpty {
                             HStack(spacing: 4) {
                                 Image(systemName: "heart.text.square")
                                     .font(.system(size: 12))
-                                    .foregroundColor(.pink.opacity(0.8))
+                                    .foregroundColor(.pink.opacity(todo.isCompleted ? 0.4 : 0.8))
                                 
                                 Text("Why: \(todo.whyThisMatters)")
                                     .font(.caption)
-                                    .foregroundColor(.pink.opacity(0.8))
+                                    .foregroundColor(.pink.opacity(todo.isCompleted ? 0.4 : 0.8))
                                     .italic()
                                     .lineLimit(1)
+                                    .strikethrough(todo.isCompleted, color: .pink.opacity(0.4))
                             }
                             .padding(.top, 4)
                         }
                         
-                        // Due date and overdue indicator.
+                        // Due date and overdue indicator
                         if let formattedDueDate = todo.formattedDueDate {
                             HStack {
                                 Image(systemName: "clock")
@@ -509,7 +526,7 @@ struct EnhancedTodoItemRow: View {
                                 Text(formattedDueDate)
                                     .font(.caption)
                                 
-                                if todo.isOverdue {
+                                if todo.isOverdue && !todo.isCompleted {
                                     Text("OVERDUE")
                                         .font(.system(size: 10, weight: .bold))
                                         .foregroundColor(.white)
@@ -519,22 +536,24 @@ struct EnhancedTodoItemRow: View {
                                         .cornerRadius(4)
                                 }
                             }
-                            .foregroundColor(todo.isOverdue ? .red : .gray)
+                            .foregroundColor(todo.isOverdue && !todo.isCompleted ? .red : .gray)
+                            .strikethrough(todo.isCompleted, color: .gray.opacity(0.4))
                             .padding(.top, 2)
                         }
                         
-                        // Priority indicator.
+                        // Priority indicator
                         HStack {
                             Text("Priority: \(todo.priority.name)")
                                 .font(.caption)
-                                .foregroundColor(getPriorityColor())
+                                .foregroundColor(todo.isCompleted ? .gray : getPriorityColor())
+                                .strikethrough(todo.isCompleted, color: .gray.opacity(0.4))
                         }
                         .padding(.top, 2)
                     }
                     
                     Spacer()
                     
-                    // Edit button – only visible when the row is not swiped.
+                    // Edit button – only visible when the row is not swiped
                     if offset == 0 {
                         Button(action: onEdit) {
                             Image(systemName: "pencil")
@@ -550,7 +569,7 @@ struct EnhancedTodoItemRow: View {
                 }
                 .padding(.vertical, 12)
                 .padding(.horizontal, 16)
-                // Use a fully opaque background so the delete button remains hidden until swiped.
+                // Use a fully opaque background so the delete button remains hidden until swiped
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color.black)
@@ -559,6 +578,7 @@ struct EnhancedTodoItemRow: View {
                                 .stroke(Color.white.opacity(isRecentlyCompleted ? 0.3 : 0.1), lineWidth: 1)
                         )
                 )
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: todo.isCompleted)
                 .offset(x: offset)
             }
             .padding(.horizontal)
@@ -569,16 +589,16 @@ struct EnhancedTodoItemRow: View {
                 DragGesture()
                     .onChanged { gesture in
                         if gesture.translation.width < 0 {
-                            // Swipe left to reveal the delete button, limiting the offset.
+                            // Swipe left to reveal the delete button, limiting the offset
                             self.offset = max(gesture.translation.width, -deleteButtonWidth)
                         } else if offset != 0 {
-                            // Allow swiping right to cancel.
+                            // Allow swiping right to cancel
                             self.offset = min(0, offset + gesture.translation.width)
                         }
                     }
                     .onEnded { _ in
                         withAnimation(.spring()) {
-                            // If swiped far enough, keep the delete button exposed.
+                            // If swiped far enough, keep the delete button exposed
                             if self.offset < -deleteButtonWidth * 0.5 {
                                 self.offset = -deleteButtonWidth
                             } else {
@@ -606,7 +626,7 @@ struct EnhancedTodoItemRow: View {
         .frame(height: 120)
     }
     
-    // Helper function to retrieve the priority color.
+    // Helper function to retrieve the priority color
     private func getPriorityColor() -> Color {
         switch todo.priority {
         case .low:
@@ -638,4 +658,3 @@ struct CelebrationQuote {
         celebrationQuotes.randomElement() ?? celebrationQuotes[0]
     }
 }
-
