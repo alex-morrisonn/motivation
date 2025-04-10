@@ -12,6 +12,7 @@ struct TodoItem: Identifiable, Codable, Equatable {
     var createdDate: Date
     var dueDate: Date?
     var priority: Priority = .normal
+    var whyThisMatters: String = "" // New field for emotional context
     
     // Priority levels for todos
     enum Priority: Int, Codable, CaseIterable {
@@ -61,11 +62,12 @@ struct TodoItem: Identifiable, Codable, Equatable {
     // MARK: - Factory Methods
     
     /// Create a new todo item with default values
-    static func createNew(title: String, notes: String = "") -> TodoItem {
+    static func createNew(title: String, notes: String = "", whyThisMatters: String = "") -> TodoItem {
         return TodoItem(
             title: title,
             notes: notes,
-            createdDate: Date()
+            createdDate: Date(),
+            whyThisMatters: whyThisMatters
         )
     }
     
@@ -78,7 +80,8 @@ struct TodoItem: Identifiable, Codable, Equatable {
             isCompleted: false,
             createdDate: Date(),
             dueDate: Date().addingTimeInterval(86400),
-            priority: .normal
+            priority: .normal,
+            whyThisMatters: "It's an important example"
         )
     }
     
@@ -92,7 +95,8 @@ struct TodoItem: Identifiable, Codable, Equatable {
                 isCompleted: false,
                 createdDate: Date(),
                 dueDate: Date().addingTimeInterval(3600),
-                priority: .high
+                priority: .high,
+                whyThisMatters: "Helps keep me centered all day"
             ),
             TodoItem(
                 id: UUID(),
@@ -101,7 +105,8 @@ struct TodoItem: Identifiable, Codable, Equatable {
                 isCompleted: true,
                 createdDate: Date().addingTimeInterval(-86400),
                 dueDate: Date().addingTimeInterval(-3600),
-                priority: .normal
+                priority: .normal,
+                whyThisMatters: "Building my knowledge foundation"
             ),
             TodoItem(
                 id: UUID(),
@@ -110,7 +115,8 @@ struct TodoItem: Identifiable, Codable, Equatable {
                 isCompleted: false,
                 createdDate: Date().addingTimeInterval(-172800),
                 dueDate: Date().addingTimeInterval(86400),
-                priority: .low
+                priority: .low,
+                whyThisMatters: "So I don't panic Sunday night"
             )
         ]
     }

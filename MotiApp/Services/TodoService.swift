@@ -17,6 +17,12 @@ class TodoService: ObservableObject {
     private let todosKey = "savedTodos"
     private let backupTodosKey = "savedTodos_backup"
     
+    // MARK: - Streak Management Properties
+    
+    private let momentumStreakKey = "todo_momentumStreak"
+    private let lastStreakDateKey = "todo_lastStreakDate"
+    private let streakCountKey = "todo_streakCount"
+    
     // MARK: - Error Types
     
     /// Error type for TodoService operations
@@ -43,7 +49,7 @@ class TodoService: ObservableObject {
         loadTodos()
     }
     
-    // MARK: - Public Methods
+    // MARK: - Public Methods - CRUD
     
     /// Add a new todo item
     /// - Parameter todo: The todo item to add
@@ -74,12 +80,22 @@ class TodoService: ObservableObject {
     /// - Parameter todo: The todo to toggle
     func toggleCompletionStatus(_ todo: TodoItem) {
         if let index = todos.firstIndex(where: { $0.id == todo.id }) {
+            let wasCompleted = todos[index].isCompleted
             todos[index].isCompleted.toggle()
+            
+            // Check if we just completed a task (not uncompleted)
+            if !wasCompleted && todos[index].isCompleted {
+                // Update streak only when completing a task (not uncompleting)
+                checkStreakAfterCompletion()
+            }
+            
             saveTodos()
         } else {
             print("Warning: Attempted to toggle completion for non-existent todo: \(todo.id)")
         }
     }
+    
+    // MARK: - Public Methods - Queries
     
     /// Get incomplete todos sorted by priority
     /// - Returns: Array of incomplete todos
@@ -101,6 +117,95 @@ class TodoService: ObservableObject {
     /// - Returns: Array of overdue todos
     func getOverdueTodos() -> [TodoItem] {
         return todos.filter { $0.isOverdue }
+    }
+    
+    // MARK: - Streak Management Methods
+    
+    /// Check if user has momentum streak (completed 3+ tasks today)
+    var hasMomentumToday: Bool {
+        return getCompletedTodosForToday().count >= 3
+    }
+    
+    /// Get current streak count
+    var currentStreakDays: Int {
+        return UserDefaults.standard.integer(forKey: streakCountKey)
+    }
+    
+    /// Get completed todos for today only
+    func getCompletedTodosForToday() -> [TodoItem] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        
+        return todos.filter {
+            $0.isCompleted &&
+            calendar.isDate(calendar.startOfDay(for: $0.createdDate), inSameDayAs: today)
+        }
+    }
+    
+    /// Calculate progress for today's tasks
+    func calculateDailyProgress() -> Double {
+        let todayTodos = todos.filter {
+            let calendar = Calendar.current
+            return calendar.isDateInToday($0.createdDate)
+        }
+        
+        guard !todayTodos.isEmpty else { return 0.0 }
+        
+        let completedCount = todayTodos.filter { $0.isCompleted }.count
+        return Double(completedCount) / Double(todayTodos.count)
+    }
+    
+    /// Update streak when completing a task
+    func updateStreak() {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let defaults = UserDefaults.standard
+        
+        // Get last streak date if exists
+        if let lastStreakDateData = defaults.object(forKey: lastStreakDateKey) as? Date {
+            let lastDate = calendar.startOfDay(for: lastStreakDateData)
+            
+            if calendar.isDate(today, inSameDayAs: lastDate) {
+                // Same day, check if we just hit 3 tasks
+                if getCompletedTodosForToday().count == 3 {
+                    // Just reached momentum today
+                    defaults.set(true, forKey: momentumStreakKey)
+                }
+            } else if let daysBetween = calendar.dateComponents([.day], from: lastDate, to: today).day {
+                if daysBetween == 1 {
+                    // Consecutive day
+                    if hasMomentumToday {
+                        // Continue streak
+                        let currentStreak = defaults.integer(forKey: streakCountKey)
+                        defaults.set(currentStreak + 1, forKey: streakCountKey)
+                        defaults.set(true, forKey: momentumStreakKey)
+                    }
+                } else {
+                    // Streak broken
+                    if hasMomentumToday {
+                        // Start new streak
+                        defaults.set(1, forKey: streakCountKey)
+                        defaults.set(true, forKey: momentumStreakKey)
+                    } else {
+                        // No streak
+                        defaults.set(0, forKey: streakCountKey)
+                        defaults.set(false, forKey: momentumStreakKey)
+                    }
+                }
+            }
+        } else if hasMomentumToday {
+            // First time ever reaching momentum
+            defaults.set(1, forKey: streakCountKey)
+            defaults.set(true, forKey: momentumStreakKey)
+        }
+        
+        // Always update the last streak date
+        defaults.set(today, forKey: lastStreakDateKey)
+    }
+    
+    /// Call this when a task is completed
+    func checkStreakAfterCompletion() {
+        updateStreak()
     }
     
     // MARK: - Private Methods

@@ -12,6 +12,7 @@ struct TodoEditorView: View {
     @State private var hasDueDate: Bool = false
     @State private var dueDate: Date
     @State private var priority: TodoItem.Priority
+    @State private var whyThisMatters: String // New state for emotional context
     
     // MARK: - Private Properties
     private let isNewTodo: Bool
@@ -26,6 +27,7 @@ struct TodoEditorView: View {
         _isCompleted = State(initialValue: false)
         _dueDate = State(initialValue: Date().addingTimeInterval(3600)) // 1 hour from now
         _priority = State(initialValue: .normal)
+        _whyThisMatters = State(initialValue: "") // Initialize why this matters
         isNewTodo = true
         todoId = UUID() // Generate a new id
     }
@@ -41,6 +43,7 @@ struct TodoEditorView: View {
         _dueDate = State(initialValue: todo.dueDate ?? Date().addingTimeInterval(3600))
         
         _priority = State(initialValue: todo.priority)
+        _whyThisMatters = State(initialValue: todo.whyThisMatters) // Initialize with stored value
         isNewTodo = false
         todoId = todo.id // Use existing id
     }
@@ -95,6 +98,22 @@ struct TodoEditorView: View {
                                     .padding(.horizontal, 10)
                                     .padding(.top, 13)
                             }
+                        }
+                    }
+                    .padding(.horizontal)
+                    
+                    // "Why This Matters" Field
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Why This Matters")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        ZStack(alignment: .topLeading) {
+                            TextField("e.g., \"Submit this to pass the unit\"", text: $whyThisMatters)
+                                .padding()
+                                .background(Color(UIColor.systemGray6).opacity(0.2))
+                                .cornerRadius(10)
+                                .foregroundColor(.white)
                         }
                     }
                     .padding(.horizontal)
@@ -227,7 +246,8 @@ struct TodoEditorView: View {
             isCompleted: isCompleted,
             createdDate: isNewTodo ? Date() : Date(), // In a real app, preserve the creation date when editing
             dueDate: hasDueDate ? dueDate : nil,
-            priority: priority
+            priority: priority,
+            whyThisMatters: whyThisMatters
         )
         
         if isNewTodo {
