@@ -422,7 +422,6 @@ struct TodoListView: View {
     }
 }
 
-// Enhanced Todo item row with improved UX
 struct EnhancedTodoItemRow: View {
     let todo: TodoItem
     let isRecentlyCompleted: Bool
@@ -434,197 +433,189 @@ struct EnhancedTodoItemRow: View {
     @State private var checkboxScale: CGFloat = 1.0
     @State private var isCheckboxHovered: Bool = false
     @State private var offset: CGFloat = 0
-    @State private var isSwiping = false
+    
+    // Hardcoded delete button width to ensure proper offset
+    private let deleteButtonWidth: CGFloat = 80
     
     var body: some View {
-        ZStack {
-            // Swipe action background
-            HStack {
-                Spacer()
-                
-                // Delete button revealed on swipe
-                Button(action: onDelete) {
-                    Image(systemName: "trash")
-                        .font(.title3)
-                        .foregroundColor(.white)
-                        .frame(width: 60, height: 50)
-                        .background(Color.red)
-                        .cornerRadius(8)
-                }
-            }
-            
-            // Main todo row content
-            HStack(alignment: .top, spacing: 12) {
-                // Completion checkbox with improved feedback
-                Button(action: {
-                    // Animate button press
-                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
-                        checkboxScale = 1.4
-                    }
-                    
-                    // Execute action after slight delay for better visual feedback
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        GeometryReader { geometry in
+            ZStack(alignment: .trailing) {
+                // Main todo row content
+                HStack(alignment: .top, spacing: 12) {
+                    // Completion checkbox with improved feedback
+                    Button(action: {
+                        // Animate button press
                         withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
-                            checkboxScale = 1.0
+                            checkboxScale = 1.4
                         }
-                        onToggle()
-                    }
-                }) {
-                    ZStack {
-                        // Circle background with hover effect
-                        Circle()
-                            .fill(Color.gray.opacity(isCheckboxHovered ? 0.2 : 0.0))
-                            .frame(width: 36, height: 36)
                         
-                        // Checkbox icon
-                        Image(systemName: todo.isCompleted ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 22))
-                            .foregroundColor(todo.isCompleted ? .green : getPriorityColor())
-                            .scaleEffect(checkboxScale)
-                            .animation(.spring(response: 0.2), value: checkboxScale)
-                    }
-                    .contentShape(Circle())
-                    .onHover { hovering in
-                        withAnimation {
-                            isCheckboxHovered = hovering
+                        // Execute action after slight delay for better visual feedback
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                                checkboxScale = 1.0
+                            }
+                            onToggle()
                         }
-                    }
-                }
-                .buttonStyle(PlainButtonStyle())
-                .padding(.top, 2)
-                
-                // Todo content
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(todo.title)
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .strikethrough(todo.isCompleted)
-                    
-                    if !todo.notes.isEmpty {
-                        Text(todo.notes)
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                            .lineLimit(2)
-                    }
-                    
-                    // "Why This Matters" field
-                    if !todo.whyThisMatters.isEmpty {
-                        HStack(spacing: 4) {
-                            Image(systemName: "heart.text.square")
-                                .font(.system(size: 12))
-                                .foregroundColor(.pink.opacity(0.8))
+                    }) {
+                        ZStack {
+                            // Circle background with hover effect
+                            Circle()
+                                .fill(Color.gray.opacity(isCheckboxHovered ? 0.2 : 0.0))
+                                .frame(width: 36, height: 36)
                             
-                            Text("Why: \(todo.whyThisMatters)")
-                                .font(.caption)
-                                .foregroundColor(.pink.opacity(0.8))
-                                .italic()
-                                .lineLimit(1)
+                            // Checkbox icon
+                            Image(systemName: todo.isCompleted ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 22))
+                                .foregroundColor(todo.isCompleted ? .green : getPriorityColor())
+                                .scaleEffect(checkboxScale)
+                                .animation(.spring(response: 0.2), value: checkboxScale)
                         }
-                        .padding(.top, 4)
-                    }
-                    
-                    // Due date if available
-                    if let formattedDueDate = todo.formattedDueDate {
-                        HStack {
-                            Image(systemName: "clock")
-                                .font(.system(size: 12))
-                            
-                            Text(formattedDueDate)
-                                .font(.caption)
-                            
-                            // Overdue indicator
-                            if todo.isOverdue {
-                                Text("OVERDUE")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.red)
-                                    .cornerRadius(4)
+                        .contentShape(Circle())
+                        .onHover { hovering in
+                            withAnimation {
+                                isCheckboxHovered = hovering
                             }
                         }
-                        .foregroundColor(todo.isOverdue ? .red : .gray)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .padding(.top, 2)
+                    
+                    // Todo content
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(todo.title)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .strikethrough(todo.isCompleted)
+                            .lineLimit(1)
+                        
+                        if !todo.notes.isEmpty {
+                            Text(todo.notes)
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                                .lineLimit(2)
+                        }
+                        
+                        // "Why This Matters" field
+                        if !todo.whyThisMatters.isEmpty {
+                            HStack(spacing: 4) {
+                                Image(systemName: "heart.text.square")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.pink.opacity(0.8))
+                                
+                                Text("Why: \(todo.whyThisMatters)")
+                                    .font(.caption)
+                                    .foregroundColor(.pink.opacity(0.8))
+                                    .italic()
+                                    .lineLimit(1)
+                            }
+                            .padding(.top, 4)
+                        }
+                        
+                        // Due date if available
+                        if let formattedDueDate = todo.formattedDueDate {
+                            HStack {
+                                Image(systemName: "clock")
+                                    .font(.system(size: 12))
+                                
+                                Text(formattedDueDate)
+                                    .font(.caption)
+                                
+                                // Overdue indicator
+                                if todo.isOverdue {
+                                    Text("OVERDUE")
+                                        .font(.system(size: 10, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.red)
+                                        .cornerRadius(4)
+                                }
+                            }
+                            .foregroundColor(todo.isOverdue ? .red : .gray)
+                            .padding(.top, 2)
+                        }
+                        
+                        // Priority indicator
+                        HStack {
+                            Text("Priority: \(todo.priority.name)")
+                                .font(.caption)
+                                .foregroundColor(getPriorityColor())
+                        }
                         .padding(.top, 2)
                     }
                     
-                    // Priority indicator
-                    HStack {
-                        Text("Priority: \(todo.priority.name)")
-                            .font(.caption)
-                            .foregroundColor(getPriorityColor())
+                    Spacer()
+                    
+                    // Edit button with conditional visibility - disappears during swipe
+                    if offset == 0 {
+                        Button(action: onEdit) {
+                            Image(systemName: "pencil")
+                                .foregroundColor(.white)
+                                .font(.system(size: 14))
+                                .padding(8)
+                                .background(Color.gray.opacity(0.3))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .padding(.trailing, 4)
                     }
-                    .padding(.top, 2)
                 }
+                .padding(.vertical, 12)
+                .padding(.horizontal, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.black.opacity(0.3))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white.opacity(isRecentlyCompleted ? 0.3 : 0.1), lineWidth: 1)
+                        )
+                )
+                .offset(x: offset)
                 
-                Spacer()
-                
-                // Edit button with tooltip
-                Button(action: onEdit) {
-                    Image(systemName: "pencil")
-                        .foregroundColor(.white)
-                        .font(.system(size: 14))
-                        .padding(8)
-                        .background(Color.gray.opacity(0.3))
-                        .clipShape(Circle())
-                        .contentShape(Circle())
+                // Delete button - positioned on the right edge but only revealed during swipe
+                Button(action: onDelete) {
+                    HStack {
+                        Image(systemName: "trash")
+                        Text("Delete")
+                    }
+                    .font(.system(size: 14))
+                    .foregroundColor(.white)
+                    .frame(width: deleteButtonWidth, height: 50)
+                    .background(Color.red)
+                    .cornerRadius(10)
                 }
-                .buttonStyle(PlainButtonStyle())
-                .help("Edit Task") // Tooltip for clarity
+                .offset(x: min(0, offset + deleteButtonWidth)) // This ensures the button is hidden until swipe
+                
             }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.black.opacity(0.3))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(isRecentlyCompleted ? 0.3 : 0.1), lineWidth: 1)
-                    )
-            )
-            .offset(x: offset)
             .padding(.horizontal)
-            .contextMenu {
-                // Mark as complete/incomplete
-                Button(action: onToggle) {
-                    Label(
-                        todo.isCompleted ? "Mark as Incomplete" : "Mark as Complete",
-                        systemImage: todo.isCompleted ? "circle" : "checkmark.circle"
-                    )
-                }
-                
-                // Edit option
-                Button(action: onEdit) {
-                    Label("Edit Task", systemImage: "pencil")
-                }
-                
-                Divider()
-                
-                // Delete option
-                Button(role: .destructive, action: onDelete) {
-                    Label("Delete", systemImage: "trash")
-                }
-            }
+            .contentShape(Rectangle())
+            .frame(width: geometry.size.width)
+            
+            // Add the gesture
             .gesture(
                 DragGesture()
                     .onChanged { gesture in
                         if gesture.translation.width < 0 {
-                            isSwiping = true
-                            // Limit how far you can swipe left
-                            self.offset = max(gesture.translation.width, -80)
+                            // Limit how far you can swipe left (to the width of delete button)
+                            self.offset = max(gesture.translation.width, -deleteButtonWidth)
+                        } else if offset != 0 {
+                            // Allow swiping right to cancel
+                            self.offset = min(0, offset + gesture.translation.width)
                         }
                     }
-                    .onEnded { _ in
-                        isSwiping = false
+                    .onEnded { gesture in
                         // If swiped far enough, show delete option; otherwise reset
-                        withAnimation {
-                            if self.offset < -50 {
-                                self.offset = -60 // Partially visible delete button
+                        withAnimation(.spring()) {
+                            if self.offset < -deleteButtonWidth * 0.5 {
+                                self.offset = -deleteButtonWidth // Expose delete button
                             } else {
-                                self.offset = 0
+                                self.offset = 0 // Reset position
                             }
                         }
                     }
             )
-            // Subtle shine effect for new items or recently completed
+            
+            // Overlay effect for recently completed tasks
             .overlay(
                 isRecentlyCompleted ?
                 RoundedRectangle(cornerRadius: 12)
@@ -639,8 +630,28 @@ struct EnhancedTodoItemRow: View {
                     .blendMode(.overlay)
                 : nil
             )
+            
+            // Context menu for additional options
+            .contextMenu {
+                Button(action: onToggle) {
+                    Label(
+                        todo.isCompleted ? "Mark as Incomplete" : "Mark as Complete",
+                        systemImage: todo.isCompleted ? "circle" : "checkmark.circle"
+                    )
+                }
+                
+                Button(action: onEdit) {
+                    Label("Edit Task", systemImage: "pencil")
+                }
+                
+                Divider()
+                
+                Button(role: .destructive, action: onDelete) {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
         }
-        .animation(.interactiveSpring(), value: offset)
+        .frame(height: 120) // Set a fixed height for the row - adjust as needed
     }
     
     // Get color based on priority
