@@ -1,12 +1,81 @@
 import SwiftUI
 
+// Progress Ring View - Modified from your existing implementation
+struct ProgressRingView: View {
+    let progress: Double // 0.0 to 1.0
+    let totalTasks: Int
+    let completedTasks: Int
+    let streakDays: Int
+    let ringColor: Color
+    let size: CGFloat
+    
+    init(progress: Double, totalTasks: Int, completedTasks: Int, streakDays: Int,
+         ringColor: Color = .blue, size: CGFloat = 120) {
+        self.progress = min(max(progress, 0.0), 1.0) // Clamp between 0 and 1
+        self.totalTasks = totalTasks
+        self.completedTasks = completedTasks
+        self.streakDays = streakDays
+        self.ringColor = ringColor
+        self.size = size
+    }
+    
+    var body: some View {
+        ZStack {
+            // Background ring
+            Circle()
+                .stroke(lineWidth: 12)
+                .opacity(0.2)
+                .foregroundColor(ringColor)
+            
+            // Progress ring
+            Circle()
+                .trim(from: 0.0, to: CGFloat(progress))
+                .stroke(style: StrokeStyle(lineWidth: 12, lineCap: .round, lineJoin: .round))
+                .foregroundColor(ringColor)
+                .rotationEffect(.degrees(-90)) // Start from top
+                .animation(.easeInOut(duration: 1.0), value: progress)
+            
+            // Center content
+            VStack(spacing: 4) {
+                Text("\(completedTasks)/\(totalTasks)")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+                
+                Text("Tasks")
+                    .font(.system(size: 12))
+                    .foregroundColor(.gray)
+                
+                if streakDays > 0 {
+                    HStack(spacing: 2) {
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.orange)
+                        
+                        Text("\(streakDays) days")
+                            .font(.system(size: 10))
+                            .foregroundColor(.orange)
+                    }
+                    .padding(.top, 4)
+                }
+            }
+        }
+        .frame(width: size, height: size)
+    }
+}
+
 struct TodoListView: View {
     @ObservedObject private var todoService = TodoService.shared
     @State private var showingAddTodo = false
     @State private var editingTodo: TodoItem?
     @State private var showCompletedTodos = false
-    @State private var showingCelebration = false
+    @State private var selectedTodoForCompletion: TodoItem?
+    @State private var completionCelebrationOffset: CGFloat = 100
+    @State private var showCelebrationToast = false
     @State private var celebrationQuote = ""
+    @State private var lastCompletedTodoID: UUID?
+    
+    // For haptic feedback
+    private let successHaptic = UINotificationFeedbackGenerator()
     
     var body: some View {
         ZStack {
@@ -96,19 +165,83 @@ struct TodoListView: View {
                 }
             }
             .padding(.bottom, 30)
-            .overlay(
-                Group {
-                    if showingCelebration {
-                        CelebrationView(isShowing: $showingCelebration, quote: celebrationQuote)
+            
+            // Non-intrusive celebration toast that slides in from the bottom
+            if showCelebrationToast {
+                VStack {
+                    Spacer()
+                    
+                    HStack(alignment: .center, spacing: 12) {
+                        // Checkmark icon with animation
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                            .font(.system(size: 24))
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Task Completed!")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            
+                            Text(celebrationQuote)
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.9))
+                                .lineLimit(2)
+                        }
+                        
+                        Spacer()
+                        
+                        // Dismiss button
+                        Button(action: {
+                            dismissCelebrationToast()
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.white.opacity(0.7))
+                                .font(.system(size: 20))
+                        }
+                    }
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 16)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.green.opacity(0.7), Color.blue.opacity(0.7)]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
+                    .padding(.horizontal, 16)
+                    .offset(y: completionCelebrationOffset)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.7), value: completionCelebrationOffset)
+                    .onAppear {
+                        // Show the toast
+                        completionCelebrationOffset = 0
+                        
+                        // Auto-hide after 2.5 seconds
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                            dismissCelebrationToast()
+                        }
                     }
                 }
-            )
+            }
         }
         .sheet(isPresented: $showingAddTodo) {
             TodoEditorView()
         }
         .sheet(item: $editingTodo) { todo in
             TodoEditorView(todo: todo)
+        }
+    }
+    
+    // Dismiss the celebration toast with animation
+    private func dismissCelebrationToast() {
+        withAnimation {
+            completionCelebrationOffset = 100
+        }
+        
+        // Hide the toast completely after animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            showCelebrationToast = false
         }
     }
     
@@ -168,26 +301,22 @@ struct TodoListView: View {
                         
                         // Active todos
                         ForEach(todoService.getIncompleteTodos()) { todo in
-                            TodoItemRow(
+                            EnhancedTodoItemRow(
                                 todo: todo,
+                                isRecentlyCompleted: lastCompletedTodoID == todo.id,
                                 onToggle: {
-                                    if !todo.isCompleted {
-                                        celebrationQuote = CelebrationView.randomQuote()
-                                        todoService.toggleCompletionStatus(todo)
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                            showingCelebration = true
-                                        }
-                                    } else {
-                                        todoService.toggleCompletionStatus(todo)
-                                    }
+                                    handleTaskCompletion(todo)
                                 },
                                 onEdit: {
                                     editingTodo = todo
                                 },
                                 onDelete: {
-                                    todoService.deleteTodo(todo)
+                                    withAnimation {
+                                        todoService.deleteTodo(todo)
+                                    }
                                 }
                             )
+                            .transition(.opacity)
                         }
                     }
                     
@@ -207,24 +336,19 @@ struct TodoListView: View {
                         .padding(.top, 8)
                         
                         ForEach(overdueTodos) { todo in
-                            TodoItemRow(
+                            EnhancedTodoItemRow(
                                 todo: todo,
+                                isRecentlyCompleted: lastCompletedTodoID == todo.id,
                                 onToggle: {
-                                    if !todo.isCompleted {
-                                        celebrationQuote = CelebrationView.randomQuote()
-                                        todoService.toggleCompletionStatus(todo)
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                            showingCelebration = true
-                                        }
-                                    } else {
-                                        todoService.toggleCompletionStatus(todo)
-                                    }
+                                    handleTaskCompletion(todo)
                                 },
                                 onEdit: {
                                     editingTodo = todo
                                 },
                                 onDelete: {
-                                    todoService.deleteTodo(todo)
+                                    withAnimation {
+                                        todoService.deleteTodo(todo)
+                                    }
                                 }
                             )
                         }
@@ -246,16 +370,20 @@ struct TodoListView: View {
                         .padding(.top, 8)
                         
                         ForEach(completedTodos) { todo in
-                            TodoItemRow(
+                            EnhancedTodoItemRow(
                                 todo: todo,
+                                isRecentlyCompleted: false, // No animation for already completed tasks
                                 onToggle: {
+                                    // Just toggle status without celebration for already completed tasks
                                     todoService.toggleCompletionStatus(todo)
                                 },
                                 onEdit: {
                                     editingTodo = todo
                                 },
                                 onDelete: {
-                                    todoService.deleteTodo(todo)
+                                    withAnimation {
+                                        todoService.deleteTodo(todo)
+                                    }
                                 }
                             )
                         }
@@ -273,93 +401,164 @@ struct TodoListView: View {
             .padding(.bottom, 50) // Extra padding for bottom of scroll view
         }
     }
+    
+    // Handle task completion with improved feedback
+    private func handleTaskCompletion(_ todo: TodoItem) {
+        // Remember the last completed task ID for animation
+        lastCompletedTodoID = todo.id
+        
+        // Trigger success haptic feedback
+        successHaptic.notificationOccurred(.success)
+        
+        // Get a motivational quote
+        celebrationQuote = CelebrationQuote.randomQuote()
+        
+        // Toggle task completion status
+        todoService.toggleCompletionStatus(todo)
+        
+        // Show the non-intrusive celebration toast
+        showCelebrationToast = true
+        completionCelebrationOffset = 0
+    }
 }
 
-// Todo item row component
-struct TodoItemRow: View {
+// Enhanced Todo item row with improved UX
+struct EnhancedTodoItemRow: View {
     let todo: TodoItem
+    let isRecentlyCompleted: Bool
     let onToggle: () -> Void
     let onEdit: () -> Void
     let onDelete: () -> Void
     
+    // State for the checkbox hover/press animation
+    @State private var checkboxScale: CGFloat = 1.0
+    @State private var isCheckboxHovered: Bool = false
+    @State private var offset: CGFloat = 0
+    @State private var isSwiping = false
+    
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            // Completion checkbox
-            Button(action: onToggle) {
-                Image(systemName: todo.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(todo.isCompleted ? .green : getPriorityColor())
-                    .font(.system(size: 22))
-                    .padding(.top, 2)
+        ZStack {
+            // Swipe action background
+            HStack {
+                Spacer()
+                
+                // Delete button revealed on swipe
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                        .font(.title3)
+                        .foregroundColor(.white)
+                        .frame(width: 60, height: 50)
+                        .background(Color.red)
+                        .cornerRadius(8)
+                }
             }
-            .buttonStyle(PlainButtonStyle())
             
-            // Todo content
-            VStack(alignment: .leading, spacing: 4) {
-                Text(todo.title)
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .strikethrough(todo.isCompleted)
-                
-                if !todo.notes.isEmpty {
-                    Text(todo.notes)
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                        .lineLimit(2)
-                }
-                
-                // "Why This Matters" field
-                if !todo.whyThisMatters.isEmpty {
-                    HStack(spacing: 4) {
-                        Image(systemName: "heart.text.square")
-                            .font(.system(size: 12))
-                            .foregroundColor(.pink.opacity(0.8))
-                        
-                        Text("Why: \(todo.whyThisMatters)")
-                            .font(.caption)
-                            .foregroundColor(.pink.opacity(0.8))
-                            .italic()
-                            .lineLimit(1)
+            // Main todo row content
+            HStack(alignment: .top, spacing: 12) {
+                // Completion checkbox with improved feedback
+                Button(action: {
+                    // Animate button press
+                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                        checkboxScale = 1.4
                     }
-                    .padding(.top, 4)
-                }
-                
-                // Due date if available
-                if let formattedDueDate = todo.formattedDueDate {
-                    HStack {
-                        Image(systemName: "clock")
-                            .font(.system(size: 12))
+                    
+                    // Execute action after slight delay for better visual feedback
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                            checkboxScale = 1.0
+                        }
+                        onToggle()
+                    }
+                }) {
+                    ZStack {
+                        // Circle background with hover effect
+                        Circle()
+                            .fill(Color.gray.opacity(isCheckboxHovered ? 0.2 : 0.0))
+                            .frame(width: 36, height: 36)
                         
-                        Text(formattedDueDate)
-                            .font(.caption)
-                        
-                        // Overdue indicator
-                        if todo.isOverdue {
-                            Text("OVERDUE")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.red)
-                                .cornerRadius(4)
+                        // Checkbox icon
+                        Image(systemName: todo.isCompleted ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 22))
+                            .foregroundColor(todo.isCompleted ? .green : getPriorityColor())
+                            .scaleEffect(checkboxScale)
+                            .animation(.spring(response: 0.2), value: checkboxScale)
+                    }
+                    .contentShape(Circle())
+                    .onHover { hovering in
+                        withAnimation {
+                            isCheckboxHovered = hovering
                         }
                     }
-                    .foregroundColor(todo.isOverdue ? .red : .gray)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.top, 2)
+                
+                // Todo content
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(todo.title)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .strikethrough(todo.isCompleted)
+                    
+                    if !todo.notes.isEmpty {
+                        Text(todo.notes)
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                            .lineLimit(2)
+                    }
+                    
+                    // "Why This Matters" field
+                    if !todo.whyThisMatters.isEmpty {
+                        HStack(spacing: 4) {
+                            Image(systemName: "heart.text.square")
+                                .font(.system(size: 12))
+                                .foregroundColor(.pink.opacity(0.8))
+                            
+                            Text("Why: \(todo.whyThisMatters)")
+                                .font(.caption)
+                                .foregroundColor(.pink.opacity(0.8))
+                                .italic()
+                                .lineLimit(1)
+                        }
+                        .padding(.top, 4)
+                    }
+                    
+                    // Due date if available
+                    if let formattedDueDate = todo.formattedDueDate {
+                        HStack {
+                            Image(systemName: "clock")
+                                .font(.system(size: 12))
+                            
+                            Text(formattedDueDate)
+                                .font(.caption)
+                            
+                            // Overdue indicator
+                            if todo.isOverdue {
+                                Text("OVERDUE")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.red)
+                                    .cornerRadius(4)
+                            }
+                        }
+                        .foregroundColor(todo.isOverdue ? .red : .gray)
+                        .padding(.top, 2)
+                    }
+                    
+                    // Priority indicator
+                    HStack {
+                        Text("Priority: \(todo.priority.name)")
+                            .font(.caption)
+                            .foregroundColor(getPriorityColor())
+                    }
                     .padding(.top, 2)
                 }
                 
-                // Priority indicator
-                HStack {
-                    Text("Priority: \(todo.priority.name)")
-                        .font(.caption)
-                        .foregroundColor(getPriorityColor())
-                }
-                .padding(.top, 2)
-            }
-            
-            Spacer()
-            
-            // Action buttons
-            HStack(spacing: 12) {
+                Spacer()
+                
+                // Edit button with tooltip
                 Button(action: onEdit) {
                     Image(systemName: "pencil")
                         .foregroundColor(.white)
@@ -367,23 +566,81 @@ struct TodoItemRow: View {
                         .padding(8)
                         .background(Color.gray.opacity(0.3))
                         .clipShape(Circle())
+                        .contentShape(Circle())
+                }
+                .buttonStyle(PlainButtonStyle())
+                .help("Edit Task") // Tooltip for clarity
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.black.opacity(0.3))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(isRecentlyCompleted ? 0.3 : 0.1), lineWidth: 1)
+                    )
+            )
+            .offset(x: offset)
+            .padding(.horizontal)
+            .contextMenu {
+                // Mark as complete/incomplete
+                Button(action: onToggle) {
+                    Label(
+                        todo.isCompleted ? "Mark as Incomplete" : "Mark as Complete",
+                        systemImage: todo.isCompleted ? "circle" : "checkmark.circle"
+                    )
                 }
                 
-                Button(action: onDelete) {
-                    Image(systemName: "trash")
-                        .foregroundColor(.white)
-                        .font(.system(size: 14))
-                        .padding(8)
-                        .background(Color.red.opacity(0.3))
-                        .clipShape(Circle())
+                // Edit option
+                Button(action: onEdit) {
+                    Label("Edit Task", systemImage: "pencil")
+                }
+                
+                Divider()
+                
+                // Delete option
+                Button(role: .destructive, action: onDelete) {
+                    Label("Delete", systemImage: "trash")
                 }
             }
-            .padding(.leading, 8)
+            .gesture(
+                DragGesture()
+                    .onChanged { gesture in
+                        if gesture.translation.width < 0 {
+                            isSwiping = true
+                            // Limit how far you can swipe left
+                            self.offset = max(gesture.translation.width, -80)
+                        }
+                    }
+                    .onEnded { _ in
+                        isSwiping = false
+                        // If swiped far enough, show delete option; otherwise reset
+                        withAnimation {
+                            if self.offset < -50 {
+                                self.offset = -60 // Partially visible delete button
+                            } else {
+                                self.offset = 0
+                            }
+                        }
+                    }
+            )
+            // Subtle shine effect for new items or recently completed
+            .overlay(
+                isRecentlyCompleted ?
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [.green.opacity(0.3), .clear]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .opacity(0.7)
+                    .blendMode(.overlay)
+                : nil
+            )
         }
-        .padding()
-        .background(Color.black.opacity(0.3))
-        .cornerRadius(12)
-        .padding(.horizontal)
+        .animation(.interactiveSpring(), value: offset)
     }
     
     // Get color based on priority
@@ -399,11 +656,8 @@ struct TodoItemRow: View {
     }
 }
 
-// Confetti Celebration View
-struct CelebrationView: View {
-    @Binding var isShowing: Bool
-    let quote: String
-    
+// Helper to provide celebration quotes
+struct CelebrationQuote {
     // List of motivational quotes for completion
     private static let celebrationQuotes = [
         "Great job! One step closer to your goals.",
@@ -421,225 +675,5 @@ struct CelebrationView: View {
     // Get a random quote
     static func randomQuote() -> String {
         celebrationQuotes.randomElement() ?? celebrationQuotes[0]
-    }
-    
-    var body: some View {
-        ZStack {
-            // Semi-transparent background
-            Color.black.opacity(0.6)
-                .edgesIgnoringSafeArea(.all)
-                .onTapGesture {
-                    withAnimation {
-                        isShowing = false
-                    }
-                }
-            
-            VStack(spacing: 20) {
-                // Confetti effect
-                ConfettiView()
-                    .frame(width: 300, height: 200)
-                
-                // Quote text
-                Text(quote)
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.blue.opacity(0.3))
-                    )
-                    .padding(.horizontal)
-                
-                // Continue button
-                Button(action: {
-                    withAnimation {
-                        isShowing = false
-                    }
-                }) {
-                    Text("Continue")
-                        .fontWeight(.medium)
-                        .foregroundColor(.white)
-                        .padding(.vertical, 12)
-                        .padding(.horizontal, 30)
-                        .background(Color.blue)
-                        .cornerRadius(25)
-                }
-                .padding(.top, 10)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 30)
-            .onAppear {
-                // Auto-dismiss after 3 seconds
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                    withAnimation {
-                        isShowing = false
-                    }
-                }
-            }
-        }
-    }
-}
-
-// Confetti animation view
-struct ConfettiView: View {
-    @State private var particles = [ConfettiParticle]()
-    
-    let colors: [Color] = [.red, .blue, .green, .yellow, .pink, .purple, .orange]
-    
-    var body: some View {
-        ZStack {
-            ForEach(particles) { particle in
-                particle.view
-                    .position(particle.position)
-                    .opacity(particle.opacity)
-                    .rotationEffect(Angle(degrees: particle.rotation))
-                    .animation(
-                        Animation.timingCurve(0.05, 0.7, 0.3, 1.0, duration: 2.5)
-                            .delay(particle.delay),
-                        value: particle.position
-                    )
-            }
-        }
-        .onAppear(perform: generateParticles)
-    }
-    
-    private func generateParticles() {
-        particles = []
-        
-        // Generate particles
-        for _ in 0..<60 {
-            let shape = Int.random(in: 0...1) // 0: circle, 1: rectangle
-            let color = colors.randomElement() ?? .blue
-            let position = CGPoint(
-                x: CGFloat.random(in: 0...300),
-                y: CGFloat.random(in: 0...50)
-            )
-            let finalPosition = CGPoint(
-                x: position.x + CGFloat.random(in: -100...100),
-                y: position.y + CGFloat.random(in: 100...200)
-            )
-            let size = CGFloat.random(in: 5...10)
-            let opacity = Double.random(in: 0.5...1.0)
-            let rotation = Double.random(in: 0...360)
-            let delay = Double.random(in: 0...0.5)
-            
-            let view: AnyView
-            if shape == 0 {
-                view = AnyView(Circle().fill(color).frame(width: size, height: size))
-            } else {
-                view = AnyView(Rectangle().fill(color).frame(width: size, height: size * 0.5))
-            }
-            
-            let particle = ConfettiParticle(
-                id: UUID(),
-                view: view,
-                position: position,
-                finalPosition: finalPosition,
-                opacity: opacity,
-                rotation: rotation,
-                delay: delay
-            )
-            
-            particles.append(particle)
-        }
-        
-        // Animate particles
-        withAnimation {
-            for i in particles.indices {
-                particles[i].position = particles[i].finalPosition
-                particles[i].opacity = 0
-            }
-        }
-    }
-}
-
-struct ConfettiParticle: Identifiable {
-    let id: UUID
-    let view: AnyView
-    var position: CGPoint
-    let finalPosition: CGPoint
-    var opacity: Double
-    var rotation: Double
-    let delay: Double
-}
-
-// Progress Ring View
-struct ProgressRingView: View {
-    let progress: Double // 0.0 to 1.0
-    let totalTasks: Int
-    let completedTasks: Int
-    let streakDays: Int
-    let ringColor: Color
-    let size: CGFloat
-    
-    init(progress: Double, totalTasks: Int, completedTasks: Int, streakDays: Int,
-         ringColor: Color = .blue, size: CGFloat = 120) {
-        self.progress = min(max(progress, 0.0), 1.0) // Clamp between 0 and 1
-        self.totalTasks = totalTasks
-        self.completedTasks = completedTasks
-        self.streakDays = streakDays
-        self.ringColor = ringColor
-        self.size = size
-    }
-    
-    var body: some View {
-        ZStack {
-            // Background ring
-            Circle()
-                .stroke(lineWidth: 12)
-                .opacity(0.2)
-                .foregroundColor(ringColor)
-            
-            // Progress ring
-            Circle()
-                .trim(from: 0.0, to: CGFloat(progress))
-                .stroke(style: StrokeStyle(lineWidth: 12, lineCap: .round, lineJoin: .round))
-                .foregroundColor(ringColor)
-                .rotationEffect(.degrees(-90)) // Start from top
-                .animation(.easeInOut(duration: 1.0), value: progress)
-            
-            // Center content
-            VStack(spacing: 4) {
-                Text("\(completedTasks)/\(totalTasks)")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
-                
-                Text("Tasks")
-                    .font(.system(size: 12))
-                    .foregroundColor(.gray)
-                
-                if streakDays > 0 {
-                    HStack(spacing: 2) {
-                        Image(systemName: "flame.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(.orange)
-                        
-                        Text("\(streakDays) days")
-                            .font(.system(size: 10))
-                            .foregroundColor(.orange)
-                    }
-                    .padding(.top, 4)
-                }
-            }
-        }
-        .frame(width: size, height: size)
-    }
-}
-
-// Preview
-struct TodoListView_Previews: PreviewProvider {
-    static var previews: some View {
-        TodoListView()
-            .preferredColorScheme(.dark)
-            .onAppear {
-                // Add some sample todos for preview
-                let service = TodoService.shared
-                if service.todos.isEmpty {
-                    for todo in TodoItem.samples {
-                        service.addTodo(todo)
-                    }
-                }
-            }
     }
 }
