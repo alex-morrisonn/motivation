@@ -14,10 +14,6 @@
 		1E0921CA2D97ADC800852F14 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0921C92D97ADC800852F14 /* GoogleMobileAds */; };
 		1E0DA7442D9E1CB000AE0D31 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA7432D9E1CB000AE0D31 /* AsyncAlgorithms */; };
 		1E0DA7462D9E1D2200AE0D31 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA7452D9E1D2200AE0D31 /* FirebaseCore */; };
-		1E216DFC2DA3E87C0003816F /* app-ads.txt in Sources */ = {isa = PBXBuildFile; fileRef = 1E216DFB2DA3E8790003816F /* app-ads.txt */; };
-		1E216DFD2DA3E87C0003816F /* app-ads.txt in Sources */ = {isa = PBXBuildFile; fileRef = 1E216DFB2DA3E8790003816F /* app-ads.txt */; };
-		1E216DFE2DA3E87C0003816F /* app-ads.txt in Sources */ = {isa = PBXBuildFile; fileRef = 1E216DFB2DA3E8790003816F /* app-ads.txt */; };
-		1E216DFF2DA3E87C0003816F /* app-ads.txt in Sources */ = {isa = PBXBuildFile; fileRef = 1E216DFB2DA3E8790003816F /* app-ads.txt */; };
 		1E216E7C2DA4B1050003816F /* privacy-policy.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E216E7B2DA4B0FB0003816F /* privacy-policy.md */; };
 		1E216E7D2DA4B1050003816F /* privacy-policy.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E216E7B2DA4B0FB0003816F /* privacy-policy.md */; };
 		1E216E7E2DA4B1050003816F /* privacy-policy.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E216E7B2DA4B0FB0003816F /* privacy-policy.md */; };
@@ -26,6 +22,7 @@
 		1E216EFD2DA543D20003816F /* support.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E216EFB2DA543CE0003816F /* support.md */; };
 		1E216EFE2DA543D20003816F /* support.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E216EFB2DA543CE0003816F /* support.md */; };
 		1E216EFF2DA543D20003816F /* support.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E216EFB2DA543CE0003816F /* support.md */; };
+		1E216F7B2DA745720003816F /* app-ads.txt in Resources */ = {isa = PBXBuildFile; fileRef = 1E216DFB2DA3E8790003816F /* app-ads.txt */; };
 		1E21CDEF2D93715B000F7451 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF802D8ECF3600123E99 /* WidgetKit.framework */; };
 		1E21CDF02D93715B000F7451 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1ECDCF822D8ECF3700123E99 /* SwiftUI.framework */; };
 		1E21CE012D93715C000F7451 /* MotiWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E21CDEE2D93715B000F7451 /* MotiWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -476,6 +473,7 @@
 				1E6A60222D94CC2800AD9399 /* GoogleService-Info.plist in Resources */,
 				1E216E7E2DA4B1050003816F /* privacy-policy.md in Resources */,
 				1E0498D72D9BC87400EE04EC /* index.md in Resources */,
+				1E216F7B2DA745720003816F /* app-ads.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -530,7 +528,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1E216DFD2DA3E87C0003816F /* app-ads.txt in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -538,7 +535,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1E216DFF2DA3E87C0003816F /* app-ads.txt in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -546,7 +542,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1E216DFC2DA3E87C0003816F /* app-ads.txt in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -554,7 +549,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1E216DFE2DA3E87C0003816F /* app-ads.txt in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
