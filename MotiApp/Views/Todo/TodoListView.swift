@@ -1,14 +1,14 @@
 import SwiftUI
 
-// Progress Ring View - Modified from your existing implementation
+// MARK: - Progress Ring View
 struct ProgressRingView: View {
-    let progress: Double // 0.0 to 1.0
+    let progress: Double   // 0.0 to 1.0
     let totalTasks: Int
     let completedTasks: Int
     let streakDays: Int
     let ringColor: Color
     let size: CGFloat
-    
+
     init(progress: Double, totalTasks: Int, completedTasks: Int, streakDays: Int,
          ringColor: Color = .blue, size: CGFloat = 120) {
         self.progress = min(max(progress, 0.0), 1.0) // Clamp between 0 and 1
@@ -18,7 +18,7 @@ struct ProgressRingView: View {
         self.ringColor = ringColor
         self.size = size
     }
-    
+
     var body: some View {
         ZStack {
             // Background ring
@@ -32,7 +32,7 @@ struct ProgressRingView: View {
                 .trim(from: 0.0, to: CGFloat(progress))
                 .stroke(style: StrokeStyle(lineWidth: 12, lineCap: .round, lineJoin: .round))
                 .foregroundColor(ringColor)
-                .rotationEffect(.degrees(-90)) // Start from top
+                .rotationEffect(.degrees(-90)) // Start from the top
                 .animation(.easeInOut(duration: 1.0), value: progress)
             
             // Center content
@@ -63,6 +63,7 @@ struct ProgressRingView: View {
     }
 }
 
+// MARK: - Todo List View
 struct TodoListView: View {
     @ObservedObject private var todoService = TodoService.shared
     @State private var showingAddTodo = false
@@ -79,8 +80,9 @@ struct TodoListView: View {
     
     var body: some View {
         ZStack {
-            // Background
-            Color.black.edgesIgnoringSafeArea(.all)
+            // Background color
+            Color.black
+                .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 16) {
                 // Header
@@ -128,7 +130,7 @@ struct TodoListView: View {
                 }
                 .padding(.bottom, 10)
                 
-                // Filter toggle
+                // Filter toggle and add button
                 HStack {
                     Toggle(isOn: $showCompletedTodos) {
                         Text("Show Completed")
@@ -140,9 +142,7 @@ struct TodoListView: View {
                     Spacer()
                     
                     // Add button
-                    Button(action: {
-                        showingAddTodo = true
-                    }) {
+                    Button(action: { showingAddTodo = true }) {
                         HStack {
                             Image(systemName: "plus.circle.fill")
                                 .font(.system(size: 16))
@@ -157,7 +157,7 @@ struct TodoListView: View {
                 }
                 .padding(.horizontal)
                 
-                // Check if list is empty
+                // Content view for todos
                 if todoService.todos.isEmpty {
                     emptyStateView
                 } else {
@@ -166,13 +166,11 @@ struct TodoListView: View {
             }
             .padding(.bottom, 30)
             
-            // Non-intrusive celebration toast that slides in from the bottom
+            // Celebration toast
             if showCelebrationToast {
                 VStack {
                     Spacer()
-                    
                     HStack(alignment: .center, spacing: 12) {
-                        // Checkmark icon with animation
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(.green)
                             .font(.system(size: 24))
@@ -214,10 +212,7 @@ struct TodoListView: View {
                     .offset(y: completionCelebrationOffset)
                     .animation(.spring(response: 0.5, dampingFraction: 0.7), value: completionCelebrationOffset)
                     .onAppear {
-                        // Show the toast
                         completionCelebrationOffset = 0
-                        
-                        // Auto-hide after 2.5 seconds
                         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
                             dismissCelebrationToast()
                         }
@@ -238,14 +233,12 @@ struct TodoListView: View {
         withAnimation {
             completionCelebrationOffset = 100
         }
-        
-        // Hide the toast completely after animation
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             showCelebrationToast = false
         }
     }
     
-    // Empty state view
+    // Empty state view for when there are no todos
     private var emptyStateView: some View {
         VStack(spacing: 20) {
             Image(systemName: "checkmark.circle")
@@ -263,9 +256,7 @@ struct TodoListView: View {
                 .multilineTextAlignment(.center)
                 .padding()
             
-            Button(action: {
-                showingAddTodo = true
-            }) {
+            Button(action: { showingAddTodo = true }) {
                 Text("Create Task")
                     .font(.headline)
                     .foregroundColor(.black)
@@ -280,14 +271,13 @@ struct TodoListView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
-    // Todo list content
+    // The main todo list content
     private var todoListContent: some View {
         ScrollView {
             LazyVStack(spacing: 16) {
-                // Incomplete todos section with overdue indicators
                 if !showCompletedTodos {
                     if !todoService.getIncompleteTodos().isEmpty {
-                        // Section header for active todos
+                        // Active todos header
                         HStack {
                             Text("ACTIVE TASKS")
                                 .font(.caption)
@@ -299,7 +289,6 @@ struct TodoListView: View {
                         }
                         .padding(.top, 8)
                         
-                        // Active todos
                         ForEach(todoService.getIncompleteTodos()) { todo in
                             EnhancedTodoItemRow(
                                 todo: todo,
@@ -320,10 +309,9 @@ struct TodoListView: View {
                         }
                     }
                     
-                    // Overdue todos (only show if there are any)
                     let overdueTodos = todoService.getOverdueTodos()
                     if !overdueTodos.isEmpty {
-                        // Section header for overdue
+                        // Overdue header
                         HStack {
                             Text("OVERDUE")
                                 .font(.caption)
@@ -354,10 +342,9 @@ struct TodoListView: View {
                         }
                     }
                 } else {
-                    // Completed todos section (only when toggled)
+                    // Completed todos section
                     let completedTodos = todoService.getCompletedTodos()
                     if !completedTodos.isEmpty {
-                        // Section header for completed
                         HStack {
                             Text("COMPLETED")
                                 .font(.caption)
@@ -372,9 +359,9 @@ struct TodoListView: View {
                         ForEach(completedTodos) { todo in
                             EnhancedTodoItemRow(
                                 todo: todo,
-                                isRecentlyCompleted: false, // No animation for already completed tasks
+                                isRecentlyCompleted: false,
                                 onToggle: {
-                                    // Just toggle status without celebration for already completed tasks
+                                    // Simply toggle the status without the celebration animation
                                     todoService.toggleCompletionStatus(todo)
                                 },
                                 onEdit: {
@@ -388,7 +375,6 @@ struct TodoListView: View {
                             )
                         }
                     } else {
-                        // No completed todos message
                         VStack {
                             Text("No completed tasks")
                                 .font(.subheadline)
@@ -398,30 +384,22 @@ struct TodoListView: View {
                     }
                 }
             }
-            .padding(.bottom, 50) // Extra padding for bottom of scroll view
+            .padding(.bottom, 50)
         }
     }
     
     // Handle task completion with improved feedback
     private func handleTaskCompletion(_ todo: TodoItem) {
-        // Remember the last completed task ID for animation
         lastCompletedTodoID = todo.id
-        
-        // Trigger success haptic feedback
         successHaptic.notificationOccurred(.success)
-        
-        // Get a motivational quote
         celebrationQuote = CelebrationQuote.randomQuote()
-        
-        // Toggle task completion status
         todoService.toggleCompletionStatus(todo)
-        
-        // Show the non-intrusive celebration toast
         showCelebrationToast = true
         completionCelebrationOffset = 0
     }
 }
 
+// MARK: - Enhanced Todo Item Row
 struct EnhancedTodoItemRow: View {
     let todo: TodoItem
     let isRecentlyCompleted: Bool
@@ -429,27 +407,39 @@ struct EnhancedTodoItemRow: View {
     let onEdit: () -> Void
     let onDelete: () -> Void
     
-    // State for the checkbox hover/press animation
+    // State for animations and gestures
     @State private var checkboxScale: CGFloat = 1.0
     @State private var isCheckboxHovered: Bool = false
     @State private var offset: CGFloat = 0
     
-    // Hardcoded delete button width to ensure proper offset
+    // The fixed width for the delete button
     private let deleteButtonWidth: CGFloat = 80
     
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .trailing) {
-                // Main todo row content
+                // Delete button is declared first so it is placed behind the row.
+                Button(action: onDelete) {
+                    HStack {
+                        Image(systemName: "trash")
+                        Text("Delete")
+                    }
+                    .font(.system(size: 14))
+                    .foregroundColor(.white)
+                    .frame(width: deleteButtonWidth, height: 50)
+                    .background(Color.red)
+                    .cornerRadius(10)
+                }
+                // The offset here ensures the delete button is hidden until a sufficient swipe.
+                .offset(x: min(0, offset + deleteButtonWidth))
+                
+                // Main row content (on top)
                 HStack(alignment: .top, spacing: 12) {
-                    // Completion checkbox with improved feedback
+                    // Completion checkbox with animation and hover effect.
                     Button(action: {
-                        // Animate button press
                         withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
                             checkboxScale = 1.4
                         }
-                        
-                        // Execute action after slight delay for better visual feedback
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
                                 checkboxScale = 1.0
@@ -458,12 +448,10 @@ struct EnhancedTodoItemRow: View {
                         }
                     }) {
                         ZStack {
-                            // Circle background with hover effect
                             Circle()
                                 .fill(Color.gray.opacity(isCheckboxHovered ? 0.2 : 0.0))
                                 .frame(width: 36, height: 36)
                             
-                            // Checkbox icon
                             Image(systemName: todo.isCompleted ? "checkmark.circle.fill" : "circle")
                                 .font(.system(size: 22))
                                 .foregroundColor(todo.isCompleted ? .green : getPriorityColor())
@@ -480,12 +468,13 @@ struct EnhancedTodoItemRow: View {
                     .buttonStyle(PlainButtonStyle())
                     .padding(.top, 2)
                     
-                    // Todo content
+                    // Todo details content.
                     VStack(alignment: .leading, spacing: 4) {
+                        // Updated title text with a gray strikethrough when the task is completed.
                         Text(todo.title)
                             .font(.headline)
                             .foregroundColor(.white)
-                            .strikethrough(todo.isCompleted)
+                            .strikethrough(todo.isCompleted, color: .gray)
                             .lineLimit(1)
                         
                         if !todo.notes.isEmpty {
@@ -495,7 +484,7 @@ struct EnhancedTodoItemRow: View {
                                 .lineLimit(2)
                         }
                         
-                        // "Why This Matters" field
+                        // "Why This Matters" field.
                         if !todo.whyThisMatters.isEmpty {
                             HStack(spacing: 4) {
                                 Image(systemName: "heart.text.square")
@@ -511,7 +500,7 @@ struct EnhancedTodoItemRow: View {
                             .padding(.top, 4)
                         }
                         
-                        // Due date if available
+                        // Due date and overdue indicator.
                         if let formattedDueDate = todo.formattedDueDate {
                             HStack {
                                 Image(systemName: "clock")
@@ -520,7 +509,6 @@ struct EnhancedTodoItemRow: View {
                                 Text(formattedDueDate)
                                     .font(.caption)
                                 
-                                // Overdue indicator
                                 if todo.isOverdue {
                                     Text("OVERDUE")
                                         .font(.system(size: 10, weight: .bold))
@@ -535,7 +523,7 @@ struct EnhancedTodoItemRow: View {
                             .padding(.top, 2)
                         }
                         
-                        // Priority indicator
+                        // Priority indicator.
                         HStack {
                             Text("Priority: \(todo.priority.name)")
                                 .font(.caption)
@@ -546,7 +534,7 @@ struct EnhancedTodoItemRow: View {
                     
                     Spacer()
                     
-                    // Edit button with conditional visibility - disappears during swipe
+                    // Edit button – only visible when the row is not swiped.
                     if offset == 0 {
                         Button(action: onEdit) {
                             Image(systemName: "pencil")
@@ -562,60 +550,44 @@ struct EnhancedTodoItemRow: View {
                 }
                 .padding(.vertical, 12)
                 .padding(.horizontal, 16)
+                // Use a fully opaque background so the delete button remains hidden until swiped.
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.black.opacity(0.3))
+                        .fill(Color.black)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(Color.white.opacity(isRecentlyCompleted ? 0.3 : 0.1), lineWidth: 1)
                         )
                 )
                 .offset(x: offset)
-                
-                // Delete button - positioned on the right edge but only revealed during swipe
-                Button(action: onDelete) {
-                    HStack {
-                        Image(systemName: "trash")
-                        Text("Delete")
-                    }
-                    .font(.system(size: 14))
-                    .foregroundColor(.white)
-                    .frame(width: deleteButtonWidth, height: 50)
-                    .background(Color.red)
-                    .cornerRadius(10)
-                }
-                .offset(x: min(0, offset + deleteButtonWidth)) // This ensures the button is hidden until swipe
-                
             }
             .padding(.horizontal)
             .contentShape(Rectangle())
             .frame(width: geometry.size.width)
-            
-            // Add the gesture
+            // Attach the drag gesture
             .gesture(
                 DragGesture()
                     .onChanged { gesture in
                         if gesture.translation.width < 0 {
-                            // Limit how far you can swipe left (to the width of delete button)
+                            // Swipe left to reveal the delete button, limiting the offset.
                             self.offset = max(gesture.translation.width, -deleteButtonWidth)
                         } else if offset != 0 {
-                            // Allow swiping right to cancel
+                            // Allow swiping right to cancel.
                             self.offset = min(0, offset + gesture.translation.width)
                         }
                     }
-                    .onEnded { gesture in
-                        // If swiped far enough, show delete option; otherwise reset
+                    .onEnded { _ in
                         withAnimation(.spring()) {
+                            // If swiped far enough, keep the delete button exposed.
                             if self.offset < -deleteButtonWidth * 0.5 {
-                                self.offset = -deleteButtonWidth // Expose delete button
+                                self.offset = -deleteButtonWidth
                             } else {
-                                self.offset = 0 // Reset position
+                                self.offset = 0
                             }
                         }
                     }
             )
-            
-            // Overlay effect for recently completed tasks
+            // Overlay for recently completed tasks
             .overlay(
                 isRecentlyCompleted ?
                 RoundedRectangle(cornerRadius: 12)
@@ -630,31 +602,11 @@ struct EnhancedTodoItemRow: View {
                     .blendMode(.overlay)
                 : nil
             )
-            
-            // Context menu for additional options
-            .contextMenu {
-                Button(action: onToggle) {
-                    Label(
-                        todo.isCompleted ? "Mark as Incomplete" : "Mark as Complete",
-                        systemImage: todo.isCompleted ? "circle" : "checkmark.circle"
-                    )
-                }
-                
-                Button(action: onEdit) {
-                    Label("Edit Task", systemImage: "pencil")
-                }
-                
-                Divider()
-                
-                Button(role: .destructive, action: onDelete) {
-                    Label("Delete", systemImage: "trash")
-                }
-            }
         }
-        .frame(height: 120) // Set a fixed height for the row - adjust as needed
+        .frame(height: 120)
     }
     
-    // Get color based on priority
+    // Helper function to retrieve the priority color.
     private func getPriorityColor() -> Color {
         switch todo.priority {
         case .low:
@@ -667,9 +619,8 @@ struct EnhancedTodoItemRow: View {
     }
 }
 
-// Helper to provide celebration quotes
+// MARK: - Celebration Quote Helper
 struct CelebrationQuote {
-    // List of motivational quotes for completion
     private static let celebrationQuotes = [
         "Great job! One step closer to your goals.",
         "Progress is progress, no matter how small!",
@@ -683,8 +634,8 @@ struct CelebrationQuote {
         "Checked off and moving forward!"
     ]
     
-    // Get a random quote
     static func randomQuote() -> String {
         celebrationQuotes.randomElement() ?? celebrationQuotes[0]
     }
 }
+
