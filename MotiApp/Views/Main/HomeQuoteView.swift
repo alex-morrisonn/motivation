@@ -1,9 +1,10 @@
 import SwiftUI
 
-// Home Quote View with Calendar
+// Home Quote View with Calendar and Todo List
 struct HomeQuoteView: View {
     @ObservedObject private var quoteService = QuoteService.shared
     @ObservedObject private var eventService = EventService.shared
+    @ObservedObject private var todoService = TodoService.shared
     @State private var quote: Quote
     @State private var showingShareSheet = false
     @State private var showingEventEditor = false
@@ -55,13 +56,87 @@ struct HomeQuoteView: View {
                         .background(Color.white.opacity(0.3))
                         .padding(.horizontal, 40)
                     
+                    // Todo section
+                    VStack(spacing: 15) {
+                        // Todo header with add button
+                        HStack {
+                            Text("TODAY'S TASKS")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white.opacity(0.6))
+                                .tracking(2)
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                // Navigate to the Todo tab
+                                TabNavigationHelper.shared.switchToTab(2)
+                            }) {
+                                Text("See All")
+                                    .font(.caption)
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        
+                        // Todo list preview
+                        VStack(spacing: 10) {
+                            let highPriorityTodos = todoService.getIncompleteTodos().filter { $0.priority == .high }
+                            let otherTodos = todoService.getIncompleteTodos().filter { $0.priority != .high }
+                            
+                            // Show high priority todos first
+                            ForEach(highPriorityTodos.prefix(2)) { todo in
+                                HomeTodoRow(todo: todo)
+                            }
+                            
+                            // Then show other todos
+                            ForEach(otherTodos.prefix(3 - min(2, highPriorityTodos.count))) { todo in
+                                HomeTodoRow(todo: todo)
+                            }
+                            
+                            // No tasks message or add button
+                            if todoService.getIncompleteTodos().isEmpty {
+                                VStack(spacing: 10) {
+                                    Text("No active tasks")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                        .padding(.top, 10)
+                                    
+                                    Button(action: {
+                                        // Navigate to the Todo tab
+                                        TabNavigationHelper.shared.switchToTab(2)
+                                    }) {
+                                        Text("Add Task")
+                                            .font(.caption)
+                                            .foregroundColor(.white)
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 8)
+                                            .background(Color.blue.opacity(0.3))
+                                            .cornerRadius(20)
+                                    }
+                                    .padding(.bottom, 10)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .background(Color.black.opacity(0.3))
+                                .cornerRadius(10)
+                                .padding(.horizontal)
+                            }
+                        }
+                    }
+                    .padding(.bottom, 10)
+                    
+                    Divider()
+                        .background(Color.white.opacity(0.3))
+                        .padding(.horizontal, 40)
+                    
                     // Calendar section
                     VStack(spacing: 15) {
                         // Calendar title with add button
                         HStack {
                             Text("IMPORTANT DATES")
                                 .font(.caption)
-                                .foregroundColor(.gray)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white.opacity(0.6))
                                 .tracking(2)
                             
                             Spacer()
@@ -211,5 +286,14 @@ struct HomeQuoteView_Previews: PreviewProvider {
     static var previews: some View {
         HomeQuoteView()
             .preferredColorScheme(.dark)
+            .onAppear {
+                // Add some sample todos for preview
+                let todoService = TodoService.shared
+                if todoService.todos.isEmpty {
+                    for todo in TodoItem.samples {
+                        todoService.addTodo(todo)
+                    }
+                }
+            }
     }
 }

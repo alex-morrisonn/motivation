@@ -110,6 +110,7 @@
 				Resources/SharedQuotes.swift,
 				Utilities/Constants/SharedConstants.swift,
 				Utilities/UI/ShareSheet.swift,
+				Utilities/UI/TabNavigationHelper.swift,
 			);
 			target = 1E41834F2D8EC71300AAEC12 /* MotiTests */;
 		};
@@ -121,6 +122,7 @@
 				Resources/SharedQuotes.swift,
 				Utilities/Constants/SharedConstants.swift,
 				Utilities/UI/ShareSheet.swift,
+				Utilities/UI/TabNavigationHelper.swift,
 			);
 			target = 1E4183592D8EC71300AAEC12 /* MotiUITests */;
 		};
@@ -132,6 +134,7 @@
 				Resources/SharedQuotes.swift,
 				Utilities/Constants/SharedConstants.swift,
 				Utilities/UI/ShareSheet.swift,
+				Utilities/UI/TabNavigationHelper.swift,
 			);
 			target = 1E21CDED2D93715B000F7451 /* MotiWidgetExtension */;
 		};

@@ -25,6 +25,9 @@ struct ContentView: View {
     // Track whether tracking consent has been shown
     @AppStorage("hasShownTrackingConsent") private var hasShownTrackingConsent = false
     
+    // Add observer for tab selection changes
+    @State private var tabNavigationCancellable: NSObjectProtocol? = nil
+    
     // MARK: - Initialization
     
     init() {
@@ -71,20 +74,20 @@ struct ContentView: View {
                     .tag(1)
                     .trackNavigationForAds() // Track navigation for interstitials
                 
+                // To-Do Tab
+                TodoListView()
+                    .tabItem {
+                        Image(systemName: "checkmark.circle")
+                        Text("To-Do")
+                    }
+                    .tag(2)
+                    .trackNavigationForAds() // Track navigation for interstitials
+                
                 // Favorites Tab
                 FavoritesView()
                     .tabItem {
                         Image(systemName: "heart.fill")
                         Text("Favorites")
-                    }
-                    .tag(2)
-                    .trackNavigationForAds() // Track navigation for interstitials
-                
-                // Widgets Tab
-                WidgetsShowcaseView()
-                    .tabItem {
-                        Image(systemName: "square.grid.2x2.fill")
-                        Text("Widgets")
                     }
                     .tag(3)
                     .trackNavigationForAds() // Track navigation for interstitials
@@ -96,6 +99,7 @@ struct ContentView: View {
                         Text("More")
                     }
                     .tag(4)
+                    .trackNavigationForAds() // Track navigation for interstitials
             }
             .accentColor(.white) // Active tab color
             
@@ -122,6 +126,27 @@ struct ContentView: View {
         .edgesIgnoringSafeArea(.top) // Allow the banner ad to extend to the top edge
         .sheet(isPresented: $showingPremiumOffer) {
             PremiumView()
+        }
+        .onAppear {
+            // Add observer to listen for tab selection changes
+            tabNavigationCancellable = NotificationCenter.default.addObserver(
+                forName: Notification.Name("TabSelectionChanged"),
+                object: nil,
+                queue: .main
+            ) { notification in
+                if let userInfo = notification.userInfo,
+                   let newTab = userInfo["selectedTab"] as? Int {
+                    withAnimation {
+                        self.selectedTab = newTab
+                    }
+                }
+            }
+        }
+        .onDisappear {
+            // Remove observer when view disappears
+            if let cancellable = tabNavigationCancellable {
+                NotificationCenter.default.removeObserver(cancellable)
+            }
         }
         .fullScreenCover(isPresented: $showingTrackingConsent) {
             TrackingConsentView()
@@ -187,8 +212,8 @@ struct ContentView: View {
         switch selectedTab {
         case 0: return "HomeView"
         case 1: return "CategoriesView"
-        case 2: return "FavoritesView"
-        case 3: return "WidgetsView"
+        case 2: return "TodoListView"
+        case 3: return "FavoritesView"
         case 4: return "MoreView"
         default: return "Default"
         }
@@ -235,5 +260,14 @@ struct ContentView_Previews: PreviewProvider {
         ContentView()
             .environmentObject(NotificationManager.shared)
             .preferredColorScheme(.dark)
+            .onAppear {
+                // Add some sample todos for preview
+                let todoService = TodoService.shared
+                if todoService.todos.isEmpty {
+                    for todo in TodoItem.samples {
+                        todoService.addTodo(todo)
+                    }
+                }
+            }
     }
 }
