@@ -11,6 +11,9 @@ class TodoService: ObservableObject {
     /// Collection of all todo items
     @Published var todos: [TodoItem] = []
     
+    /// Refresh trigger to force UI updates
+    @Published var refreshTrigger = UUID()
+    
     // MARK: - Private Properties
     
     /// UserDefaults keys
@@ -55,6 +58,7 @@ class TodoService: ObservableObject {
     /// - Parameter todo: The todo item to add
     func addTodo(_ todo: TodoItem) {
         todos.append(todo)
+        refreshTrigger = UUID() // Force UI update
         saveTodos()
     }
     
@@ -63,6 +67,7 @@ class TodoService: ObservableObject {
     func updateTodo(_ todo: TodoItem) {
         if let index = todos.firstIndex(where: { $0.id == todo.id }) {
             todos[index] = todo
+            refreshTrigger = UUID() // Force UI update
             saveTodos()
         } else {
             print("Warning: Attempted to update non-existent todo: \(todo.id)")
@@ -73,6 +78,7 @@ class TodoService: ObservableObject {
     /// - Parameter todo: The todo to delete
     func deleteTodo(_ todo: TodoItem) {
         todos.removeAll(where: { $0.id == todo.id })
+        refreshTrigger = UUID() // Force UI update
         saveTodos()
     }
     
@@ -81,7 +87,12 @@ class TodoService: ObservableObject {
     func toggleCompletionStatus(_ todo: TodoItem) {
         if let index = todos.firstIndex(where: { $0.id == todo.id }) {
             let wasCompleted = todos[index].isCompleted
+            
+            // Directly modify the todo item - now safe because TodoItem is a class
             todos[index].isCompleted.toggle()
+            
+            // Force UI refresh
+            refreshTrigger = UUID()
             
             // Check if we just completed a task (not uncompleted)
             if !wasCompleted && todos[index].isCompleted {

@@ -7,10 +7,11 @@ struct HomeTodoRow: View {
     
     var body: some View {
         Button(action: {
-            todoService.toggleCompletionStatus(todo)
+            // Navigate to Todo tab instead of completing the task
+            TabNavigationHelper.shared.switchToTab(2)
         }) {
             HStack {
-                // Completion checkbox
+                // Completion checkbox - green when completed
                 Image(systemName: todo.isCompleted ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(todo.isCompleted ? .green : getPriorityColor())
                     .font(.system(size: 18))
@@ -69,9 +70,11 @@ struct HomeTodoRow: View {
         .buttonStyle(PlainButtonStyle())
         .contentShape(Rectangle())
         .contextMenu {
-            // Mark as complete/incomplete
+            // Mark as complete/incomplete - keep this functionality in the context menu
             Button(action: {
-                todoService.toggleCompletionStatus(todo)
+                withAnimation {
+                    todoService.toggleCompletionStatus(todo)
+                }
             }) {
                 Label(
                     todo.isCompleted ? "Mark as Incomplete" : "Mark as Complete",
@@ -96,6 +99,8 @@ struct HomeTodoRow: View {
                 Label("Delete", systemImage: "trash")
             }
         }
+        // Use the refreshTrigger to force updates when completion status changes
+        .id("home-todo-\(todo.id)-\(todo.isCompleted)-\(todoService.refreshTrigger)")
     }
     
     // Get color based on priority

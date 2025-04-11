@@ -101,34 +101,38 @@ struct ProgressRingView: View {
     }
 }
 
+
 // MARK: - Enhanced Todo Item Row
 struct EnhancedTodoItemRow: View {
-    // Changed from @ObservedObject to regular property since TodoItem is a struct
+    // TodoItem is now a class
     let todo: TodoItem
     let isRecentlyCompleted: Bool
     let onToggle: () -> Void
     let onEdit: () -> Void
     let onDelete: () -> Void
     
+    // For forcing component refresh
+    @ObservedObject private var todoService = TodoService.shared
+    
     // State for animations and gestures
     @State private var offset: CGFloat = 0
     
-    // The fixed width for the delete button
-    private let deleteButtonWidth: CGFloat = 130
+    // The fixed width for the delete button - reduced width
+    private let deleteButtonWidth: CGFloat = 100
     
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .trailing) {
-                // Delete button in a sub-view
+                // Delete button in a sub-view - smaller size
                 Button(action: onDelete) {
                     HStack {
                         Image(systemName: "trash")
-                            .font(.system(size: 20))
+                            .font(.system(size: 16))
                         Text("Delete")
-                            .font(.headline)
+                            .font(.subheadline)
                     }
                     .foregroundColor(.white)
-                    .frame(width: deleteButtonWidth, height: 60)
+                    .frame(width: deleteButtonWidth, height: 50)
                     .background(Color.red.opacity(0.8))
                     .cornerRadius(8)
                 }
@@ -136,11 +140,11 @@ struct EnhancedTodoItemRow: View {
                 
                 // Main content
                 HStack(spacing: 16) {
-                    // Checkbox
+                    // Checkbox - green when completed, priority color when not
                     Button(action: onToggle) {
                         Image(systemName: todo.isCompleted ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 28))
-                            .foregroundColor(.blue)
+                            .font(.system(size: 26))
+                            .foregroundColor(todo.isCompleted ? .green : .blue)
                     }
                     .buttonStyle(PlainButtonStyle())
                     
@@ -151,48 +155,38 @@ struct EnhancedTodoItemRow: View {
                         .strikethrough(todo.isCompleted)
                     
                     Spacer()
+                    
+                    // Priority badge with appropriate color but smaller
+                    Text(todo.priority.name)
+                        .font(.caption)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(getPriorityColor())
+                        .cornerRadius(10)
+                    
+                    // Edit button - smaller size
+                    Button(action: onEdit) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
-                .padding(.leading, 20)
-                .padding(.trailing, 8)
+                .padding(.horizontal, 20)
                 .padding(.vertical, 16)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(red: 0.15, green: 0.15, blue: 0.15))
                 .cornerRadius(8)
-                .overlay(
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            // Priority badge
-                            Text(todo.priority.name)
-                                .font(.callout)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 4)
-                                .background(Color.blue.opacity(0.5))
-                                .cornerRadius(12)
-                                .padding(.trailing, 4)
-                            
-                            // Edit button
-                            Button(action: onEdit) {
-                                Image(systemName: "pencil")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.white)
-                            }
-                            .frame(width: 36, height: 36)
-                            .background(Color.blue)
-                            .clipShape(Circle())
-                            .padding(.trailing, 20)
-                        }
-                        .padding(.bottom, 10)
-                    }
-                )
                 .offset(x: offset)
             }
             .frame(width: geometry.size.width)
             .gesture(dragGesture)
+            // Use the refreshTrigger to force updates when completion status changes
+            .id("todo-row-\(todo.id)-\(todo.isCompleted)-\(todoService.refreshTrigger)")
         }
-        .frame(height: 96)
+        .frame(height: 80) // Reduced height
         .padding(.horizontal)
     }
     

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Todo item model for task management
-struct TodoItem: Identifiable, Codable, Equatable {
+class TodoItem: Identifiable, Codable, Equatable {
     // Unique identifier for the todo item
     var id = UUID()
     
@@ -119,5 +119,27 @@ struct TodoItem: Identifiable, Codable, Equatable {
                 whyThisMatters: "So I don't panic Sunday night"
             )
         ]
+    }
+    
+    // MARK: - Initializers
+    
+    init(
+        id: UUID = UUID(),
+        title: String,
+        notes: String,
+        isCompleted: Bool = false,
+        createdDate: Date,
+        dueDate: Date? = nil,
+        priority: Priority = .normal,
+        whyThisMatters: String = ""
+    ) {
+        self.id = id
+        self.title = title
+        self.notes = notes
+        self.isCompleted = isCompleted
+        self.createdDate = createdDate
+        self.dueDate = dueDate
+        self.priority = priority
+        self.whyThisMatters = whyThisMatters
     }
 }
