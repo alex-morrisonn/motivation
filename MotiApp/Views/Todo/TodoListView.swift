@@ -103,56 +103,109 @@ struct ProgressRingView: View {
 
 // MARK: - Enhanced Todo Item Row
 struct EnhancedTodoItemRow: View {
-    @ObservedObject var todo: TodoItem
+    // Changed from @ObservedObject to regular property since TodoItem is a struct
+    let todo: TodoItem
     let isRecentlyCompleted: Bool
     let onToggle: () -> Void
     let onEdit: () -> Void
     let onDelete: () -> Void
     
     // State for animations and gestures
-    @State private var checkboxScale: CGFloat = 1.0
-    @State private var isCheckboxHovered: Bool = false
     @State private var offset: CGFloat = 0
     
     // The fixed width for the delete button
-    private let deleteButtonWidth: CGFloat = 80
+    private let deleteButtonWidth: CGFloat = 130
     
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .trailing) {
                 // Delete button in a sub-view
-                DeleteButtonView(onDelete: onDelete, offset: offset, deleteButtonWidth: deleteButtonWidth)
+                Button(action: onDelete) {
+                    HStack {
+                        Image(systemName: "trash")
+                            .font(.system(size: 20))
+                        Text("Delete")
+                            .font(.headline)
+                    }
+                    .foregroundColor(.white)
+                    .frame(width: deleteButtonWidth, height: 60)
+                    .background(Color.red.opacity(0.8))
+                    .cornerRadius(8)
+                }
+                .offset(x: min(0, offset + deleteButtonWidth))
                 
-                // Main row content sub-view
-                MainRowContentView(
-                    todo: todo,
-                    isRecentlyCompleted: isRecentlyCompleted,
-                    onToggle: onToggle,
-                    onEdit: onEdit,
-                    checkboxScale: $checkboxScale,
-                    isCheckboxHovered: $isCheckboxHovered,
-                    offset: offset
+                // Main content
+                HStack(spacing: 16) {
+                    // Checkbox
+                    Button(action: onToggle) {
+                        Image(systemName: todo.isCompleted ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 28))
+                            .foregroundColor(.blue)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    // Title
+                    Text(todo.title)
+                        .font(.title3)
+                        .foregroundColor(.white)
+                        .strikethrough(todo.isCompleted)
+                    
+                    Spacer()
+                }
+                .padding(.leading, 20)
+                .padding(.trailing, 8)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(red: 0.15, green: 0.15, blue: 0.15))
+                .cornerRadius(8)
+                .overlay(
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            // Priority badge
+                            Text(todo.priority.name)
+                                .font(.callout)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 4)
+                                .background(Color.blue.opacity(0.5))
+                                .cornerRadius(12)
+                                .padding(.trailing, 4)
+                            
+                            // Edit button
+                            Button(action: onEdit) {
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(.white)
+                            }
+                            .frame(width: 36, height: 36)
+                            .background(Color.blue)
+                            .clipShape(Circle())
+                            .padding(.trailing, 20)
+                        }
+                        .padding(.bottom, 10)
+                    }
                 )
+                .offset(x: offset)
             }
-            .padding(.horizontal)
-            .contentShape(Rectangle())
             .frame(width: geometry.size.width)
             .gesture(dragGesture)
-            .overlay(
-                isRecentlyCompleted ?
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [.green.opacity(0.3), .clear]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .opacity(0.7)
-                : nil
-            )
         }
-        .frame(height: 120)
+        .frame(height: 96)
+        .padding(.horizontal)
+    }
+    
+    // Helper to get priority color
+    private func getPriorityColor() -> Color {
+        switch todo.priority {
+        case .low:
+            return .green
+        case .normal:
+            return .blue
+        case .high:
+            return .red
+        }
     }
     
     // Drag gesture to reveal the delete button
@@ -179,26 +232,6 @@ struct EnhancedTodoItemRow: View {
     }
 }
 
-private struct DeleteButtonView: View {
-    let onDelete: () -> Void
-    let offset: CGFloat
-    let deleteButtonWidth: CGFloat
-
-    var body: some View {
-        Button(action: onDelete) {
-            HStack {
-                Image(systemName: "trash")
-                Text("Delete")
-            }
-            .font(.system(size: 14))
-            .foregroundColor(.white)
-            .frame(width: deleteButtonWidth, height: 50)
-            .background(Color.red)
-            .cornerRadius(10)
-        }
-        .offset(x: min(0, offset + deleteButtonWidth))
-    }
-}
 
 // MARK: - Todo List View
 struct TodoListView: View {
