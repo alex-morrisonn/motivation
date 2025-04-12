@@ -431,7 +431,7 @@ struct TodoEditorView: View {
                                 }
                                 .padding(.vertical, 8)
                                 
-                                // Day of week headers
+                                // Weekday headers
                                 HStack {
                                     ForEach(weekdaySymbols, id: \.self) { symbol in
                                         Text(symbol)
@@ -460,9 +460,12 @@ struct TodoEditorView: View {
                                             dueDate = newDate
                                         }) {
                                             ZStack {
-                                                Circle()
-                                                    .fill(isDaySelected(day) ? Color.blue : Color.clear)
-                                                    .frame(width: 38, height: 38)
+                                                // Highlight current day
+                                                if isDaySelected(day) {
+                                                    Circle()
+                                                        .fill(Color.blue)
+                                                        .frame(width: 38, height: 38)
+                                                }
                                                 
                                                 Text("\(day)")
                                                     .foregroundColor(isDaySelected(day) ? .white : isToday(day) ? .blue : .white)
@@ -478,88 +481,54 @@ struct TodoEditorView: View {
                             .cornerRadius(12)
                         }
                         
-                        // Time Selection - Compact version
+                        // Time Selection - Modified to remove presets
                         VStack(alignment: .leading, spacing: 8) {
                             Text("TIME")
                                 .font(.caption)
                                 .fontWeight(.medium)
                                 .foregroundColor(.gray)
                             
-                            HStack {
-                                // Time pickers in a more compact layout
-                                HStack(spacing: 8) {
-                                    // Hour picker with fixed height
-                                    Picker("Hour", selection: $selectedHour) {
-                                        ForEach(0..<24, id: \.self) { hour in
-                                            Text("\(hour)").tag(hour)
-                                        }
-                                    }
-                                    .pickerStyle(WheelPickerStyle())
-                                    .frame(width: 60, height: 100) // Fixed height
-                                    .clipped()
-                                    .onChange(of: selectedHour) { oldHour, newHour in
-                                        updateTimeInDueDate()
-                                    }
-                                    
-                                    Text(":")
-                                        .font(.title3)
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, -4)
-                                    
-                                    // Minute picker with fixed height
-                                    Picker("Minute", selection: $selectedMinute) {
-                                        ForEach(0..<60, id: \.self) { minute in
-                                            Text(String(format: "%02d", minute)).tag(minute)
-                                        }
-                                    }
-                                    .pickerStyle(WheelPickerStyle())
-                                    .frame(width: 60, height: 100) // Fixed height
-                                    .clipped()
-                                    .onChange(of: selectedMinute) { oldMinute, newMinute in
-                                        updateTimeInDueDate()
+                            // Time pickers in a centered layout
+                            HStack(spacing: 8) {
+                                // Hour picker with fixed height
+                                Picker("Hour", selection: $selectedHour) {
+                                    ForEach(0..<24, id: \.self) { hour in
+                                        Text("\(hour)")
+                                            .foregroundColor(.white) // Improve text visibility
+                                            .tag(hour)
                                     }
                                 }
-                                .padding(.vertical, 8)
+                                .pickerStyle(WheelPickerStyle())
+                                .frame(width: 60, height: 100) // Fixed height
+                                .clipped()
+                                .onChange(of: selectedHour) { oldHour, newHour in
+                                    updateTimeInDueDate()
+                                }
+                                .accentColor(.white) // Set accent color to improve visibility
                                 
-                                Spacer(minLength: 20)
+                                Text(":")
+                                    .font(.title3)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, -4)
                                 
-                                // Time presets in a more compact layout
-                                HStack(spacing: 8) {
-                                    // Use a vertical stack for time presets
-                                    Button(action: {
-                                        setTime(hour: 9, minute: 0) // Morning
-                                    }) {
-                                        Text("9:00")
-                                            .font(.caption)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(Color.blue.opacity(0.3))
-                                            .cornerRadius(6)
-                                    }
-                                    
-                                    Button(action: {
-                                        setTime(hour: 12, minute: 0) // Noon
-                                    }) {
-                                        Text("12:00")
-                                            .font(.caption)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(Color.blue.opacity(0.3))
-                                            .cornerRadius(6)
-                                    }
-                                    
-                                    Button(action: {
-                                        setTime(hour: 17, minute: 0) // Evening
-                                    }) {
-                                        Text("17:00")
-                                            .font(.caption)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(Color.blue.opacity(0.3))
-                                            .cornerRadius(6)
+                                // Minute picker with fixed height
+                                Picker("Minute", selection: $selectedMinute) {
+                                    ForEach(0..<60, id: \.self) { minute in
+                                        Text(String(format: "%02d", minute))
+                                            .foregroundColor(.white) // Improve text visibility
+                                            .tag(minute)
                                     }
                                 }
+                                .pickerStyle(WheelPickerStyle())
+                                .frame(width: 60, height: 100) // Fixed height
+                                .clipped()
+                                .onChange(of: selectedMinute) { oldMinute, newMinute in
+                                    updateTimeInDueDate()
+                                }
+                                .accentColor(.white) // Set accent color to improve visibility
                             }
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity, alignment: .center) // Center the time picker
                             .padding(12)
                             .background(Color.black.opacity(0.3))
                             .cornerRadius(12)
@@ -777,13 +746,6 @@ struct TodoEditorView: View {
         if let newDate = calendar.date(from: newComponents) {
             dueDate = newDate
         }
-    }
-    
-    // Set time to specific hour and minute
-    private func setTime(hour: Int, minute: Int) {
-        selectedHour = hour
-        selectedMinute = minute
-        updateTimeInDueDate()
     }
     
     // Format due date for display
