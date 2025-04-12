@@ -14,6 +14,10 @@ struct TodoEditorView: View {
     @State private var priority: TodoItem.Priority
     @State private var whyThisMatters: String
     
+    // State to store hour and minute separately for more reliable time selection
+    @State private var selectedHour: Int = 0
+    @State private var selectedMinute: Int = 0
+    
     // Animation states
     @State private var showWhyItMatters: Bool = false
     @State private var keyboardVisible: Bool = false
@@ -27,6 +31,50 @@ struct TodoEditorView: View {
     // MARK: - Private Properties
     private let isNewTodo: Bool
     private var todoId: UUID
+    
+    // MARK: - Date Selection Helpers
+    
+    // Calendar helpers for the date grid
+    private var calendar: Calendar {
+        Calendar.current
+    }
+    
+    private var currentYear: Int {
+        calendar.component(.year, from: dueDate)
+    }
+    
+    private var currentMonth: Int {
+        calendar.component(.month, from: dueDate)
+    }
+    
+    private var firstWeekdayOfMonth: Int {
+        let components = DateComponents(year: currentYear, month: currentMonth, day: 1)
+        let firstDayOfMonth = calendar.date(from: components)!
+        let weekday = calendar.component(.weekday, from: firstDayOfMonth)
+        // Adjust to make Sunday the first day (index 0)
+        return (weekday - 1) % 7
+    }
+    
+    private var daysInMonth: Int {
+        let range = calendar.range(of: .day, in: .month, for: dueDate)!
+        return range.count
+    }
+    
+    private var weekdaySymbols: [String] {
+        calendar.shortWeekdaySymbols.map { String($0.prefix(1)) }
+    }
+    
+    private var monthYearString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: dueDate)
+    }
+    
+    private var formattedSelectedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMM d, yyyy"
+        return formatter.string(from: dueDate)
+    }
     
     // MARK: - Initialization
     
@@ -90,6 +138,9 @@ struct TodoEditorView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
+            // Initialize hour and minute state from dueDate
+            initializeTimeState()
+            
             // Animate "Why it matters" expansion if it has content
             if !whyThisMatters.isEmpty {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -263,50 +314,277 @@ struct TodoEditorView: View {
                 }
             }
             
-            // Due Date Section
+            // Due Date Section with completely separated date and time selection
             VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    // Due date toggle button with icon
-                    Button(action: {
-                        withAnimation {
-                            hasDueDate.toggle()
-                        }
-                    }) {
-                        HStack {
-                            Image(systemName: hasDueDate ? "calendar.badge.clock.fill" : "calendar.badge.plus")
-                                .foregroundColor(hasDueDate ? .blue : .gray)
-                                .font(.system(size: 18))
-                            
-                            Text(hasDueDate ? "Due Date Set" : "Add Due Date")
-                                .font(.system(size: 16, weight: hasDueDate ? .medium : .regular))
-                                .foregroundColor(hasDueDate ? .white : .white.opacity(0.8))
-                            
-                            Spacer()
-                            
-                            if hasDueDate {
-                                // Display the current due date
-                                Text(formatDate(dueDate))
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.blue.opacity(0.8))
-                                    .padding(.vertical, 4)
-                                    .padding(.horizontal, 10)
-                                    .background(Color.blue.opacity(0.1))
-                                    .cornerRadius(8)
-                            }
-                        }
-                        .padding(.vertical, 8)
+                // Section header with toggle button
+                Button(action: {
+                    withAnimation {
+                        hasDueDate.toggle()
                     }
+                }) {
+                    HStack {
+                        Image(systemName: hasDueDate ? "calendar.badge.clock.fill" : "calendar.badge.plus")
+                            .foregroundColor(hasDueDate ? .blue : .gray)
+                            .font(.system(size: 18))
+                        
+                        Text(hasDueDate ? "Due Date Set" : "Add Due Date")
+                            .font(.system(size: 16, weight: hasDueDate ? .medium : .regular))
+                            .foregroundColor(hasDueDate ? .white : .white.opacity(0.8))
+                        
+                        Spacer()
+                        
+                        if hasDueDate {
+                            Image(systemName: "chevron.up")
+                                .font(.system(size: 14))
+                                .foregroundColor(.gray)
+                        } else {
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 14))
+                                .foregroundColor(.gray)
+                        }
+                    }
+                    .padding(.vertical, 8)
                 }
                 
                 if hasDueDate {
-                    // Full date picker without component restrictions
-                    DatePicker("", selection: $dueDate)
-                        .datePickerStyle(GraphicalDatePickerStyle())
-                        .colorScheme(.dark)
-                        .padding(12)
-                        .background(Color(UIColor.systemGray6).opacity(0.2))
-                        .cornerRadius(12)
-                        .transition(.opacity)
+                    VStack(spacing: 20) {
+                        // Date Selection - Completely separate
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("DATE")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundColor(.gray)
+                        
+                            // Custom date selector using buttons and calendar view
+                            VStack(spacing: 10) {
+                                // Selected date display
+                                HStack {
+                                    Text(formattedSelectedDate)
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                    
+                                    Spacer()
+                                    
+                                    // Today shortcut button
+                                    Button(action: {
+                                        // Set dueDate to today at the same time
+                                        let currentTime = Calendar.current.dateComponents([.hour, .minute], from: dueDate)
+                                        var today = Calendar.current.startOfDay(for: Date())
+                                        today = Calendar.current.date(bySettingHour: currentTime.hour ?? 0, minute: currentTime.minute ?? 0, second: 0, of: today) ?? today
+                                        dueDate = today
+                                    }) {
+                                        Text("Today")
+                                            .font(.caption)
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 5)
+                                            .background(Color.blue.opacity(0.3))
+                                            .cornerRadius(8)
+                                    }
+                                    
+                                    // Tomorrow shortcut button
+                                    Button(action: {
+                                        // Set dueDate to tomorrow at the same time
+                                        let currentTime = Calendar.current.dateComponents([.hour, .minute], from: dueDate)
+                                        var tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date())) ?? Date()
+                                        tomorrow = Calendar.current.date(bySettingHour: currentTime.hour ?? 0, minute: currentTime.minute ?? 0, second: 0, of: tomorrow) ?? tomorrow
+                                        dueDate = tomorrow
+                                    }) {
+                                        Text("Tomorrow")
+                                            .font(.caption)
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 5)
+                                            .background(Color.blue.opacity(0.3))
+                                            .cornerRadius(8)
+                                    }
+                                }
+                                
+                                // Month and year selector
+                                HStack {
+                                    Button(action: {
+                                        // Go to previous month
+                                        if let newDate = Calendar.current.date(byAdding: .month, value: -1, to: dueDate) {
+                                            dueDate = newDate
+                                        }
+                                    }) {
+                                        Image(systemName: "chevron.left")
+                                            .foregroundColor(.white)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    // Month and year display
+                                    Text(monthYearString)
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                    
+                                    Spacer()
+                                    
+                                    Button(action: {
+                                        // Go to next month
+                                        if let newDate = Calendar.current.date(byAdding: .month, value: 1, to: dueDate) {
+                                            dueDate = newDate
+                                        }
+                                    }) {
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(.white)
+                                    }
+                                }
+                                .padding(.vertical, 8)
+                                
+                                // Day of week headers
+                                HStack {
+                                    ForEach(weekdaySymbols, id: \.self) { symbol in
+                                        Text(symbol)
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                            .foregroundColor(.gray)
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                }
+                                
+                                // Calendar days grid
+                                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
+                                    // First, add empty cells for the first day of the month
+                                    ForEach(0..<firstWeekdayOfMonth, id: \.self) { _ in
+                                        Text("")
+                                            .frame(height: 40)
+                                    }
+                                    
+                                    // Then add the days of the month
+                                    ForEach(1...daysInMonth, id: \.self) { day in
+                                        Button(action: {
+                                            // Set dueDate to this day while keeping the current time
+                                            let currentTime = Calendar.current.dateComponents([.hour, .minute], from: dueDate)
+                                            var newDate = Calendar.current.date(from: DateComponents(year: currentYear, month: currentMonth, day: day)) ?? Date()
+                                            newDate = Calendar.current.date(bySettingHour: currentTime.hour ?? 0, minute: currentTime.minute ?? 0, second: 0, of: newDate) ?? newDate
+                                            dueDate = newDate
+                                        }) {
+                                            ZStack {
+                                                Circle()
+                                                    .fill(isDaySelected(day) ? Color.blue : Color.clear)
+                                                    .frame(width: 38, height: 38)
+                                                
+                                                Text("\(day)")
+                                                    .foregroundColor(isDaySelected(day) ? .white : isToday(day) ? .blue : .white)
+                                                    .font(.system(size: 16, weight: isDaySelected(day) ? .bold : .regular))
+                                            }
+                                            .frame(height: 40)
+                                        }
+                                    }
+                                }
+                            }
+                            .padding(12)
+                            .background(Color.black.opacity(0.3))
+                            .cornerRadius(12)
+                        }
+                        
+                        // Time Selection - Compact version
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("TIME")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundColor(.gray)
+                            
+                            HStack {
+                                // Time pickers in a more compact layout
+                                HStack(spacing: 8) {
+                                    // Hour picker with fixed height
+                                    Picker("Hour", selection: $selectedHour) {
+                                        ForEach(0..<24, id: \.self) { hour in
+                                            Text("\(hour)").tag(hour)
+                                        }
+                                    }
+                                    .pickerStyle(WheelPickerStyle())
+                                    .frame(width: 60, height: 100) // Fixed height
+                                    .clipped()
+                                    .onChange(of: selectedHour) { oldHour, newHour in
+                                        updateTimeInDueDate()
+                                    }
+                                    
+                                    Text(":")
+                                        .font(.title3)
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, -4)
+                                    
+                                    // Minute picker with fixed height
+                                    Picker("Minute", selection: $selectedMinute) {
+                                        ForEach(0..<60, id: \.self) { minute in
+                                            Text(String(format: "%02d", minute)).tag(minute)
+                                        }
+                                    }
+                                    .pickerStyle(WheelPickerStyle())
+                                    .frame(width: 60, height: 100) // Fixed height
+                                    .clipped()
+                                    .onChange(of: selectedMinute) { oldMinute, newMinute in
+                                        updateTimeInDueDate()
+                                    }
+                                }
+                                .padding(.vertical, 8)
+                                
+                                Spacer(minLength: 20)
+                                
+                                // Time presets in a more compact layout
+                                HStack(spacing: 8) {
+                                    // Use a vertical stack for time presets
+                                    Button(action: {
+                                        setTime(hour: 9, minute: 0) // Morning
+                                    }) {
+                                        Text("9:00")
+                                            .font(.caption)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Color.blue.opacity(0.3))
+                                            .cornerRadius(6)
+                                    }
+                                    
+                                    Button(action: {
+                                        setTime(hour: 12, minute: 0) // Noon
+                                    }) {
+                                        Text("12:00")
+                                            .font(.caption)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Color.blue.opacity(0.3))
+                                            .cornerRadius(6)
+                                    }
+                                    
+                                    Button(action: {
+                                        setTime(hour: 17, minute: 0) // Evening
+                                    }) {
+                                        Text("17:00")
+                                            .font(.caption)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Color.blue.opacity(0.3))
+                                            .cornerRadius(6)
+                                    }
+                                }
+                            }
+                            .padding(12)
+                            .background(Color.black.opacity(0.3))
+                            .cornerRadius(12)
+                        }
+                        
+                        // Summary of selected date and time
+                        HStack {
+                            Image(systemName: "calendar.badge.clock")
+                                .foregroundColor(.blue)
+                                .font(.system(size: 18))
+                            
+                            Text("Due: \(formatDueDate(dueDate))")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            
+                            Spacer()
+                        }
+                        .padding(10)
+                        .background(Color.blue.opacity(0.2))
+                        .cornerRadius(10)
+                    }
+                    .padding(16)
+                    .background(Color(UIColor.systemGray6).opacity(0.2))
+                    .cornerRadius(16)
+                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
             
@@ -375,6 +653,7 @@ struct TodoEditorView: View {
                     )
             }
             .disabled(title.isEmpty)
+            .opacity(title.isEmpty ? 0.5 : 1)
         }
         .padding(.top, 16)
     }
@@ -438,14 +717,6 @@ struct TodoEditorView: View {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
     
-    // Format date for display
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
-    }
-    
     // Get color based on priority level
     private func priorityColor(for priority: TodoItem.Priority) -> Color {
         switch priority {
@@ -476,6 +747,60 @@ struct TodoEditorView: View {
         } else {
             todoService.updateTodo(todoToSave)
         }
+    }
+    
+    // Check if a day is the selected day
+    private func isDaySelected(_ day: Int) -> Bool {
+        calendar.component(.day, from: dueDate) == day &&
+        calendar.component(.month, from: dueDate) == currentMonth &&
+        calendar.component(.year, from: dueDate) == currentYear
+    }
+    
+    // Check if a day is today
+    private func isToday(_ day: Int) -> Bool {
+        let today = Date()
+        return calendar.component(.day, from: today) == day &&
+        calendar.component(.month, from: today) == currentMonth &&
+        calendar.component(.year, from: today) == currentYear
+    }
+    
+    // Update time in dueDate from separate hour and minute
+    private func updateTimeInDueDate() {
+        let components = calendar.dateComponents([.year, .month, .day], from: dueDate)
+        var newComponents = DateComponents()
+        newComponents.year = components.year
+        newComponents.month = components.month
+        newComponents.day = components.day
+        newComponents.hour = selectedHour
+        newComponents.minute = selectedMinute
+        
+        if let newDate = calendar.date(from: newComponents) {
+            dueDate = newDate
+        }
+    }
+    
+    // Set time to specific hour and minute
+    private func setTime(hour: Int, minute: Int) {
+        selectedHour = hour
+        selectedMinute = minute
+        updateTimeInDueDate()
+    }
+    
+    // Format due date for display
+    private func formatDueDate(_ date: Date) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .medium
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.timeStyle = .short
+        
+        return "\(dateFormatter.string(from: date)) at \(timeFormatter.string(from: date))"
+    }
+    
+    // Initialize the hour and minute state when the view appears
+    private func initializeTimeState() {
+        selectedHour = calendar.component(.hour, from: dueDate)
+        selectedMinute = calendar.component(.minute, from: dueDate)
     }
 }
 
