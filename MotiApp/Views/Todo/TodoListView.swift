@@ -139,43 +139,78 @@ struct EnhancedTodoItemRow: View {
                 .offset(x: min(0, offset + deleteButtonWidth))
                 
                 // Main content
-                HStack(spacing: 16) {
-                    // Checkbox - green when completed, priority color when not
-                    Button(action: onToggle) {
-                        Image(systemName: todo.isCompleted ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 26))
-                            .foregroundColor(todo.isCompleted ? .green : .blue)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    
-                    // Title
-                    Text(todo.title)
-                        .font(.title3)
-                        .foregroundColor(.white)
-                        .strikethrough(todo.isCompleted)
-                    
-                    Spacer()
-                    
-                    // Priority badge with appropriate color but smaller
-                    Text(todo.priority.name)
-                        .font(.caption)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(getPriorityColor())
-                        .cornerRadius(10)
-                    
-                    // Edit button - smaller size
-                    Button(action: onEdit) {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 18, weight: .semibold))
+                VStack(spacing: 8) {
+                    // Top row with title and actions
+                    HStack(spacing: 16) {
+                        // Checkbox - green when completed, priority color when not
+                        Button(action: onToggle) {
+                            Image(systemName: todo.isCompleted ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 26))
+                                .foregroundColor(todo.isCompleted ? .green : getPriorityColor())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        // Title
+                        Text(todo.title)
+                            .font(.title3)
                             .foregroundColor(.white)
-                            .padding(.horizontal, 6)
+                            .strikethrough(todo.isCompleted)
+                        
+                        Spacer()
+                        
+                        // Priority badge with appropriate color but smaller
+                        Text(todo.priority.name)
+                            .font(.caption)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(getPriorityColor())
+                            .cornerRadius(10)
+                        
+                        // Edit button - smaller size
+                        Button(action: onEdit) {
+                            Image(systemName: "pencil")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 6)
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    
+                    // Due date info row (only if due date exists)
+                    if let formattedDueDate = todo.formattedDueDate {
+                        HStack(spacing: 6) {
+                            // Subtle spacer to align with checkbox
+                            Spacer()
+                                .frame(width: 42)
+                            
+                            // Due date information
+                            HStack(spacing: 6) {
+                                Image(systemName: "calendar.badge.clock")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(todo.isOverdue ? .red.opacity(0.8) : .gray.opacity(0.8))
+                                
+                                Text("Due \(formattedDueDate)")
+                                    .font(.caption)
+                                    .foregroundColor(todo.isOverdue ? .red.opacity(0.8) : .gray.opacity(0.8))
+                                
+                                if todo.isOverdue {
+                                    Text("OVERDUE")
+                                        .font(.system(size: 8, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 4)
+                                        .padding(.vertical, 1)
+                                        .background(Color.red.opacity(0.8))
+                                        .cornerRadius(3)
+                                }
+                            }
+                            
+                            Spacer()
+                        }
+                    }
                 }
                 .padding(.horizontal, 20)
-                .padding(.vertical, 16)
+                .padding(.vertical, 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(red: 0.15, green: 0.15, blue: 0.15))
                 .cornerRadius(8)
@@ -186,7 +221,7 @@ struct EnhancedTodoItemRow: View {
             // Use the refreshTrigger to force updates when completion status changes
             .id("todo-row-\(todo.id)-\(todo.isCompleted)-\(todoService.refreshTrigger)")
         }
-        .frame(height: 80) // Reduced height
+        .frame(height: todo.formattedDueDate != nil ? 90 : 80) // Adjusted height based on whether there's a due date
         .padding(.horizontal)
     }
     
