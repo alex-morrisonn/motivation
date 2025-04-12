@@ -23,6 +23,9 @@ struct MoreView: View {
     @State private var showingRewardedAdView = false
     @State private var showingComingSoonAlert = false
     
+    // New state variable for Widget Guide
+    @State private var showingWidgetGuide = false
+    
     @State private var selectedCategories: Set<String> = []
     
     var body: some View {
@@ -279,6 +282,16 @@ struct MoreView: View {
                             Divider()
                                 .background(Color.white.opacity(0.1))
                             
+                            // Widget Guide Option - NEW
+                            OptionRow(
+                                icon: "square.grid.2x2",
+                                title: "Widget Guide",
+                                action: { showingWidgetGuide.toggle() }
+                            )
+                            
+                            Divider()
+                                .background(Color.white.opacity(0.1))
+                            
                             OptionRow(
                                 icon: "lock.shield",
                                 title: "Privacy Policy",
@@ -425,6 +438,10 @@ struct MoreView: View {
         .sheet(isPresented: $showingRewardedAdView) {
             RewardedAdView()
         }
+        // Widget Guide sheet presentation - NEW
+        .sheet(isPresented: $showingWidgetGuide) {
+            WidgetsShowcaseView()
+        }
         .alert("Notification Permission", isPresented: $showingPermissionAlert) {
             Button("Cancel", role: .cancel) {
                 // User canceled, make sure toggle reflects permission state
@@ -533,6 +550,8 @@ struct MoreView: View {
         }
     }
 }
+
+// MARK: - Supporting Components
 
 // Coming Soon banner at the top of the More view
 struct ComingSoonBanner: View {
@@ -739,13 +758,5 @@ struct CategoryRow: View {
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
         }
-    }
-}
-
-// SwiftUI Preview
-struct MoreView_Previews: PreviewProvider {
-    static var previews: some View {
-        MoreView()
-            .preferredColorScheme(.dark)
     }
 }
