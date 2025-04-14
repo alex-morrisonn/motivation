@@ -1,6 +1,168 @@
 import SwiftUI
 import WidgetKit
 
+// MARK: - Section Header Component
+struct SectionHeader: View {
+    let title: String
+    
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(.white.opacity(0.6))
+                .tracking(2)
+                .padding(.bottom, 8)
+            
+            Spacer()
+        }
+        .padding(.horizontal, 4)
+    }
+}
+
+// MARK: - Option Row Component
+struct OptionRow: View {
+    let icon: String
+    let title: String
+    var action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(.white)
+                    .font(.system(size: 18))
+                    .frame(width: 24)
+                
+                Text(title)
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundColor(.white)
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.3))
+            }
+            .padding(.vertical, 16)
+            .padding(.horizontal, 16)
+        }
+    }
+}
+
+// MARK: - Category Row Component
+struct CategoryRow: View {
+    let category: String
+    let isSelected: Bool
+    let onToggle: () -> Void
+    
+    var body: some View {
+        Button(action: onToggle) {
+            HStack {
+                Text(category)
+                    .font(.system(size: 16))
+                    .foregroundColor(.white)
+                
+                Spacer()
+                
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundColor(isSelected ? .blue : .gray)
+                    .font(.system(size: 20))
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+        }
+    }
+}
+
+// MARK: - Stat Card Component
+struct StatCard: View {
+    let number: String
+    let label: String
+    let icon: String
+    let iconColor: Color
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(iconColor.opacity(0.2))
+                    .frame(width: 50, height: 50)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 24))
+                    .foregroundColor(iconColor)
+            }
+            
+            Text(number)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.white)
+            
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.gray)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(Color.black.opacity(0.3))
+        .cornerRadius(12)
+    }
+}
+
+// MARK: - Coming Soon Banner Component
+struct ComingSoonBanner: View {
+    var action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 15) {
+                // Left content with icon and text
+                HStack {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(.yellow)
+                        .padding(8)
+                        .background(Color.yellow.opacity(0.2))
+                        .clipShape(Circle())
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Premium Features")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        Text("Coming soon!")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                }
+                
+                Spacer()
+                
+                // Right arrow
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.white.opacity(0.6))
+                    .font(.system(size: 14))
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [Color(red: 0.2, green: 0.2, blue: 0.3), Color(red: 0.1, green: 0.1, blue: 0.2)]),
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
+            )
+            .padding(.horizontal)
+        }
+    }
+}
+
 // More View for settings and additional options
 struct MoreView: View {
     @ObservedObject var quoteService = QuoteService.shared
