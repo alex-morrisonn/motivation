@@ -143,7 +143,6 @@ struct MoreView: View {
                                         .labelsHidden()
                                         .frame(width: 100)
                                         .colorScheme(.dark)
-                                        // Updated to use the new onChange API with two parameters
                                         .onChange(of: notificationManager.reminderTime) { oldValue, newValue in
                                             notificationManager.updateReminderTime(newValue)
                                         }
@@ -156,51 +155,56 @@ struct MoreView: View {
                         .cornerRadius(12)
                     }
                     
-                    // Themes section
+                    // Coming Soon section (Free Features)
                     VStack(spacing: 0) {
-                        SectionHeader(title: "THEMES")
+                        SectionHeader(title: "COMING SOON")
                         
                         // Section background
                         VStack(spacing: 0) {
-                            Button(action: {
-                                showingThemesWIPAlert = true
-                            }) {
-                                HStack {
-                                    Image(systemName: "paintpalette")
-                                        .font(.system(size: 18))
-                                        .foregroundColor(.white)
-                                        .frame(width: 20)
-                                    
-                                    Text("App Themes")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(.white)
-                                    
-                                    Spacer()
-                                    
-                                    Text("Coming Soon")
-                                        .font(.caption)
-                                        .foregroundColor(.blue.opacity(0.8))
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 4)
-                                        .background(Color.blue.opacity(0.2))
-                                        .cornerRadius(10)
-                                    
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.3))
-                                }
-                                .padding(.vertical, 16)
-                                .padding(.horizontal, 16)
-                            }
+                            // AI-Powered Assignment Kick-Starter
+                            ComingSoonFeatureRow(
+                                icon: "brain",
+                                iconColor: .purple,
+                                title: "Assignment Kick-Starter",
+                                description: "AI-powered tool to break assignments into manageable steps and conquer blank page anxiety."
+                            )
+                            .padding(.vertical, 16)
+                            .padding(.horizontal, 16)
+                            
+                            Divider()
+                                .background(Color.white.opacity(0.1))
+                            
+                            // Pomodoro Timer
+                            ComingSoonFeatureRow(
+                                icon: "timer",
+                                iconColor: .orange,
+                                title: "Pomodoro Timer",
+                                description: "Focus mode with 25/5 minute sessions, ambient sounds, and encouraging messages."
+                            )
+                            .padding(.vertical, 16)
+                            .padding(.horizontal, 16)
+                            
+                            Divider()
+                                .background(Color.white.opacity(0.1))
+                            
+                            // Gratitude/Mind Dump Notes
+                            ComingSoonFeatureRow(
+                                icon: "note.text",
+                                iconColor: .green,
+                                title: "Gratitude Journal",
+                                description: "Simple notepad for journaling thoughts and practicing mindfulness."
+                            )
+                            .padding(.vertical, 16)
+                            .padding(.horizontal, 16)
                         }
                         .background(Color.white.opacity(0.05))
                         .cornerRadius(12)
                     }
-                    .padding(.bottom, 10)
+                    .padding(.vertical, 10)
                     
-                    // Premium Info section
+                    // Premium Features section
                     VStack(spacing: 0) {
-                        SectionHeader(title: "PREMIUM")
+                        SectionHeader(title: "PREMIUM FEATURES")
                         
                         // Section background
                         VStack(spacing: 0) {
@@ -225,13 +229,6 @@ struct MoreView: View {
                                         .background(Color.orange.opacity(0.2))
                                         .cornerRadius(10)
                                 }
-                                
-                                Text("We're working on premium features like ad removal, custom themes, and enhanced widgets. Stay tuned!")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.gray)
-                                    .padding(.leading, 36)
-                                    .padding(.trailing, 16)
-                                    .padding(.bottom, 8)
                             }
                             .padding(.vertical, 16)
                             .padding(.horizontal, 16)
@@ -239,6 +236,40 @@ struct MoreView: View {
                             Divider()
                                 .background(Color.white.opacity(0.1))
                             
+                            // Ad Removal
+                            PremiumFeatureItemRow(
+                                icon: "xmark.circle",
+                                iconColor: .red,
+                                title: "Ad-Free Experience",
+                                description: "Enjoy the app without any advertisements."
+                            )
+                            
+                            Divider()
+                                .background(Color.white.opacity(0.1))
+                            
+                            // Custom Themes
+                            PremiumFeatureItemRow(
+                                icon: "paintpalette",
+                                iconColor: .blue,
+                                title: "Custom Themes",
+                                description: "Choose between a range of beautiful themes for the app."
+                            )
+                            
+                            Divider()
+                                .background(Color.white.opacity(0.1))
+                            
+                            // Enhanced Widgets
+                            PremiumFeatureItemRow(
+                                icon: "square.grid.2x2",
+                                iconColor: .purple,
+                                title: "Enhanced Widgets",
+                                description: "Access exclusive widget designs and customization options."
+                            )
+                            
+                            Divider()
+                                .background(Color.white.opacity(0.1))
+                            
+                            // Learn More button
                             Button(action: {
                                 showingPremiumView = true
                             }) {
@@ -266,7 +297,7 @@ struct MoreView: View {
                         .cornerRadius(12)
                     }
                     .padding(.bottom, 10)
-                    
+
                     // Other options section
                     VStack(spacing: 0) {
                         SectionHeader(title: "OPTIONS")
@@ -282,7 +313,7 @@ struct MoreView: View {
                             Divider()
                                 .background(Color.white.opacity(0.1))
                             
-                            // Widget Guide Option - NEW
+                            // Widget Guide Option
                             OptionRow(
                                 icon: "square.grid.2x2",
                                 title: "Widget Guide",
@@ -438,7 +469,7 @@ struct MoreView: View {
         .sheet(isPresented: $showingRewardedAdView) {
             RewardedAdView()
         }
-        // Widget Guide sheet presentation - NEW
+        // Widget Guide sheet presentation
         .sheet(isPresented: $showingWidgetGuide) {
             WidgetsShowcaseView()
         }
@@ -551,212 +582,154 @@ struct MoreView: View {
     }
 }
 
-// MARK: - Supporting Components
-
-// Coming Soon banner at the top of the More view
-struct ComingSoonBanner: View {
-    var action: () -> Void
+// Free upcoming feature row
+struct ComingSoonFeatureRow: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let description: String
     
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 15) {
-                // Icon container
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [.blue, .purple]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 50, height: 50)
-                    
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 24))
-                        .foregroundColor(.white)
-                }
+        HStack(spacing: 15) {
+            Image(systemName: icon)
+                .font(.system(size: 22))
+                .foregroundColor(iconColor)
+                .frame(width: 30)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundColor(.white)
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("What's Coming Soon")
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .lineLimit(2)
+            }
+            
+            Spacer()
+            
+            // Coming soon label
+            Text("Soon")
+                .font(.caption2)
+                .foregroundColor(.blue)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(Color.blue.opacity(0.2))
+                .cornerRadius(8)
+        }
+    }
+}
+
+// Premium feature row
+struct PremiumFeatureItemRow: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let description: String
+    
+    var body: some View {
+        HStack(spacing: 15) {
+            Image(systemName: icon)
+                .font(.system(size: 22))
+                .foregroundColor(iconColor)
+                .frame(width: 30)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 4) {
+                    Text(title)
                         .font(.headline)
                         .foregroundColor(.white)
                     
-                    Text("See upcoming features and improvements")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
+                    // Crown icon to indicate premium
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.yellow)
                 }
                 
-                Spacer()
-                
-                // Arrow icon
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.blue)
-                    .font(.system(size: 14))
-                    .padding(8)
-                    .background(Circle().fill(Color.blue.opacity(0.2)))
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .lineLimit(2)
             }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [Color(.sRGB, red: 0.1, green: 0.1, blue: 0.2, opacity: 0.8), Color(.sRGB, red: 0.1, green: 0.1, blue: 0.3, opacity: 0.8)]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .strokeBorder(Color.blue.opacity(0.3), lineWidth: 1)
-                    )
-            )
+            
+            Spacer()
         }
     }
 }
 
-// Section header with minimalist design
-struct SectionHeader: View {
-    let title: String
-    
-    var body: some View {
-        Text(title)
-            .font(.caption)
-            .fontWeight(.semibold)
-            .foregroundColor(.white.opacity(0.6))
-            .tracking(2)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 4)
-            .padding(.bottom, 8)
-            .padding(.top, 8)
-    }
-}
-
-// Stat card with colored icons
-struct StatCard: View {
-    let number: String
-    let label: String
+// Free upcoming feature row
+struct ComingSoonFeatureRow: View {
     let icon: String
     let iconColor: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(iconColor)
-                .padding(.bottom, 4)
-            
-            Text(number)
-                .font(.system(size: 32, weight: .bold))
-                .foregroundColor(.white)
-            
-            Text(label)
-                .font(.system(size: 12))
-                .fontWeight(.medium)
-                .foregroundColor(.white.opacity(0.6))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(12)
-    }
-}
-
-// Option row with minimalist design
-struct OptionRow: View {
-    let icon: String
     let title: String
-    var action: () -> Void
+    let description: String
     
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                Image(systemName: icon)
-                    .font(.system(size: 18))
-                    .foregroundColor(.white)
-                    .frame(width: 20)
-                
+        HStack(spacing: 15) {
+            Image(systemName: icon)
+                .font(.system(size: 22))
+                .foregroundColor(iconColor)
+                .frame(width: 30)
+            
+            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.headline)
                     .foregroundColor(.white)
                 
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.3))
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .lineLimit(2)
             }
-            .padding(.vertical, 16)
-            .padding(.horizontal, 16)
+            
+            Spacer()
+            
+            // Coming soon label
+            Text("Soon")
+                .font(.caption2)
+                .foregroundColor(.blue)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(Color.blue.opacity(0.2))
+                .cornerRadius(8)
         }
     }
 }
 
-// Category row with colored icon backgrounds
-struct CategoryRow: View {
-    let category: String
-    let isSelected: Bool
-    var onToggle: () -> Void
-    
-    // Icons for categories
-    private func iconForCategory(_ category: String) -> String {
-        switch category {
-        case "Success & Achievement": return "trophy"
-        case "Life & Perspective": return "scope"
-        case "Dreams & Goals": return "sparkles"
-        case "Courage & Confidence": return "bolt.heart"
-        case "Perseverance & Resilience": return "figure.walk"
-        case "Growth & Change": return "leaf"
-        case "Action & Determination": return "flag"
-        case "Mindset & Attitude": return "brain"
-        case "Focus & Discipline": return "target"
-        default: return "quote.bubble"
-        }
-    }
-    
-    // Color for category icons
-    private func colorForCategory(_ category: String) -> Color {
-        switch category {
-        case "Success & Achievement": return Color.blue
-        case "Life & Perspective": return Color.purple
-        case "Dreams & Goals": return Color.green
-        case "Courage & Confidence": return Color.orange
-        case "Perseverance & Resilience": return Color.red
-        case "Growth & Change": return Color.teal
-        case "Action & Determination": return Color.indigo
-        case "Mindset & Attitude": return Color.pink
-        case "Focus & Discipline": return Color.yellow
-        default: return Color.gray
-        }
-    }
+// Premium feature row
+struct PremiumFeatureItemRow: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let description: String
     
     var body: some View {
-        Button(action: onToggle) {
-            HStack(spacing: 16) {
-                // Category icon with colored background
-                ZStack {
-                    Circle()
-                        .fill(colorForCategory(category))
-                        .frame(width: 32, height: 32)
-                    
-                    Image(systemName: iconForCategory(category))
-                        .font(.system(size: 16))
+        HStack(spacing: 15) {
+            Image(systemName: icon)
+                .font(.system(size: 22))
+                .foregroundColor(iconColor)
+                .frame(width: 30)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 4) {
+                    Text(title)
+                        .font(.headline)
                         .foregroundColor(.white)
+                    
+                    // Crown icon to indicate premium
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.yellow)
                 }
                 
-                Text(category)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                // Green checkmark when selected
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(isSelected ? .green : .white.opacity(0.3))
-                    .font(.system(size: 18))
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .lineLimit(2)
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 16)
+            
+            Spacer()
         }
     }
 }
