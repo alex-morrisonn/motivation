@@ -12,7 +12,7 @@ struct SectionHeader: View {
                 .fontWeight(.semibold)
                 .foregroundColor(.white.opacity(0.6))
                 .tracking(2)
-                .padding(.bottom, 8)
+                .padding(.vertical, 8)
             
             Spacer()
         }
@@ -20,57 +20,145 @@ struct SectionHeader: View {
     }
 }
 
+// MARK: - Enhanced Feature Row Component
+struct EnhancedFeatureRow: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let description: String
+    let badge: String?
+    let badgeColor: Color
+    
+    // Add state to track if the row is expanded
+    @State private var isExpanded = false
+    
+    init(
+        icon: String,
+        iconColor: Color,
+        title: String,
+        description: String,
+        badge: String? = nil,
+        badgeColor: Color = .blue
+    ) {
+        self.icon = icon
+        self.iconColor = iconColor
+        self.title = title
+        self.description = description
+        self.badge = badge
+        self.badgeColor = badgeColor
+    }
+    
+    var body: some View {
+        Button(action: {
+            // Toggle expanded state on tap
+            withAnimation(.spring()) {
+                isExpanded.toggle()
+            }
+        }) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 15) {
+                    // Icon with background
+                    Image(systemName: icon)
+                        .font(.system(size: 18))
+                        .foregroundColor(iconColor)
+                        .frame(width: 20, height: 20)
+                        .padding(10)
+                        .background(iconColor.opacity(0.15))
+                        .clipShape(Circle())
+                    
+                    // Title and description
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(title)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        Text(description)
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                            // Remove line limit restriction when expanded
+                            .lineLimit(isExpanded ? nil : 2)
+                    }
+                    
+                    Spacer()
+                    
+                    // Optional badge
+                    if let badge = badge {
+                        Text(badge)
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .foregroundColor(badgeColor)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(badgeColor.opacity(0.2))
+                            .cornerRadius(8)
+                    }
+                }
+                
+                // Show an indicator for expansion state
+                if isExpanded {
+                    HStack {
+                        Spacer()
+                        Text("Tap to collapse")
+                            .font(.caption)
+                            .foregroundColor(.gray.opacity(0.7))
+                        Image(systemName: "chevron.up")
+                            .font(.system(size: 10))
+                            .foregroundColor(.gray.opacity(0.7))
+                        Spacer()
+                    }
+                    .padding(.top, 2)
+                }
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+        .padding(.vertical, 14)
+        .contentShape(Rectangle())
+        .background(Color.black.opacity(0.001)) // Invisible background to make entire area tappable
+    }
+}
+
 // MARK: - Option Row Component
 struct OptionRow: View {
     let icon: String
+    let iconColor: Color
     let title: String
     var action: () -> Void
+    
+    init(
+        icon: String,
+        iconColor: Color = .white,
+        title: String,
+        action: @escaping () -> Void
+    ) {
+        self.icon = icon
+        self.iconColor = iconColor
+        self.title = title
+        self.action = action
+    }
     
     var body: some View {
         Button(action: action) {
             HStack {
+                // Icon with background
                 Image(systemName: icon)
-                    .foregroundColor(.white)
-                    .font(.system(size: 18))
-                    .frame(width: 24)
+                    .foregroundColor(iconColor)
+                    .font(.system(size: 16))
+                    .frame(width: 18, height: 18)
+                    .padding(8)
+                    .background(iconColor.opacity(0.15))
+                    .clipShape(Circle())
                 
                 Text(title)
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.3))
-            }
-            .padding(.vertical, 16)
-            .padding(.horizontal, 16)
-        }
-    }
-}
-
-// MARK: - Category Row Component
-struct CategoryRow: View {
-    let category: String
-    let isSelected: Bool
-    let onToggle: () -> Void
-    
-    var body: some View {
-        Button(action: onToggle) {
-            HStack {
-                Text(category)
                     .font(.system(size: 16))
                     .foregroundColor(.white)
                 
                 Spacer()
                 
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(isSelected ? .blue : .gray)
-                    .font(.system(size: 20))
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.3))
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
         }
     }
 }
@@ -81,74 +169,112 @@ struct StatCard: View {
     let label: String
     let icon: String
     let iconColor: Color
+    var action: (() -> Void)? = nil
     
     var body: some View {
-        VStack(spacing: 8) {
-            ZStack {
-                Circle()
-                    .fill(iconColor.opacity(0.2))
-                    .frame(width: 50, height: 50)
-                
+        Button(action: {
+            action?()
+        }) {
+            VStack(spacing: 12) {
+                // Icon with background
                 Image(systemName: icon)
-                    .font(.system(size: 24))
+                    .font(.system(size: 20))
                     .foregroundColor(iconColor)
+                    .frame(width: 24, height: 24)
+                    .padding(12)
+                    .background(iconColor.opacity(0.15))
+                    .clipShape(Circle())
+                
+                Text(number)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white)
+                
+                Text(label)
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .lineLimit(1)
             }
-            
-            Text(number)
-                .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.white)
-            
-            Text(label)
-                .font(.caption)
-                .foregroundColor(.gray)
-                .lineLimit(1)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Color.black.opacity(0.3))
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            )
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(Color.black.opacity(0.3))
-        .cornerRadius(12)
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
-// MARK: - Coming Soon Banner Component
-struct ComingSoonBanner: View {
+// MARK: - Premium Banner Component
+struct PremiumBanner: View {
     var action: () -> Void
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 15) {
-                // Left content with icon and text
-                HStack {
-                    Image(systemName: "star.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(.yellow)
-                        .padding(8)
-                        .background(Color.yellow.opacity(0.2))
-                        .clipShape(Circle())
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Premium Features")
-                            .font(.headline)
-                            .foregroundColor(.white)
+            VStack(spacing: 0) {
+                HStack(alignment: .top, spacing: 15) {
+                    // Premium icon and text
+                    HStack(alignment: .center) {
+                        // Crown icon
+                        Image(systemName: "crown.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(.yellow)
+                            .padding(10)
+                            .background(
+                                Circle()
+                                    .fill(Color.yellow.opacity(0.2))
+                            )
                         
-                        Text("Coming soon!")
-                            .font(.caption)
-                            .foregroundColor(.gray)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Premium Features")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            
+                            Text("Coming soon!")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
                     }
+                    
+                    Spacer()
+                    
+                    // Status tag
+                    Text("In Development")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Color.orange.opacity(0.2))
+                        .cornerRadius(10)
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
                 
-                Spacer()
-                
-                // Right arrow
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.6))
-                    .font(.system(size: 14))
+                // Animated bottom indicator
+                HStack {
+                    Spacer()
+                    Text("Tap to learn more")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.6))
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10))
+                        .foregroundColor(.white.opacity(0.6))
+                    Spacer()
+                }
+                .padding(.vertical, 8)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.yellow.opacity(0.3), Color.orange.opacity(0.3)]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
             }
-            .padding(.vertical, 14)
-            .padding(.horizontal, 16)
             .background(
                 LinearGradient(
-                    gradient: Gradient(colors: [Color(red: 0.2, green: 0.2, blue: 0.3), Color(red: 0.1, green: 0.1, blue: 0.2)]),
+                    gradient: Gradient(colors: [Color(red: 0.15, green: 0.15, blue: 0.2), Color(red: 0.1, green: 0.1, blue: 0.15)]),
                     startPoint: .leading,
                     endPoint: .trailing
                 )
@@ -158,13 +284,31 @@ struct ComingSoonBanner: View {
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
             )
-            .padding(.horizontal)
         }
     }
 }
 
-// More View for settings and additional options
+// MARK: - Section Container Component
+struct SectionContainer<Content: View>: View {
+    let content: Content
+    
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            content
+        }
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(16)
+    }
+}
+
+// MARK: - More View
 struct MoreView: View {
+    // MARK: - Properties
+    
     @ObservedObject var quoteService = QuoteService.shared
     @ObservedObject var eventService = EventService.shared
     @ObservedObject var notificationManager = NotificationManager.shared
@@ -184,74 +328,74 @@ struct MoreView: View {
     @State private var showingPremiumView = false
     @State private var showingRewardedAdView = false
     @State private var showingComingSoonAlert = false
-    
-    // New state variable for Widget Guide
     @State private var showingWidgetGuide = false
     
-    @State private var selectedCategories: Set<String> = []
+    // Removed selectedCategories state variable
+    
+    // MARK: - View Body
     
     var body: some View {
         ZStack {
-            // Black background
+            // Background
             Color.black.edgesIgnoringSafeArea(.all)
             
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 25) {
-                    // Premium banner for non-premium users
-                    ComingSoonBanner(action: { showingPremiumView = true })
+                VStack(spacing: 20) {
+                    // Premium Banner
+                    PremiumBanner(action: { showingPremiumView = true })
                         .padding(.top, 10)
+                        .padding(.horizontal, 20)
                     
-                    // Stats cards with colors
-                    HStack(spacing: 15) {
-                        StatCard(
-                            number: "\(quoteService.favorites.count)",
-                            label: "Favorites",
-                            icon: "heart",
-                            iconColor: .red
-                        )
+                    // Stats Section
+                    VStack(spacing: 12) {
+                        SectionHeader(title: "STATISTICS")
+                            .padding(.horizontal, 20)
                         
-                        StatCard(
-                            number: "\(eventService.events.count)",
-                            label: "Events",
-                            icon: "calendar",
-                            iconColor: .blue
-                        )
-                        
-                        // Updated to use real streak data with tap action
-                        Button(action: {
-                            showingStreakDetails = true
-                        }) {
+                        HStack(spacing: 15) {
+                            // Favorites stat
+                            StatCard(
+                                number: "\(quoteService.favorites.count)",
+                                label: "Favorites",
+                                icon: "heart.fill",
+                                iconColor: .red
+                            )
+                            
+                            // Events stat
+                            StatCard(
+                                number: "\(eventService.events.count)",
+                                label: "Events",
+                                icon: "calendar",
+                                iconColor: .blue
+                            )
+                            
+                            // Streak stat with tap action
                             StatCard(
                                 number: "\(streakManager.currentStreak)",
                                 label: "Day Streak",
-                                icon: "flame",
-                                iconColor: .orange
-                            )
-                            .overlay(
-                                // Subtle indicator that this is tappable
-                                Image(systemName: "info.circle")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.6))
-                                    .padding(6),
-                                alignment: .topTrailing
+                                icon: "flame.fill",
+                                iconColor: .orange,
+                                action: { showingStreakDetails = true }
                             )
                         }
-                        .buttonStyle(PlainButtonStyle())
+                        .padding(.horizontal, 20)
                     }
-                    .padding(.top, 16)
                     
-                    // Settings section
-                    VStack(spacing: 0) {
+                    // Notification Settings Section
+                    VStack(spacing: 12) {
                         SectionHeader(title: "SETTINGS")
+                            .padding(.horizontal, 20)
                         
-                        // Section background
-                        VStack(spacing: 0) {
-                            // Notifications toggle
+                        SectionContainer {
+                            // Daily Quote Reminder toggle
                             HStack {
-                                Image(systemName: "bell")
-                                    .font(.system(size: 18))
+                                // Icon with background
+                                Image(systemName: "bell.fill")
+                                    .font(.system(size: 16))
                                     .foregroundColor(.white)
-                                    .frame(width: 20)
+                                    .frame(width: 18, height: 18)
+                                    .padding(8)
+                                    .background(Color.blue.opacity(0.15))
+                                    .clipShape(Circle())
                                 
                                 Text("Daily Quote Reminder")
                                     .font(.system(size: 16, weight: .medium))
@@ -259,41 +403,37 @@ struct MoreView: View {
                                 
                                 Spacer()
                                 
-                                // Custom toggle connected to notification manager
-                                ZStack {
-                                    Capsule()
-                                        .fill(notificationManager.isNotificationsEnabled ? Color.gray.opacity(0.3) : Color.gray.opacity(0.2))
-                                        .frame(width: 50, height: 30)
-                                    
-                                    Circle()
-                                        .fill(notificationManager.isNotificationsEnabled ? Color.white.opacity(0.7) : Color.gray.opacity(0.5))
-                                        .frame(width: 26, height: 26)
-                                        .offset(x: notificationManager.isNotificationsEnabled ? 10 : -10)
-                                        .animation(.spring(response: 0.2), value: notificationManager.isNotificationsEnabled)
-                                }
-                                .onTapGesture {
-                                    if !notificationManager.isNotificationsEnabled {
-                                        // When enabling, check/request permission first
-                                        checkAndRequestNotificationPermission()
-                                    } else {
-                                        // When disabling, just update the manager
-                                        notificationManager.toggleNotifications(false)
+                                // Toggle switch
+                                Toggle("", isOn: Binding(
+                                    get: { notificationManager.isNotificationsEnabled },
+                                    set: { newValue in
+                                        if !newValue {
+                                            notificationManager.toggleNotifications(false)
+                                        } else {
+                                            checkAndRequestNotificationPermission()
+                                        }
                                     }
-                                }
+                                ))
+                                .toggleStyle(SwitchToggleStyle(tint: .blue))
                             }
-                            .padding(.vertical, 16)
+                            .padding(.vertical, 14)
                             .padding(.horizontal, 16)
                             
-                            // Show time picker only when notifications are enabled
+                            // Show reminder time picker when notifications are enabled
                             if notificationManager.isNotificationsEnabled {
                                 Divider()
                                     .background(Color.white.opacity(0.1))
+                                    .padding(.horizontal, 16)
                                 
                                 HStack {
-                                    Image(systemName: "clock")
-                                        .font(.system(size: 18))
-                                        .foregroundColor(.white)
-                                        .frame(width: 20)
+                                    // Icon with background
+                                    Image(systemName: "clock.fill")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(.blue)
+                                        .frame(width: 18, height: 18)
+                                        .padding(8)
+                                        .background(Color.blue.opacity(0.15))
+                                        .clipShape(Circle())
                                     
                                     Text("Reminder Time")
                                         .font(.system(size: 16, weight: .medium))
@@ -301,6 +441,7 @@ struct MoreView: View {
                                     
                                     Spacer()
                                     
+                                    // Time picker
                                     DatePicker("", selection: $notificationManager.reminderTime, displayedComponents: .hourAndMinute)
                                         .labelsHidden()
                                         .frame(width: 100)
@@ -309,281 +450,252 @@ struct MoreView: View {
                                             notificationManager.updateReminderTime(newValue)
                                         }
                                 }
-                                .padding(.vertical, 16)
+                                .padding(.vertical, 14)
                                 .padding(.horizontal, 16)
                             }
                         }
-                        .background(Color.white.opacity(0.05))
-                        .cornerRadius(12)
+                        .padding(.horizontal, 20)
                     }
                     
-                    // Coming Soon section (Free Features)
-                    VStack(spacing: 0) {
+                    // Coming Soon Features Section
+                    VStack(spacing: 12) {
                         SectionHeader(title: "COMING SOON")
+                            .padding(.horizontal, 20)
                         
-                        // Section background
-                        VStack(spacing: 0) {
-                            // AI-Powered Assignment Kick-Starter
-                            ComingSoonFeatureRow(
+                        SectionContainer {
+                            // Assignment Kick-Starter
+                            EnhancedFeatureRow(
                                 icon: "brain",
                                 iconColor: .purple,
                                 title: "Assignment Kick-Starter",
-                                description: "AI-powered tool to break assignments into manageable steps and conquer blank page anxiety."
+                                description: "AI-powered tool to break assignments into manageable steps and conquer blank page anxiety.",
+                                badge: "Soon",
+                                badgeColor: .blue
                             )
-                            .padding(.vertical, 16)
                             .padding(.horizontal, 16)
                             
                             Divider()
                                 .background(Color.white.opacity(0.1))
+                                .padding(.horizontal, 16)
                             
                             // Pomodoro Timer
-                            ComingSoonFeatureRow(
+                            EnhancedFeatureRow(
                                 icon: "timer",
                                 iconColor: .orange,
                                 title: "Pomodoro Timer",
-                                description: "Focus mode with 25/5 minute sessions, ambient sounds, and encouraging messages."
+                                description: "Focus mode with 25/5 minute sessions, ambient sounds, and encouraging messages.",
+                                badge: "Soon",
+                                badgeColor: .blue
                             )
-                            .padding(.vertical, 16)
                             .padding(.horizontal, 16)
                             
                             Divider()
                                 .background(Color.white.opacity(0.1))
+                                .padding(.horizontal, 16)
                             
-                            // Gratitude/Mind Dump Notes
-                            ComingSoonFeatureRow(
+                            // Gratitude Journal
+                            EnhancedFeatureRow(
                                 icon: "note.text",
                                 iconColor: .green,
                                 title: "Gratitude Journal",
-                                description: "Simple notepad for journaling thoughts and practicing mindfulness."
+                                description: "Simple notepad for journaling thoughts and practicing mindfulness.",
+                                badge: "Soon",
+                                badgeColor: .blue
                             )
-                            .padding(.vertical, 16)
                             .padding(.horizontal, 16)
                         }
-                        .background(Color.white.opacity(0.05))
-                        .cornerRadius(12)
+                        .padding(.horizontal, 20)
                     }
-                    .padding(.vertical, 10)
                     
-                    // Premium Features section
-                    VStack(spacing: 0) {
+                    // Premium Features Section
+                    VStack(spacing: 12) {
                         SectionHeader(title: "PREMIUM FEATURES")
+                            .padding(.horizontal, 20)
                         
-                        // Section background
-                        VStack(spacing: 0) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    Image(systemName: "star.fill")
-                                        .font(.system(size: 18))
-                                        .foregroundColor(.yellow)
-                                        .frame(width: 20)
-                                    
-                                    Text("Premium Features")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(.white)
-                                    
-                                    Spacer()
-                                    
-                                    Text("In Development")
-                                        .font(.caption)
-                                        .foregroundColor(.orange)
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 4)
-                                        .background(Color.orange.opacity(0.2))
-                                        .cornerRadius(10)
-                                }
-                            }
-                            .padding(.vertical, 16)
-                            .padding(.horizontal, 16)
-                            
-                            Divider()
-                                .background(Color.white.opacity(0.1))
-                            
-                            // Ad Removal
-                            PremiumFeatureItemRow(
+                        SectionContainer {
+                            // Ad-Free Experience
+                            EnhancedFeatureRow(
                                 icon: "xmark.circle",
                                 iconColor: .red,
                                 title: "Ad-Free Experience",
-                                description: "Enjoy the app without any advertisements."
+                                description: "Enjoy the app without any advertisements.",
+                                badge: "Premium",
+                                badgeColor: .yellow
                             )
+                            .padding(.horizontal, 16)
                             
                             Divider()
                                 .background(Color.white.opacity(0.1))
+                                .padding(.horizontal, 16)
                             
                             // Custom Themes
-                            PremiumFeatureItemRow(
+                            EnhancedFeatureRow(
                                 icon: "paintpalette",
                                 iconColor: .blue,
                                 title: "Custom Themes",
-                                description: "Choose between a range of beautiful themes for the app."
+                                description: "Choose between a range of beautiful themes for the app.",
+                                badge: "Premium",
+                                badgeColor: .yellow
                             )
+                            .padding(.horizontal, 16)
                             
                             Divider()
                                 .background(Color.white.opacity(0.1))
+                                .padding(.horizontal, 16)
                             
                             // Enhanced Widgets
-                            PremiumFeatureItemRow(
+                            EnhancedFeatureRow(
                                 icon: "square.grid.2x2",
                                 iconColor: .purple,
                                 title: "Enhanced Widgets",
-                                description: "Access exclusive widget designs and customization options."
+                                description: "Access exclusive widget designs and customization options.",
+                                badge: "Premium",
+                                badgeColor: .yellow
                             )
+                            .padding(.horizontal, 16)
                             
                             Divider()
                                 .background(Color.white.opacity(0.1))
+                                .padding(.horizontal, 16)
                             
                             // Learn More button
                             Button(action: {
                                 showingPremiumView = true
                             }) {
-                                HStack {
-                                    Image(systemName: "crown.fill")
-                                        .font(.system(size: 18))
-                                        .foregroundColor(.yellow)
-                                        .frame(width: 20)
-                                    
-                                    Text("Learn More")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(.white)
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.3))
-                                }
-                                .padding(.vertical, 16)
-                                .padding(.horizontal, 16)
+                                Text("Learn More About Premium")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [Color.yellow.opacity(0.3), Color.orange.opacity(0.3)]),
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .cornerRadius(10)
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
                         }
-                        .background(Color.white.opacity(0.05))
-                        .cornerRadius(12)
+                        .padding(.horizontal, 20)
                     }
-                    .padding(.bottom, 10)
-
-                    // Other options section
-                    VStack(spacing: 0) {
+                    
+                    // Options Section
+                    VStack(spacing: 12) {
                         SectionHeader(title: "OPTIONS")
+                            .padding(.horizontal, 20)
                         
-                        // Section background
-                        VStack(spacing: 0) {
+                        SectionContainer {
+                            // About
                             OptionRow(
                                 icon: "info.circle",
+                                iconColor: .blue,
                                 title: "About",
                                 action: { showingAbout.toggle() }
                             )
+                            .padding(.horizontal, 16)
                             
                             Divider()
                                 .background(Color.white.opacity(0.1))
+                                .padding(.horizontal, 16)
                             
-                            // Widget Guide Option
+                            // Widget Guide
                             OptionRow(
                                 icon: "square.grid.2x2",
+                                iconColor: .purple,
                                 title: "Widget Guide",
                                 action: { showingWidgetGuide.toggle() }
                             )
+                            .padding(.horizontal, 16)
                             
                             Divider()
                                 .background(Color.white.opacity(0.1))
+                                .padding(.horizontal, 16)
                             
+                            // Privacy Policy
                             OptionRow(
                                 icon: "lock.shield",
+                                iconColor: .teal,
                                 title: "Privacy Policy",
                                 action: { showingPrivacyPolicy.toggle() }
                             )
-                                    
+                            .padding(.horizontal, 16)
+                            
                             Divider()
                                 .background(Color.white.opacity(0.1))
+                                .padding(.horizontal, 16)
                             
+                            // Terms of Service
                             OptionRow(
-                                 icon: "doc.text",
-                                 title: "Terms of Service",
-                                 action: { showingTerms.toggle() }
-                             )
+                                icon: "doc.text",
+                                iconColor: .gray,
+                                title: "Terms of Service",
+                                action: { showingTerms.toggle() }
+                            )
+                            .padding(.horizontal, 16)
                             
                             Divider()
                                 .background(Color.white.opacity(0.1))
+                                .padding(.horizontal, 16)
                             
+                            // Send Feedback
                             OptionRow(
                                 icon: "envelope",
+                                iconColor: .green,
                                 title: "Send Feedback",
                                 action: { showingFeedback.toggle() }
                             )
+                            .padding(.horizontal, 16)
                             
                             Divider()
                                 .background(Color.white.opacity(0.1))
+                                .padding(.horizontal, 16)
                             
+                            // Share App
                             OptionRow(
                                 icon: "square.and.arrow.up",
+                                iconColor: .blue,
                                 title: "Share App",
                                 action: { showingShare.toggle() }
                             )
+                            .padding(.horizontal, 16)
                         }
-                        .background(Color.white.opacity(0.05))
-                        .cornerRadius(12)
+                        .padding(.horizontal, 20)
                     }
                     
-                    // Categories section
-                    VStack(spacing: 0) {
-                        SectionHeader(title: "CATEGORIES")
-                        
-                        Text("Select your favorite categories for personalized content")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 4)
-                            .padding(.bottom, 12)
-                        
-                        // Categories list
-                        VStack(spacing: 0) {
-                            ForEach(quoteService.getAllCategories(), id: \.self) { category in
-                                if category != quoteService.getAllCategories().first {
-                                    Divider()
-                                        .background(Color.white.opacity(0.1))
+                    // Categories Section removed as requested
+                    
+                    // Clear Cache Section
+                    VStack(spacing: 12) {
+                        SectionContainer {
+                            // Clear cache button with red text
+                            Button(action: {
+                                showingCacheAlert = true
+                            }) {
+                                HStack {
+                                    // Icon with background
+                                    Image(systemName: "trash")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(.red)
+                                        .frame(width: 18, height: 18)
+                                        .padding(8)
+                                        .background(Color.red.opacity(0.15))
+                                        .clipShape(Circle())
+                                    
+                                    Text("Clear Cache")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(.red)
+                                    
+                                    Spacer()
                                 }
-                                
-                                CategoryRow(
-                                    category: category,
-                                    isSelected: selectedCategories.contains(category),
-                                    onToggle: {
-                                        if selectedCategories.contains(category) {
-                                            selectedCategories.remove(category)
-                                        } else {
-                                            selectedCategories.insert(category)
-                                        }
-                                    }
-                                )
+                                .padding(.vertical, 14)
+                                .padding(.horizontal, 16)
                             }
                         }
-                        .background(Color.white.opacity(0.05))
-                        .cornerRadius(12)
+                        .padding(.horizontal, 20)
                     }
-                    .padding(.vertical, 10)
-                    
-                    // Clear Cache section at the bottom
-                    VStack(spacing: 0) {
-                        // Clear cache button with red text
-                        Button(action: {
-                            showingCacheAlert = true
-                        }) {
-                            HStack {
-                                Image(systemName: "trash")
-                                    .font(.system(size: 18))
-                                    .foregroundColor(.red.opacity(0.9))
-                                    .frame(width: 20)
-                                
-                                Text("Clear Cache")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.red.opacity(0.9))
-                                
-                                Spacer()
-                            }
-                        }
-                        .padding(.vertical, 16)
-                        .padding(.horizontal, 16)
-                    }
-                    .background(Color.white.opacity(0.05))
-                    .cornerRadius(12)
-                    .padding(.bottom, 10)
                     
                     // App info
                     VStack(spacing: 8) {
@@ -601,10 +713,9 @@ struct MoreView: View {
                             .padding(.top, 4)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
+                    .padding(.vertical, 20)
+                    .padding(.bottom, 30)
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 30)
             }
         }
         .sheet(isPresented: $showingAbout) {
@@ -631,7 +742,6 @@ struct MoreView: View {
         .sheet(isPresented: $showingRewardedAdView) {
             RewardedAdView()
         }
-        // Widget Guide sheet presentation
         .sheet(isPresented: $showingWidgetGuide) {
             WidgetsShowcaseView()
         }
@@ -663,11 +773,6 @@ struct MoreView: View {
         } message: {
             Text("All cached data has been cleared successfully.")
         }
-        .alert("Themes Feature", isPresented: $showingThemesWIPAlert) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("The themes feature is currently under development. Check back soon for updates!")
-        }
         .alert("Coming Soon", isPresented: $showingComingSoonAlert) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -681,6 +786,8 @@ struct MoreView: View {
             // This ensures the UI updates when the streak changes
         }
     }
+    
+    // MARK: - Helper Methods
     
     // Check and request notification permissions if needed
     func checkAndRequestNotificationPermission() {
@@ -744,79 +851,10 @@ struct MoreView: View {
     }
 }
 
-// Free upcoming feature row
-struct ComingSoonFeatureRow: View {
-    let icon: String
-    let iconColor: Color
-    let title: String
-    let description: String
-    
-    var body: some View {
-        HStack(spacing: 15) {
-            Image(systemName: icon)
-                .font(.system(size: 22))
-                .foregroundColor(iconColor)
-                .frame(width: 30)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                    .foregroundColor(.white)
-                
-                Text(description)
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                    .lineLimit(2)
-            }
-            
-            Spacer()
-            
-            // Coming soon label
-            Text("Soon")
-                .font(.caption2)
-                .foregroundColor(.blue)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(Color.blue.opacity(0.2))
-                .cornerRadius(8)
-        }
+// MARK: - Preview
+struct MoreView_Previews: PreviewProvider {
+    static var previews: some View {
+        MoreView()
+            .preferredColorScheme(.dark)
     }
 }
-
-// Premium feature row
-struct PremiumFeatureItemRow: View {
-    let icon: String
-    let iconColor: Color
-    let title: String
-    let description: String
-    
-    var body: some View {
-        HStack(spacing: 15) {
-            Image(systemName: icon)
-                .font(.system(size: 22))
-                .foregroundColor(iconColor)
-                .frame(width: 30)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 4) {
-                    Text(title)
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    // Crown icon to indicate premium
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(.yellow)
-                }
-                
-                Text(description)
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                    .lineLimit(2)
-            }
-            
-            Spacer()
-        }
-    }
-}
-
