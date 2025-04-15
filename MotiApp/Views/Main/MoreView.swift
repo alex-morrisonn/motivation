@@ -699,15 +699,15 @@ struct MoreView: View {
                     
                     // App info
                     VStack(spacing: 8) {
-                        Text("Moti")
+                        Text("Motii")
                             .font(.headline)
                             .foregroundColor(.white)
                         
-                        Text("Version 1.0")
+                        Text("Version 1.1.1")
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.5))
                         
-                        Text("© 2025 Moti Team")
+                        Text("© 2025 Motii Team")
                             .font(.caption2)
                             .foregroundColor(.white.opacity(0.3))
                             .padding(.top, 4)
@@ -725,7 +725,7 @@ struct MoreView: View {
             FeedbackView()
         }
         .sheet(isPresented: $showingShare) {
-            ShareSheet(activityItems: ["Check out Moti, my favorite motivational quotes app!"])
+            ShareSheet(activityItems: ["Check out Motii, my favorite motivational quotes app!"])
         }
         .sheet(isPresented: $showingStreakDetails) {
             StreakDetailsView()

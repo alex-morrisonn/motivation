@@ -17,7 +17,7 @@ struct PremiumView: View {
                             .font(.system(size: 38, weight: .bold))
                             .foregroundColor(.white)
                         
-                        Text("We're developing premium features for Moti")
+                        Text("We're developing premium features for Motii")
                             .font(.headline)
                             .foregroundColor(.gray)
                     }
@@ -108,7 +108,7 @@ struct PremiumView: View {
                             .font(.headline)
                             .foregroundColor(.white)
                         
-                        Text("We're working hard to bring you these premium features soon. For now, enjoy the free version of Moti with all quotes and widgets available!")
+                        Text("We're working hard to bring you these premium features soon. For now, enjoy the free version of Motii with all quotes and widgets available!")
                             .font(.body)
                             .foregroundColor(.gray)
                             .multilineTextAlignment(.center)

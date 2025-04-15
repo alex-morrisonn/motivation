@@ -535,13 +535,13 @@ class StreakManager: ObservableObject {
             
             // Customize message based on streak length
             if streakDays < 10 {
-                content.body = "Amazing! You've used Moti for \(streakDays) days in a row. Keep going!"
+                content.body = "Amazing! You've used Motii for \(streakDays) days in a row. Keep going!"
             } else if streakDays < 30 {
                 content.body = "Incredible discipline! Your \(streakDays)-day streak shows your commitment to growth."
             } else if streakDays < 100 {
                 content.body = "You're unstoppable! \(streakDays) consecutive days of motivation and inspiration."
             } else {
-                content.body = "WOW! \(streakDays) DAYS! You're in the elite club of dedicated Moti users!"
+                content.body = "WOW! \(streakDays) DAYS! You're in the elite club of dedicated Motii users!"
             }
             
             content.sound = UNNotificationSound.default

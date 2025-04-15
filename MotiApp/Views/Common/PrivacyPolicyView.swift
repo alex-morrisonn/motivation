@@ -19,7 +19,7 @@ struct PrivacyPolicyView: View {
                         Group {
                             sectionTitle("Introduction")
                             sectionText("""
-                            This Privacy Policy explains how Moti collects, uses, and discloses information about you when you use our mobile application. By using Moti, you agree to the practices described in this Privacy Policy.
+                            This Privacy Policy explains how Motii collects, uses, and discloses information about you when you use our mobile application. By using Moti, you agree to the practices described in this Privacy Policy.
                             """)
 
                             sectionTitle("Information We Collect")
@@ -66,7 +66,7 @@ struct PrivacyPolicyView: View {
 
                             sectionTitle("Children's Privacy")
                             sectionText("""
-                            Moti is not intended for children under 13. We do not knowingly collect personal information from individuals under 13. If you believe your child has provided us with personal information, please contact us so we can delete it.
+                            Motii is not intended for children under 13. We do not knowingly collect personal information from individuals under 13. If you believe your child has provided us with personal information, please contact us so we can delete it.
                             """)
 
                             sectionTitle("Changes to This Privacy Policy")
@@ -139,13 +139,13 @@ struct TermsOfServiceView: View {
                             sectionTitle("Agreement to Terms")
                             
                             sectionText("""
-                            By using the Moti app, you agree to these Terms of Service. If you disagree with any part of the terms, you do not have permission to access the app.
+                            By using the Motii app, you agree to these Terms of Service. If you disagree with any part of the terms, you do not have permission to access the app.
                             """)
                             
                             sectionTitle("Use License")
                             
                             sectionText("""
-                            We grant you a personal, non-transferable, non-exclusive license to use the Moti app on your devices. This license is solely for your personal, non-commercial use and is subject to the following restrictions:
+                            We grant you a personal, non-transferable, non-exclusive license to use the Motii app on your devices. This license is solely for your personal, non-commercial use and is subject to the following restrictions:
                             
                             • You may not modify, copy, distribute, transmit, display, perform, reproduce, or publish any part of the app
                             • You may not use the app for any commercial purpose
@@ -155,7 +155,7 @@ struct TermsOfServiceView: View {
                             sectionTitle("Content")
                             
                             sectionText("""
-                            All quotes, content, and materials available through the Moti app are provided for your personal motivation and inspiration. The quotes and content are the property of their respective authors and are protected by applicable copyright laws.
+                            All quotes, content, and materials available through the Motii app are provided for your personal motivation and inspiration. The quotes and content are the property of their respective authors and are protected by applicable copyright laws.
                             """)
                             
                             sectionTitle("App Updates")

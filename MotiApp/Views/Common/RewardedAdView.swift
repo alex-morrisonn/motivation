@@ -62,7 +62,7 @@ struct RewardedAdView: View {
                         .font(.headline)
                         .foregroundColor(.white)
                     
-                    Text("In the future, you'll be able to watch short videos to unlock premium features for limited periods. Until then, enjoy the free version of Moti with all quotes and widgets available!")
+                    Text("In the future, you'll be able to watch short videos to unlock premium features for limited periods. Until then, enjoy the free version of Motii with all quotes and widgets available!")
                         .font(.body)
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)

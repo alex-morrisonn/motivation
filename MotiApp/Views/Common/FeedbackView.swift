@@ -185,7 +185,7 @@ struct FeedbackView: View {
                                 .fontWeight(.bold)
                                 .foregroundColor(.white)
                             
-                            Text("Your thoughts help us improve Moti")
+                            Text("Your thoughts help us improve Motii")
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
                         }
@@ -282,7 +282,7 @@ struct FeedbackView: View {
                         .padding(.horizontal)
                         .padding(.top, 10)
                         
-                        Text("Thank you for helping us improve Moti!")
+                        Text("Thank you for helping us improve Motii!")
                             .font(.footnote)
                             .foregroundColor(.gray)
                             .padding(.top, 5)
@@ -310,7 +310,7 @@ struct FeedbackView: View {
             .alert(isPresented: $showingConfirmation) {
                 Alert(
                     title: Text("Thank You!"),
-                    message: Text("Your feedback has been submitted. We appreciate your input and will use it to make Moti even better."),
+                    message: Text("Your feedback has been submitted. We appreciate your input and will use it to make Motii even better."),
                     dismissButton: .default(Text("OK")) {
                         presentationMode.wrappedValue.dismiss()
                     }

@@ -1,11 +1,11 @@
-# 🌟 Welcome to Moti  
+# 🌟 Welcome to Motii  
 ### Your Daily Dose of Motivation, Right Where You Need It
 
-**Moti** is your personal motivation companion—designed to inspire, uplift, and help you build mindful habits. Whether you're chasing big dreams, grinding through your goals, or just need a little boost to get out of bed, Moti delivers daily motivation directly to your screen.
+**Moti** is your personal motivation companion—designed to inspire, uplift, and help you build mindful habits. Whether you're chasing big dreams, grinding through your goals, or just need a little boost to get out of bed, Motii delivers daily motivation directly to your screen.
 
 ---
 
-## 🚀 Why Moti?
+## 🚀 Why Motii?
 
 - 🧠 *Start every day inspired* with hand-picked motivational quotes  
 - 💖 *Save your favorites* and revisit them anytime  
@@ -13,8 +13,6 @@
 - 📅 *Plan your journey* with built-in calendar reminders  
 - 🔥 *Stay consistent* with our streak system  
 - 📲 *Get motivated at a glance* with stunning home & lock screen widgets  
-
-> 💬 “Moti has helped me stay focused and positive—every single day.” – Real user review
 
 ---
 
@@ -76,11 +74,11 @@ Visit our [Support Page](https://alex-morrisonn.github.io/motivation/support) or
 
 ## 🧘 Ready to Get Motivated?
 
-Join thousands already using Moti to boost their mindset and stay on track.
+Join thousands already using Motii to boost their mindset and stay on track.
 
 > 🌅 **Start your mornings right.**  
 > 📈 **Stay consistent.**  
 > 🌟 **Feel inspired.**
 
-**Download Moti now and fuel your journey—one quote at a time.**
+**Download Motii now and fuel your journey—one quote at a time.**
 

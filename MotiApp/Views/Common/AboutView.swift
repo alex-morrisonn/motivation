@@ -34,7 +34,7 @@ struct AboutView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal)
                         
-                        Text("Moti is a daily motivation companion designed to inspire and encourage you through life's journey. With a collection of carefully curated quotes across multiple categories, Moti helps you stay focused, positive, and motivated.")
+                        Text("Motii is a daily motivation companion designed to inspire and encourage you through life's journey. With a collection of carefully curated quotes across multiple categories, Motii helps you stay focused, positive, and motivated.")
                             .font(.body)
                             .foregroundColor(.white.opacity(0.8))
                             .padding(.horizontal)

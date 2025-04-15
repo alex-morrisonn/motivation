@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Welcome to Moti! This Privacy Policy explains how we collect, use, and share information about you when you use our mobile application. By using Moti, you agree to the practices described below.
+Welcome to Motii! This Privacy Policy explains how we collect, use, and share information about you when you use our mobile application. By using Motii, you agree to the practices described below.
 
 ## Information We Collect
 
@@ -40,7 +40,7 @@ These services may receive data directly from your device. Please review their p
 
 ## Children's Privacy
 
-Moti is not intended for children under 13. We do not knowingly collect personal data from anyone under 13. If you believe your child has provided us with personal information, please contact us so we can delete it.
+Motii is not intended for children under 13. We do not knowingly collect personal data from anyone under 13. If you believe your child has provided us with personal information, please contact us so we can delete it.
 
 ## Changes to This Privacy Policy
 

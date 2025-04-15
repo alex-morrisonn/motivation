@@ -204,7 +204,7 @@ struct StreakCelebrationView: View {
         } else if streakCount >= 7 {
             return "\(streakCount) days in a row! Your consistency is building a foundation for lasting positive change."
         } else {
-            return "You've used Moti for \(streakCount) consecutive days. Keep the momentum going!"
+            return "You've used Motii for \(streakCount) consecutive days. Keep the momentum going!"
         }
     }
 }
