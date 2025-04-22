@@ -1,11 +1,9 @@
 import SwiftUI
 import AppTrackingTransparency
-import FirebaseAnalytics  // Add explicit import
+import FirebaseAnalytics
 
-/// A dedicated view for requesting app tracking transparency permission
 struct TrackingConsentView: View {
     @Environment(\.presentationMode) var presentationMode
-    @ObservedObject private var adManager = AdManager.shared
     
     var body: some View {
         ZStack {
@@ -13,21 +11,21 @@ struct TrackingConsentView: View {
             Color.black.edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 24) {
-                // Icon
-                Image(systemName: "hand.raised.fill")
+                // Icon - using a neutral icon
+                Image(systemName: "info.circle.fill")
                     .font(.system(size: 60))
                     .foregroundColor(.blue)
                     .padding(.top, 40)
                 
-                // Title
-                Text("Personalize Your Experience")
+                // Title - neutral language
+                Text("About App Tracking")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
                 
-                // Description
-                Text("This identifier helps us personalize your daily quotes based on what inspires you most and improve app features you use frequently.")
+                // Description - neutral explanation
+                Text("This app uses device identifiers to measure app usage and improve your experience. On the next screen, you can choose whether to allow tracking.")
                     .font(.body)
                     .foregroundColor(.white.opacity(0.9))
                     .multilineTextAlignment(.center)
@@ -35,11 +33,10 @@ struct TrackingConsentView: View {
                 
                 Spacer()
                 
-                // Privacy notes
+                // Privacy notes - neutral information
                 VStack(alignment: .leading, spacing: 16) {
-                    privacyPoint(icon: "lock.shield", text: "Your data is safe and secure")
-                    privacyPoint(icon: "person.crop.circle", text: "No personally identifiable information is collected")
-                    privacyPoint(icon: "hand.thumbsdown", text: "You can opt out at any time in Settings")
+                    privacyPoint(icon: "lock.shield", text: "Your data is handled according to our privacy policy")
+                    privacyPoint(icon: "person.crop.circle", text: "You can change this setting anytime in your device settings")
                 }
                 .padding()
                 .background(Color.white.opacity(0.05))
@@ -48,35 +45,17 @@ struct TrackingConsentView: View {
                 
                 Spacer()
                 
-                // Buttons
-                VStack(spacing: 16) {
-                    Button(action: {
-                        requestTracking()
-                    }) {
-                        Text("Continue")
-                            .font(.headline)
-                            .foregroundColor(.black)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [.blue, .purple.opacity(0.8)]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .cornerRadius(12)
-                    }
-                    
-                    Button(action: {
-                        // Skip tracking but dismiss the view
-                        UserDefaults.standard.set(true, forKey: "hasShownTrackingConsent")
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Text("Not Now")
-                            .font(.headline)
-                            .foregroundColor(.white.opacity(0.8))
-                    }
+                // ONLY ONE button that leads directly to system prompt
+                Button(action: {
+                    proceedToSystemPrompt()
+                }) {
+                    Text("Continue")
+                        .font(.headline)
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.white)
+                        .cornerRadius(12)
                 }
                 .padding(.horizontal, 30)
                 .padding(.bottom, 40)
@@ -100,43 +79,26 @@ struct TrackingConsentView: View {
         }
     }
     
-    /// Request tracking permission and dismiss the view
-    private func requestTracking() {
+    /// Proceed directly to system prompt - no way to skip
+    private func proceedToSystemPrompt() {
         if #available(iOS 14.0, *) {
-            // Only request if not already determined
-            let currentStatus = ATTrackingManager.trackingAuthorizationStatus
-            if currentStatus == .notDetermined {
-                ATTrackingManager.requestTrackingAuthorization { status in
-                    // Update analytics collection based on authorization status
-                    let isEnabled = status == .authorized
-                    DispatchQueue.main.async {
-                        FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(isEnabled)
-                        // Set flag that we've shown the consent view
-                        UserDefaults.standard.set(true, forKey: "hasShownTrackingConsent")
-                        self.presentationMode.wrappedValue.dismiss()
-                    }
-                }
-            } else {
-                // If status is already determined, just dismiss
+            ATTrackingManager.requestTrackingAuthorization { status in
+                // Update analytics based on user's choice
+                let isEnabled = status == .authorized
                 DispatchQueue.main.async {
-                    // Still mark as shown
+                    FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(isEnabled)
+                    // Mark that we've shown the consent view
                     UserDefaults.standard.set(true, forKey: "hasShownTrackingConsent")
                     self.presentationMode.wrappedValue.dismiss()
                 }
             }
         } else {
-            // For iOS versions below 14, enable analytics by default
+            // For iOS versions below 14, handle appropriately
             DispatchQueue.main.async {
                 FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(true)
                 UserDefaults.standard.set(true, forKey: "hasShownTrackingConsent")
                 self.presentationMode.wrappedValue.dismiss()
             }
         }
-    }
-}
-
-struct TrackingConsentView_Previews: PreviewProvider {
-    static var previews: some View {
-        TrackingConsentView()
     }
 }
