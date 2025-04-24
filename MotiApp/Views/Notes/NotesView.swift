@@ -6,9 +6,14 @@ struct NotesView: View {
     @ObservedObject private var noteService = NoteService.shared
     @State private var showingNewNote = false
     @State private var searchText = ""
-    @State private var selectedNote: Note?
+    @State private var selectedNote: Note? = nil
     @State private var activeTab: NoteTab = .all
     @State private var showingSidebar = true
+    @State private var isSaved = false
+    @State private var newNoteType: Note.NoteType = .basic
+    
+    // For environment adaptations
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     
     // Enum for tab navigation
     enum NoteTab {
@@ -29,7 +34,7 @@ struct NotesView: View {
                     if showingSidebar {
                         notesSidebar
                             .frame(width: 300)
-                            .background(Color(UIColor.systemBackground))
+                            .transition(.move(edge: .leading))
                     }
                     
                     // Note view or empty state
@@ -39,9 +44,11 @@ struct NotesView: View {
                             NoteEditorView(note: note)
                                 .id(note.id)
                                 .environmentObject(noteService)
+                                .transition(.opacity)
                         } else {
                             // Empty state when no note is selected
                             emptyStateView
+                                .transition(.opacity)
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -50,7 +57,7 @@ struct NotesView: View {
             .sheet(isPresented: $showingNewNote) {
                 // Sheet for creating a new note
                 NavigationView {
-                    NoteEditorView(isNewNote: true)
+                    NoteEditorView(isNewNote: true, initialType: newNoteType)
                         .environmentObject(noteService)
                         .navigationBarTitle("New Note", displayMode: .inline)
                         .navigationBarItems(
@@ -71,7 +78,7 @@ struct NotesView: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     HStack {
                         // Only show toggle on iPad/larger screens
-                        if UIDevice.current.userInterfaceIdiom == .pad {
+                        if horizontalSizeClass == .regular {
                             Button(action: {
                                 withAnimation {
                                     showingSidebar.toggle()
@@ -82,7 +89,7 @@ struct NotesView: View {
                             }
                         }
                         
-                        if !showingSidebar || UIDevice.current.userInterfaceIdiom == .phone {
+                        if !showingSidebar || horizontalSizeClass == .compact {
                             Text("Mind Dump")
                                 .font(.headline)
                                 .foregroundColor(.white)
@@ -93,19 +100,52 @@ struct NotesView: View {
                 // Trailing items - search and new note
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack(spacing: 16) {
-                        // Search button
-                        Button(action: {
-                            // This would typically show a search field
-                        }) {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundColor(.white)
+                        // Save indicator when note is saved
+                        if isSaved {
+                            Label("Saved", systemImage: "checkmark.circle.fill")
+                                .font(.caption)
+                                .foregroundColor(.green)
+                                .transition(.opacity)
+                                .onAppear {
+                                    // Hide the saved indicator after a delay
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                                        withAnimation {
+                                            isSaved = false
+                                        }
+                                    }
+                                }
                         }
                         
-                        // New note button
-                        Button(action: {
-                            showingNewNote = true
-                            selectedNote = nil
-                        }) {
+                        // New note button - with menu for different note types
+                        Menu {
+                            Button(action: {
+                                newNoteType = .basic
+                                showingNewNote = true
+                            }) {
+                                Label("Basic Note", systemImage: "text.alignleft")
+                            }
+                            
+                            Button(action: {
+                                newNoteType = .bullets
+                                showingNewNote = true
+                            }) {
+                                Label("Bullet Points", systemImage: "list.bullet")
+                            }
+                            
+                            Button(action: {
+                                newNoteType = .markdown
+                                showingNewNote = true
+                            }) {
+                                Label("Markdown", systemImage: "text.badge.checkmark")
+                            }
+                            
+                            Button(action: {
+                                newNoteType = .sketch
+                                showingNewNote = true
+                            }) {
+                                Label("Sketch", systemImage: "pencil.line")
+                            }
+                        } label: {
                             Image(systemName: "square.and.pencil")
                                 .foregroundColor(.white)
                         }
@@ -114,7 +154,7 @@ struct NotesView: View {
             }
             .onAppear {
                 // For small devices, hide sidebar by default when the view appears
-                if UIDevice.current.userInterfaceIdiom == .phone {
+                if horizontalSizeClass == .compact {
                     showingSidebar = false
                 }
             }
@@ -135,11 +175,32 @@ struct NotesView: View {
                 
                 Spacer()
                 
-                // Plus button for new note
-                Button(action: {
-                    showingNewNote = true
-                    selectedNote = nil
-                }) {
+                // Plus button with menu for new note types
+                Menu {
+                    Button(action: {
+                        createNote(type: .basic)
+                    }) {
+                        Label("Basic Note", systemImage: "text.alignleft")
+                    }
+                    
+                    Button(action: {
+                        createNote(type: .bullets)
+                    }) {
+                        Label("Bullet Points", systemImage: "list.bullet")
+                    }
+                    
+                    Button(action: {
+                        createNote(type: .markdown)
+                    }) {
+                        Label("Markdown", systemImage: "text.badge.checkmark")
+                    }
+                    
+                    Button(action: {
+                        createNote(type: .sketch)
+                    }) {
+                        Label("Sketch", systemImage: "pencil.line")
+                    }
+                } label: {
                     Image(systemName: "plus.circle.fill")
                         .foregroundColor(.blue)
                         .font(.system(size: 24))
@@ -203,17 +264,23 @@ struct NotesView: View {
                                 onSelect: {
                                     selectedNote = note
                                     // On phone, hide sidebar after selection
-                                    if UIDevice.current.userInterfaceIdiom == .phone {
+                                    if horizontalSizeClass == .compact {
                                         showingSidebar = false
                                     }
                                 },
                                 onTogglePin: {
                                     noteService.togglePinned(note)
+                                    withAnimation {
+                                        isSaved = true
+                                    }
                                 },
                                 onDelete: {
-                                    noteService.deleteNote(note)
                                     if selectedNote?.id == note.id {
                                         selectedNote = nil
+                                    }
+                                    noteService.deleteNote(note)
+                                    withAnimation {
+                                        isSaved = true
                                     }
                                 }
                             )
@@ -298,7 +365,7 @@ struct NotesView: View {
             
             // Create note button
             Button(action: {
-                showingNewNote = true
+                createNote(type: .basic)
             }) {
                 Label("Create New Note", systemImage: "plus")
                     .font(.headline)
@@ -339,10 +406,7 @@ struct NotesView: View {
     
     private func templateButton(for type: Note.NoteType) -> some View {
         Button(action: {
-            let templateNote = createTemplateNote(for: type)
-            showingNewNote = true
-            // Pre-populate the new note with template content
-            selectedNote = templateNote
+            createNote(type: type)
         }) {
             VStack {
                 Image(systemName: type.iconName)
@@ -376,7 +440,8 @@ struct NotesView: View {
             if !searchText.isEmpty {
                 filteredNotes = filteredNotes.filter { note in
                     note.title.lowercased().contains(searchText.lowercased()) ||
-                    note.content.lowercased().contains(searchText.lowercased())
+                    note.content.lowercased().contains(searchText.lowercased()) ||
+                    note.tags.contains(where: { $0.lowercased().contains(searchText.lowercased()) })
                 }
             }
         case .tags:
@@ -390,27 +455,19 @@ struct NotesView: View {
         return filteredNotes
     }
     
-    /// Create a template note based on the type
-    private func createTemplateNote(for type: Note.NoteType) -> Note {
-        var title = ""
-        var content = ""
-        
-        switch type {
-        case .basic:
-            title = "Quick Note"
-            content = "Start typing your thoughts here..."
-        case .bullets:
-            title = "Bullet List"
-            content = "• First item\n• Second item\n• Add more items..."
-        case .markdown:
-            title = "Markdown Note"
-            content = "# Main Heading\n\n## Subheading\n\n- List item 1\n- List item 2\n\n**Bold text** and *italic text*"
-        case .sketch:
-            title = "Sketch Notes"
-            content = "Use this space for visual thinking, drawing connections, or creating simple diagrams with text."
+    /// Create a new note with the specified type
+    private func createNote(type: Note.NoteType) {
+        let newNote = noteService.createNewNote(type: type)
+        noteService.addNote(newNote)
+        withAnimation {
+            selectedNote = newNote
+            isSaved = true
+            
+            // On phone, hide sidebar when creating a note
+            if horizontalSizeClass == .compact {
+                showingSidebar = false
+            }
         }
-        
-        return Note(title: title, content: content, type: type)
     }
 }
 
@@ -423,9 +480,15 @@ struct NoteListItem: View {
     let onTogglePin: () -> Void
     let onDelete: () -> Void
     
-    // Detect swipe gesture
+    // For forcing component refresh
+    @ObservedObject private var todoService = TodoService.shared
+    
+    // State for animations and gestures
     @State private var offset: CGFloat = 0
-    private let deleteThreshold: CGFloat = -75
+    @State private var showingDeleteButton = false
+    
+    // The fixed width for the delete button
+    private let deleteButtonWidth: CGFloat = 80
     
     var body: some View {
         ZStack {
@@ -437,10 +500,11 @@ struct NoteListItem: View {
                     Image(systemName: "trash")
                         .font(.title3)
                         .foregroundColor(.white)
-                        .frame(width: 80, height: 80)
+                        .frame(width: deleteButtonWidth, height: 80)
                         .background(Color.red)
-                        .cornerRadius(12)
+                        .cornerRadius(8)
                 }
+                .opacity(showingDeleteButton ? 1 : 0)
             }
             
             // Main content
@@ -477,25 +541,39 @@ struct NoteListItem: View {
                     
                     // Bottom row with date and tags
                     HStack {
-                        // Date
-                        Text(note.formattedDate)
+                        // Type icon and name
+                        Image(systemName: note.type.iconName)
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        
+                        Text(note.type.rawValue)
                             .font(.caption)
                             .foregroundColor(.gray)
                         
                         Spacer()
                         
-                        // Tags (showing first tag only if available)
-                        if !note.tags.isEmpty {
-                            Text("#\(note.tags[0])")
-                                .font(.caption)
-                                .foregroundColor(.blue)
-                                .lineLimit(1)
-                            
-                            // Indicator if there are more tags
-                            if note.tags.count > 1 {
-                                Text("+\(note.tags.count - 1)")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
+                        // Date
+                        Text(note.formattedDate)
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                    
+                    // Tags (if any)
+                    if !note.tags.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 5) {
+                                ForEach(note.tags.prefix(3), id: \.self) { tag in
+                                    Text("#\(tag)")
+                                        .font(.caption)
+                                        .foregroundColor(.blue.opacity(0.8))
+                                        .lineLimit(1)
+                                }
+                                
+                                if note.tags.count > 3 {
+                                    Text("+\(note.tags.count - 3)")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
                             }
                         }
                     }
@@ -509,33 +587,44 @@ struct NoteListItem: View {
             .offset(x: offset)
             .gesture(
                 DragGesture()
-                    .onChanged { gesture in
-                        if gesture.translation.width < 0 {
-                            offset = gesture.translation.width
+                    .onChanged { value in
+                        if value.translation.width < 0 {
+                            // Limit drag to delete button width
+                            self.offset = max(value.translation.width, -deleteButtonWidth)
+                        } else if offset != 0 {
+                            // Allow swiping right to hide delete button
+                            self.offset = min(0, offset + value.translation.width)
                         }
                     }
-                    .onEnded { gesture in
-                        if offset < deleteThreshold {
-                            // Delete when passed threshold
-                            withAnimation {
-                                onDelete()
-                            }
-                        } else {
-                            // Bounce back
-                            withAnimation {
-                                offset = 0
+                    .onEnded { value in
+                        withAnimation(.spring()) {
+                            if self.offset < -deleteButtonWidth * 0.5 {
+                                self.offset = -deleteButtonWidth
+                                self.showingDeleteButton = true
+                            } else {
+                                self.offset = 0
+                                self.showingDeleteButton = false
                             }
                         }
                     }
             )
             .onTapGesture {
-                onSelect()
+                if showingDeleteButton {
+                    // Hide delete button if showing
+                    withAnimation(.spring()) {
+                        self.offset = 0
+                        self.showingDeleteButton = false
+                    }
+                } else {
+                    // Select the note
+                    onSelect()
+                }
             }
         }
     }
 }
 
-// MARK: - Preview
+// MARK: - Previews
 
 struct NotesView_Previews: PreviewProvider {
     static var previews: some View {

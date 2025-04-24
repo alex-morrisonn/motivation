@@ -1,10 +1,12 @@
 import SwiftUI
+import Combine
 
 struct NoteEditorView: View {
     // MARK: - Environment & Dependencies
     
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var noteService: NoteService
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     
     // MARK: - State Properties
     
@@ -27,10 +29,16 @@ struct NoteEditorView: View {
     @State private var showingSaveIndicator = false
     @State private var lastSaveTimestamp: TimeInterval = 0
     @FocusState private var isContentFocused: Bool
+    @FocusState private var isTitleFocused: Bool
     
     // Properties for handling the focused editing
     @State private var focusMode = false
     @State private var toolbarHeight: CGFloat = 44
+    @State private var showMarkdownPreview = false
+    
+    // Autosave handling
+    private let autosaveSubject = PassthroughSubject<Void, Never>()
+    @State private var autosaveCancellable: AnyCancellable?
     
     // For easier tracking of existing note vs new note
     private let existingNoteId: UUID?
@@ -52,11 +60,11 @@ struct NoteEditorView: View {
     }
     
     /// Initialize for a new note
-    init(isNewNote: Bool = true) {
+    init(isNewNote: Bool = true, initialType: Note.NoteType = .basic) {
         _noteTitle = State(initialValue: "")
         _noteContent = State(initialValue: "")
         _noteColor = State(initialValue: .blue)
-        _noteType = State(initialValue: .basic)
+        _noteType = State(initialValue: initialType)
         _isPinned = State(initialValue: false)
         _tags = State(initialValue: [])
         
@@ -80,8 +88,9 @@ struct NoteEditorView: View {
                             .foregroundColor(.white)
                             .onChange(of: noteTitle) { oldValue, newValue in
                                 isSaved = false
-                                autosave()
+                                triggerAutosave()
                             }
+                            .focused($isTitleFocused)
                             .padding(.horizontal, 16)
                             .padding(.top, 16)
                         
@@ -102,44 +111,60 @@ struct NoteEditorView: View {
                             
                             Spacer()
                             
-                            // Last edited placeholder
-                            Text("Edited just now")
-                                .font(.caption)
-                                .foregroundColor(.gray)
+                            // Last edited placeholder or save indicator
+                            if showingSaveIndicator {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.caption)
+                                        .foregroundColor(.green)
+                                    Text("Saved")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                            } else {
+                                Text("Edited just now")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
                         }
                         .padding(.horizontal, 16)
                         
-                        // Content
-                        TextEditor(text: $noteContent)
-                            .focused($isContentFocused)
-                            .scrollContentBackground(.hidden)
-                            .background(Color.clear)
-                            .font(.body)
-                            .foregroundColor(.white)
-                            .lineSpacing(4)
-                            .frame(minHeight: 300)
-                            .onChange(of: noteContent) { oldValue, newValue in
-                                isSaved = false
-                                autosave()
+                        // Content section
+                        if noteType == .markdown && showMarkdownPreview {
+                            // Markdown preview
+                            VStack(alignment: .leading) {
+                                Text("Preview")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                    .padding(.leading, 16)
+                                
+                                MarkdownView(text: noteContent)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(Color.black.opacity(0.2))
+                                    .cornerRadius(8)
+                                    .padding(.horizontal, 16)
                             }
-                            .padding(.horizontal, 12)
-                            .overlay(
+                        } else {
+                            // Content editor
+                            ZStack(alignment: .topLeading) {
                                 // Placeholder text
-                                Group {
-                                    if noteContent.isEmpty && !isContentFocused {
-                                        VStack {
-                                            HStack {
-                                                Text(getPlaceholderText())
-                                                    .foregroundColor(.gray)
-                                                    .padding(.horizontal, 16)
-                                                    .padding(.top, 8)
-                                                Spacer()
-                                            }
-                                            Spacer()
-                                        }
-                                    }
+                                if noteContent.isEmpty && !isContentFocused {
+                                    Text(getPlaceholderText())
+                                        .foregroundColor(.gray)
+                                        .padding(.horizontal, 16)
+                                        .padding(.top, 16)
+                                        .allowsHitTesting(false)
                                 }
-                            )
+                                
+                                // Use appropriate editor for different note types
+                                noteEditor
+                                    .focused($isContentFocused)
+                                    .onChange(of: noteContent) { oldValue, newValue in
+                                        handleContentChange(from: oldValue, to: newValue)
+                                    }
+                            }
+                        }
                         
                         // Tags section
                         if !tags.isEmpty {
@@ -165,6 +190,8 @@ struct NoteEditorView: View {
                     noteType: $noteType,
                     noteColor: $noteColor,
                     isPinned: $isPinned,
+                    showMarkdownPreview: $showMarkdownPreview,
+                    isMarkdownType: noteType == .markdown,
                     onFocusMode: toggleFocusMode,
                     onShowTags: { showingTagEditor = true },
                     onDelete: { showingDeleteAlert = true }
@@ -192,7 +219,7 @@ struct NoteEditorView: View {
                         Button(action: {
                             isPinned.toggle()
                             isSaved = false
-                            autosave()
+                            triggerAutosave()
                         }) {
                             Image(systemName: isPinned ? "pin.fill" : "pin")
                                 .foregroundColor(isPinned ? .yellow : .white)
@@ -224,6 +251,10 @@ struct NoteEditorView: View {
         .sheet(isPresented: $showingTagEditor) {
             // Tag editor sheet
             TagEditorView(tags: $tags)
+                .onDisappear {
+                    // Update note when tag editor is dismissed
+                    saveNote()
+                }
         }
         .alert(isPresented: $showingDeleteAlert) {
             // Delete confirmation alert
@@ -241,10 +272,77 @@ struct NoteEditorView: View {
             if isNewNote {
                 isContentFocused = true
             }
+            
+            // Set up autosave
+            autosaveCancellable = autosaveSubject
+                .debounce(for: .seconds(1.0), scheduler: RunLoop.main)
+                .sink { [weak self] _ in
+                    self?.saveNote()
+                    
+                    // Show save indicator briefly
+                    self?.showingSaveIndicator = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        self?.showingSaveIndicator = false
+                    }
+                }
         }
         .onDisappear {
             // Ensure note is saved when view disappears
             saveNote()
+            
+            // Clean up cancellable
+            autosaveCancellable?.cancel()
+            autosaveCancellable = nil
+        }
+    }
+    
+    // MARK: - Note Type Specific Editors
+    
+    @ViewBuilder
+    private var noteEditor: some View {
+        if noteType == .markdown {
+            // Markdown editor with monospaced font
+            TextEditor(text: $noteContent)
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
+                .font(.system(Font.TextStyle.body, design: .monospaced))
+                .foregroundColor(.white)
+                .lineSpacing(4)
+                .frame(minHeight: 300)
+                .padding(.horizontal, 12)
+        } else if noteType == .bullets {
+            // Bullets editor
+            TextEditor(text: $noteContent)
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
+                .font(.body)
+                .foregroundColor(.white)
+                .lineSpacing(4)
+                .frame(minHeight: 300)
+                .padding(.horizontal, 12)
+                .onChange(of: noteContent) { oldValue, newValue in
+                    handleBulletPoints(from: oldValue, to: newValue)
+                }
+        } else if noteType == .sketch {
+            // Sketch editor with monospaced font for ASCII art
+            TextEditor(text: $noteContent)
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
+                .font(.system(Font.TextStyle.body, design: .monospaced))
+                .foregroundColor(.white)
+                .lineSpacing(4)
+                .frame(minHeight: 300)
+                .padding(.horizontal, 12)
+        } else {
+            // Basic text editor
+            TextEditor(text: $noteContent)
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
+                .font(.body)
+                .foregroundColor(.white)
+                .lineSpacing(4)
+                .frame(minHeight: 300)
+                .padding(.horizontal, 12)
         }
     }
     
@@ -261,7 +359,7 @@ struct NoteEditorView: View {
                 // Remove tag
                 tags.removeAll { $0 == tag }
                 isSaved = false
-                autosave()
+                triggerAutosave()
             }) {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundColor(.gray)
@@ -315,31 +413,9 @@ struct NoteEditorView: View {
         isSaved = true
     }
     
-    /// Auto-save after a delay
-    private func autosave() {
-        // Create a timestamp for this save request
-        let currentTimestamp = Date().timeIntervalSince1970
-        lastSaveTimestamp = currentTimestamp
-        
-        // Debounce pattern - only save after user stops typing
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [self] in
-            // Only proceed if this is still the latest save request
-            if self.lastSaveTimestamp == currentTimestamp {
-                saveNote()
-                
-                // Show saved indicator briefly
-                withAnimation {
-                    showingSaveIndicator = true
-                }
-                
-                // Hide indicator after delay
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    withAnimation {
-                        showingSaveIndicator = false
-                    }
-                }
-            }
-        }
+    /// Trigger autosave
+    private func triggerAutosave() {
+        autosaveSubject.send(())
     }
     
     /// Delete the current note
@@ -371,6 +447,26 @@ struct NoteEditorView: View {
         }
     }
     
+    /// Handle content changes with special formatting for bullet points
+    private func handleContentChange(from oldValue: String, to newValue: String) {
+        isSaved = false
+        triggerAutosave()
+    }
+    
+    /// Special handling for bullet points
+    private func handleBulletPoints(from oldValue: String, to newValue: String) {
+        // Only process if this is a bullet-type note
+        guard noteType == .bullets else { return }
+        
+        // Check if the user just pressed Enter
+        if newValue.hasSuffix("\n") && !newValue.hasSuffix("\n\n") && oldValue != newValue {
+            // Add a bullet point to the new line
+            DispatchQueue.main.async {
+                self.noteContent = newValue + "• "
+            }
+        }
+    }
+    
     /// Get placeholder text based on note type
     private func getPlaceholderText() -> String {
         switch noteType {
@@ -392,7 +488,9 @@ struct FloatingToolbar: View {
     @Binding var noteType: Note.NoteType
     @Binding var noteColor: Note.NoteColor
     @Binding var isPinned: Bool
+    @Binding var showMarkdownPreview: Bool
     
+    let isMarkdownType: Bool
     let onFocusMode: () -> Void
     let onShowTags: () -> Void
     let onDelete: () -> Void
@@ -436,7 +534,7 @@ struct FloatingToolbar: View {
                 .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2) // Add subtle shadow
             }
             
-            // Spacer or type selector dropdown
+            // Type selector dropdown
             if showingTypeSelector {
                 HStack(spacing: 12) {
                     ForEach(Note.NoteType.allCases) { type in
@@ -459,6 +557,19 @@ struct FloatingToolbar: View {
             }
             
             Spacer()
+            
+            // Show/Hide Markdown Preview (only for markdown notes)
+            if isMarkdownType {
+                Button(action: {
+                    withAnimation {
+                        showMarkdownPreview.toggle()
+                    }
+                }) {
+                    Image(systemName: showMarkdownPreview ? "doc.text" : "doc.text.magnifyingglass")
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                }
+            }
             
             // Color button
             Button(action: {
@@ -644,6 +755,199 @@ struct TagEditorView: View {
     private func removeTag(_ tag: String) {
         withAnimation {
             tags.removeAll { $0 == tag }
+        }
+    }
+}
+
+// MARK: - Markdown View
+
+struct MarkdownView: View {
+    let text: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(formattedText, id: \.id) { segment in
+                segment.view
+            }
+        }
+    }
+    
+    // Simple markdown formatting
+    private var formattedText: [TextSegment] {
+        var segments: [TextSegment] = []
+        var currentId = 0
+        
+        let lines = text.components(separatedBy: "\n")
+        for line in lines {
+            let trimmedLine = line.trimmingCharacters(in: .whitespaces)
+            currentId += 1
+            
+            if trimmedLine.hasPrefix("# ") {
+                // Heading 1
+                let content = trimmedLine.dropFirst(2)
+                segments.append(TextSegment(
+                    id: currentId,
+                    view: Text(String(content))
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 8)
+                        .padding(.bottom, 4)
+                ))
+            } else if trimmedLine.hasPrefix("## ") {
+                // Heading 2
+                let content = trimmedLine.dropFirst(3)
+                segments.append(TextSegment(
+                    id: currentId,
+                    view: Text(String(content))
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 6)
+                        .padding(.bottom, 2)
+                ))
+            } else if trimmedLine.hasPrefix("### ") {
+                // Heading 3
+                let content = trimmedLine.dropFirst(4)
+                segments.append(TextSegment(
+                    id: currentId,
+                    view: Text(String(content))
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 4)
+                        .padding(.bottom, 2)
+                ))
+            } else if trimmedLine.hasPrefix("- ") || trimmedLine.hasPrefix("* ") {
+                // List item
+                let content = trimmedLine.dropFirst(2)
+                segments.append(TextSegment(
+                    id: currentId,
+                    view: HStack(alignment: .top) {
+                        Text("•")
+                            .foregroundColor(.white)
+                        Text(String(content))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.leading, 16)
+                ))
+            } else if trimmedLine.hasPrefix(">") {
+                // Blockquote
+                let content = trimmedLine.dropFirst(1).trimmingCharacters(in: .whitespaces)
+                segments.append(TextSegment(
+                    id: currentId,
+                    view: Text(content)
+                        .foregroundColor(.white.opacity(0.8))
+                        .italic()
+                        .padding(.leading, 12)
+                        .overlay(
+                            Rectangle()
+                                .fill(Color.gray.opacity(0.5))
+                                .frame(width: 4)
+                                .padding(.vertical, 2),
+                            alignment: .leading
+                        )
+                ))
+            } else if !trimmedLine.isEmpty {
+                // Regular text with bold and italic support
+                let attributedText = formatInlineStyles(text: trimmedLine)
+                segments.append(TextSegment(
+                    id: currentId,
+                    view: attributedText
+                ))
+            } else {
+                // Empty line
+                segments.append(TextSegment(
+                    id: currentId,
+                    view: Text(" ")
+                        .font(.body)
+                ))
+            }
+        }
+        
+        return segments
+    }
+    
+    // Format bold and italic inline styles
+    private func formatInlineStyles(text: String) -> Text {
+        var formattedText = Text("")
+        var currentText = ""
+        var isBold = false
+        var isItalic = false
+        var index = text.startIndex
+        
+        // Helper to append current text with appropriate styling
+        func appendCurrentText() {
+            if !currentText.isEmpty {
+                var textToAppend = Text(currentText)
+                if isBold {
+                    textToAppend = textToAppend.bold()
+                }
+                if isItalic {
+                    textToAppend = textToAppend.italic()
+                }
+                formattedText = formattedText + textToAppend
+                currentText = ""
+            }
+        }
+        
+        while index < text.endIndex {
+            let char = text[index]
+            
+            // Check for bold marker (**)
+            if char == "*" && index < text.index(before: text.endIndex) && text[text.index(after: index)] == "*" {
+                appendCurrentText()
+                isBold.toggle()
+                index = text.index(index, offsetBy: 2)
+                if index > text.endIndex {
+                    index = text.endIndex
+                }
+                continue
+            }
+            
+            // Check for italic marker (*)
+            if char == "*" {
+                appendCurrentText()
+                isItalic.toggle()
+                index = text.index(after: index)
+                continue
+            }
+            
+            currentText.append(char)
+            index = text.index(after: index)
+        }
+        
+        // Append any remaining text
+        appendCurrentText()
+        
+        return formattedText.foregroundColor(.white)
+    }
+    
+    // Helper struct to create identifiable text segments
+    struct TextSegment: Identifiable {
+        let id: Int
+        let view: AnyView
+        
+        init<V: View>(id: Int, view: V) {
+            self.id = id
+            self.view = AnyView(view)
+        }
+    }
+}
+
+// MARK: - Previews
+
+struct NoteEditorView_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            // Preview for new note
+            NoteEditorView()
+                .environmentObject(NoteService.shared)
+                .preferredColorScheme(.dark)
+                .previewDisplayName("New Note")
+            
+            // Preview for editing existing note
+            NoteEditorView(note: Note.samples[0])
+                .environmentObject(NoteService.shared)
+                .preferredColorScheme(.dark)
+                .previewDisplayName("Edit Note")
         }
     }
 }

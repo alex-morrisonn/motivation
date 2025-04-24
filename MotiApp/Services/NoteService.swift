@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Combine
 
 /// Service for managing notes with persistence and CRUD operations
 class NoteService: ObservableObject {
@@ -15,6 +16,10 @@ class NoteService: ObservableObject {
     
     /// Refresh trigger to force UI updates
     @Published var refreshTrigger = UUID()
+    
+    /// Autosave publisher for debouncing save operations
+    private var saveSubject = PassthroughSubject<Void, Never>()
+    private var autosaveCancellable: AnyCancellable?
     
     // MARK: - Private Properties
     
@@ -47,6 +52,13 @@ class NoteService: ObservableObject {
         // Load saved notes
         loadNotes()
         
+        // Set up autosave debounce
+        autosaveCancellable = saveSubject
+            .debounce(for: .seconds(1.0), scheduler: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.saveNotes()
+            }
+        
         // If no notes found, create sample notes for first-time users
         if notes.isEmpty {
             #if DEBUG
@@ -67,7 +79,7 @@ class NoteService: ObservableObject {
         
         notes.append(note)
         refreshTrigger = UUID() // Force UI update
-        saveNotes()
+        triggerAutosave()
     }
     
     /// Update an existing note
@@ -79,7 +91,7 @@ class NoteService: ObservableObject {
             
             notes[index] = note
             refreshTrigger = UUID() // Force UI update
-            saveNotes()
+            triggerAutosave()
         } else {
             print("Warning: Attempted to update non-existent note: \(note.id)")
         }
@@ -90,7 +102,7 @@ class NoteService: ObservableObject {
     func deleteNote(_ note: Note) {
         notes.removeAll(where: { $0.id == note.id })
         refreshTrigger = UUID() // Force UI update
-        saveNotes()
+        triggerAutosave()
     }
     
     /// Toggle pinned status for a note
@@ -98,10 +110,66 @@ class NoteService: ObservableObject {
     func togglePinned(_ note: Note) {
         if let index = notes.firstIndex(where: { $0.id == note.id }) {
             notes[index].isPinned.toggle()
+            notes[index].lastEditedDate = Date()
             refreshTrigger = UUID() // Force UI update
-            saveNotes()
+            triggerAutosave()
         } else {
             print("Warning: Attempted to toggle pinned status for non-existent note: \(note.id)")
+        }
+    }
+    
+    /// Format content based on note type
+    /// - Parameters:
+    ///   - content: The content to format
+    ///   - type: The note type
+    /// - Returns: Formatted content
+    func formatContent(_ content: String, for type: Note.NoteType) -> String {
+        switch type {
+        case .bullets:
+            // Ensure bullet points for new lines
+            var lines = content.components(separatedBy: "\n")
+            for i in 0..<lines.count {
+                if !lines[i].isEmpty && !lines[i].hasPrefix("•") {
+                    lines[i] = "• " + lines[i]
+                }
+            }
+            return lines.joined(separator: "\n")
+            
+        case .markdown, .basic, .sketch:
+            // No special formatting for these types
+            return content
+        }
+    }
+    
+    /// Add a tag to a note
+    /// - Parameters:
+    ///   - tag: The tag to add
+    ///   - note: The note to add the tag to
+    func addTag(_ tag: String, to note: Note) {
+        // Convert tag to lowercase and clean it
+        let cleanedTag = tag.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Only add if not empty and not already present
+        if !cleanedTag.isEmpty && !note.tags.contains(cleanedTag) {
+            if let index = notes.firstIndex(where: { $0.id == note.id }) {
+                notes[index].tags.append(cleanedTag)
+                notes[index].lastEditedDate = Date()
+                refreshTrigger = UUID()
+                triggerAutosave()
+            }
+        }
+    }
+    
+    /// Remove a tag from a note
+    /// - Parameters:
+    ///   - tag: The tag to remove
+    ///   - note: The note to remove the tag from
+    func removeTag(_ tag: String, from note: Note) {
+        if let index = notes.firstIndex(where: { $0.id == note.id }) {
+            notes[index].tags.removeAll(where: { $0 == tag })
+            notes[index].lastEditedDate = Date()
+            refreshTrigger = UUID()
+            triggerAutosave()
         }
     }
     
@@ -162,7 +230,39 @@ class NoteService: ObservableObject {
         return Array(allTags).sorted()
     }
     
+    /// Create a new note with specified type
+    /// - Parameter type: The type of note to create
+    /// - Returns: A new note with appropriate default content
+    func createNewNote(type: Note.NoteType = .basic) -> Note {
+        let content: String
+        
+        switch type {
+        case .basic:
+            content = "Start typing your thoughts here..."
+        case .bullets:
+            content = "• Start typing your bullet points\n• Use • to create new bullets\n• Organize your thoughts in lists"
+        case .markdown:
+            content = "# Heading\n## Subheading\n\nStart writing with **markdown** formatting...\n\n- List item 1\n- List item 2\n\n> Blockquote"
+        case .sketch:
+            content = "Use this space for visual thinking and rough sketches with text...\n\nProduct Flow:\n[User] -> [Sign Up] -> [Dashboard]\n|                          |\n|                          v\n|                     [Features]"
+        }
+        
+        return Note(
+            title: "",
+            content: content,
+            color: .blue,
+            type: type,
+            isPinned: false,
+            tags: []
+        )
+    }
+    
     // MARK: - Private Methods
+    
+    /// Trigger autosave with debouncing
+    private func triggerAutosave() {
+        saveSubject.send(())
+    }
     
     /// Save notes to UserDefaults with error handling
     private func saveNotes() {
