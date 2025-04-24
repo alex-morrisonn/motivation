@@ -25,6 +25,7 @@ struct NoteEditorView: View {
     @State private var isShowingToolbar = true
     @State private var isSaved = true
     @State private var showingSaveIndicator = false
+    @State private var lastSaveTimestamp: TimeInterval = 0
     @FocusState private var isContentFocused: Bool
     
     // Properties for handling the focused editing
@@ -316,26 +317,27 @@ struct NoteEditorView: View {
     
     /// Auto-save after a delay
     private func autosave() {
-        // Use debounce pattern - only save after user stops typing
-        NSObject.cancelPreviousPerformRequests(withTarget: self,
-                                              selector: #selector(performAutosave),
-                                              object: nil)
-        perform(#selector(performAutosave), with: nil, afterDelay: 1.0)
-    }
-    
-    /// Perform actual auto-save operation
-    @objc private func performAutosave() {
-        saveNote()
+        // Create a timestamp for this save request
+        let currentTimestamp = Date().timeIntervalSince1970
+        lastSaveTimestamp = currentTimestamp
         
-        // Show saved indicator briefly
-        withAnimation {
-            showingSaveIndicator = true
-        }
-        
-        // Hide indicator after delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            withAnimation {
-                showingSaveIndicator = false
+        // Debounce pattern - only save after user stops typing
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [self] in
+            // Only proceed if this is still the latest save request
+            if self.lastSaveTimestamp == currentTimestamp {
+                saveNote()
+                
+                // Show saved indicator briefly
+                withAnimation {
+                    showingSaveIndicator = true
+                }
+                
+                // Hide indicator after delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    withAnimation {
+                        showingSaveIndicator = false
+                    }
+                }
             }
         }
     }
@@ -425,8 +427,13 @@ struct FloatingToolbar: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(Color.gray.opacity(0.2))
-                .cornerRadius(16)
+                .background(Color(UIColor.systemGray6).opacity(0.95))
+                .cornerRadius(22)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 22)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 1) // Add border
+                )
+                .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2) // Add subtle shadow
             }
             
             // Spacer or type selector dropdown
@@ -638,16 +645,5 @@ struct TagEditorView: View {
         withAnimation {
             tags.removeAll { $0 == tag }
         }
-    }
-}
-
-
-// MARK: - Preview
-
-struct NoteEditorView_Previews: PreviewProvider {
-    static var previews: some View {
-        NoteEditorView(note: Note.sample)
-            .environmentObject(NoteService.shared)
-            .preferredColorScheme(.dark)
     }
 }
