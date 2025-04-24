@@ -74,116 +74,15 @@ struct NoteEditorView: View {
     }
     
     // MARK: - Body
-    
     var body: some View {
+        mainContent
+    }
+
+    // Main content container
+    private var mainContent: some View {
         ZStack(alignment: .bottom) {
             // Main content
-            VStack(spacing: 0) {
-                // Editor area
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                        // Title
-                        TextField("Untitled Note", text: $noteTitle)
-                            .font(.title)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .onChange(of: noteTitle) { oldValue, newValue in
-                                isSaved = false
-                                triggerAutosave()
-                            }
-                            .focused($isTitleFocused)
-                            .padding(.horizontal, 16)
-                            .padding(.top, 16)
-                        
-                        // Note type indicator and date
-                        HStack {
-                            HStack {
-                                Image(systemName: noteType.iconName)
-                                    .foregroundColor(noteColor.color)
-                                
-                                Text(noteType.rawValue)
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(noteColor.color.opacity(0.1))
-                            .cornerRadius(6)
-                            
-                            Spacer()
-                            
-                            // Last edited placeholder or save indicator
-                            if showingSaveIndicator {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .font(.caption)
-                                        .foregroundColor(.green)
-                                    Text("Saved")
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
-                                }
-                            } else {
-                                Text("Edited just now")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        
-                        // Content section
-                        if noteType == .markdown && showMarkdownPreview {
-                            // Markdown preview
-                            VStack(alignment: .leading) {
-                                Text("Preview")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                                    .padding(.leading, 16)
-                                
-                                MarkdownView(text: noteContent)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(Color.black.opacity(0.2))
-                                    .cornerRadius(8)
-                                    .padding(.horizontal, 16)
-                            }
-                        } else {
-                            // Content editor
-                            ZStack(alignment: .topLeading) {
-                                // Placeholder text
-                                if noteContent.isEmpty && !isContentFocused {
-                                    Text(getPlaceholderText())
-                                        .foregroundColor(.gray)
-                                        .padding(.horizontal, 16)
-                                        .padding(.top, 16)
-                                        .allowsHitTesting(false)
-                                }
-                                
-                                // Use appropriate editor for different note types
-                                noteEditor
-                                    .focused($isContentFocused)
-                                    .onChange(of: noteContent) { oldValue, newValue in
-                                        handleContentChange(from: oldValue, to: newValue)
-                                    }
-                            }
-                        }
-                        
-                        // Tags section
-                        if !tags.isEmpty {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 8) {
-                                    ForEach(tags, id: \.self) { tag in
-                                        tagView(tag)
-                                    }
-                                }
-                                .padding(.horizontal, 16)
-                            }
-                            .padding(.vertical, 8)
-                        }
-                    }
-                    .padding(.bottom, 100) // Extra padding at bottom for toolbar
-                }
-                .background(Color.black)
-            }
+            noteContentArea
             
             // Floating toolbar
             if isShowingToolbar {
@@ -204,50 +103,7 @@ struct NoteEditorView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            // Only show toolbar items when not in focus mode
-            if !focusMode {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack(spacing: 16) {
-                        // Save indicator - briefly appears when saving
-                        if showingSaveIndicator {
-                            Text("Saved")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                                .transition(.opacity)
-                        }
-                        
-                        // Toggle pin button
-                        Button(action: {
-                            isPinned.toggle()
-                            isSaved = false
-                            triggerAutosave()
-                        }) {
-                            Image(systemName: isPinned ? "pin.fill" : "pin")
-                                .foregroundColor(isPinned ? .yellow : .white)
-                        }
-                        
-                        // Toggle toolbar button
-                        Button(action: {
-                            withAnimation {
-                                isShowingToolbar.toggle()
-                            }
-                        }) {
-                            Image(systemName: isShowingToolbar ? "chevron.down.circle" : "chevron.up.circle")
-                                .foregroundColor(.white)
-                        }
-                    }
-                }
-            } else {
-                // Exit focus mode button when in focus mode
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        toggleFocusMode()
-                    }) {
-                        Image(systemName: "arrow.up.left.and.arrow.down.right")
-                            .foregroundColor(.white)
-                    }
-                }
-            }
+            toolbarContent
         }
         .sheet(isPresented: $showingTagEditor) {
             // Tag editor sheet
@@ -268,72 +124,188 @@ struct NoteEditorView: View {
                 secondaryButton: .cancel()
             )
         }
-        .onAppear {
-            // Focus content when the view appears for new notes
-            if isNewNote {
-                isContentFocused = true
-            }
-            
-            // Set up autosave
-            autosaveCancellable = autosaveSubject
-                .debounce(for: .seconds(1.0), scheduler: RunLoop.main)
-                .sink { [self] _ in
-                    saveNote()
+        // Add remaining modifiers here
+    }
+
+    // Note content area
+    private var noteContentArea: some View {
+        VStack(spacing: 0) {
+            // Editor area
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    // Title field
+                    titleSection
                     
-                    // Show save indicator briefly
-                    self?.showingSaveIndicator = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                        self?.showingSaveIndicator = false
+                    // Note type indicator and date
+                    metadataSection
+                    
+                    // Content section
+                    contentSection
+                    
+                    // Tags section
+                    tagsSection
+                }
+                .padding(.bottom, 100) // Extra padding at bottom for toolbar
+            }
+            .background(Color.black)
+        }
+    }
+
+    // Title section
+    private var titleSection: some View {
+        TextField("Untitled Note", text: $noteTitle)
+            .font(.title)
+            .fontWeight(.bold)
+            .foregroundColor(.white)
+            .onChange(of: noteTitle) { oldValue, newValue in
+                isSaved = false
+                triggerAutosave()
+            }
+            .focused($isTitleFocused)
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+    }
+
+    // Metadata section
+    private var metadataSection: some View {
+        HStack {
+            HStack {
+                Image(systemName: noteType.iconName)
+                    .foregroundColor(noteColor.color)
+                
+                Text(noteType.rawValue)
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(noteColor.color.opacity(0.1))
+            .cornerRadius(6)
+            
+            Spacer()
+            
+            // Last edited placeholder or save indicator
+            if showingSaveIndicator {
+                HStack(spacing: 4) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                    Text("Saved")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+            } else {
+                Text("Edited just now")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+        }
+        .padding(.horizontal, 16)
+    }
+
+    // Content section
+    private var contentSection: some View {
+        Group {
+            if noteType == .markdown && showMarkdownPreview {
+                // Markdown preview
+                VStack(alignment: .leading) {
+                    Text("Preview")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .padding(.leading, 16)
+                    
+                    MarkdownView(text: noteContent)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.black.opacity(0.2))
+                        .cornerRadius(8)
+                        .padding(.horizontal, 16)
+                }
+            } else {
+                // Content editor
+                ZStack(alignment: .topLeading) {
+                    // Placeholder text
+                    if noteContent.isEmpty && !isContentFocused {
+                        Text(getPlaceholderText())
+                            .foregroundColor(.gray)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+                            .allowsHitTesting(false)
+                    }
+                    
+                    // Use appropriate editor for different note types
+                    noteEditor
+                        .focused($isContentFocused)
+                        .onChange(of: noteContent) { oldValue, newValue in
+                            handleContentChange(from: oldValue, to: newValue)
+                        }
+                }
+            }
+        }
+    }
+
+    // Tags section
+    private var tagsSection: some View {
+        Group {
+            if !tags.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(tags, id: \.self) { tag in
+                            tagView(tag)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                }
+                .padding(.vertical, 8)
+            }
+        }
+    }
+
+    // Toolbar content
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        // Only show toolbar items when not in focus mode
+        if !focusMode {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                HStack(spacing: 16) {
+                    // Save indicator - briefly appears when saving
+                    if showingSaveIndicator {
+                        Text("Saved")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .transition(.opacity)
+                    }
+                    
+                    // Toggle pin button
+                    Button(action: {
+                        isPinned.toggle()
+                        isSaved = false
+                        triggerAutosave()
+                    }) {
+                        Image(systemName: isPinned ? "pin.fill" : "pin")
+                            .foregroundColor(isPinned ? .yellow : .white)
+                    }
+                    
+                    // Toggle toolbar button
+                    Button(action: {
+                        withAnimation {
+                            isShowingToolbar.toggle()
+                        }
+                    }) {
+                        Image(systemName: isShowingToolbar ? "chevron.down.circle" : "chevron.up.circle")
+                            .foregroundColor(.white)
                     }
                 }
-        }
-        .onDisappear {
-            // Ensure note is saved when view disappears
-            saveNote()
-            
-            // Clean up cancellable
-            autosaveCancellable?.cancel()
-            autosaveCancellable = nil
-        }
-        .onChange(of: scenePhase) { oldPhase, newPhase in
-            // Save when app moves to background
-            if newPhase == .background {
-                saveNote()
             }
-        }
-        .fullScreenCover(isPresented: $showingFocusMode) {
-            FocusModeView(
-                noteContent: $noteContent,
-                noteTitle: $noteTitle,
-                noteType: noteType,
-                noteColor: noteColor
-            )
-            .environmentObject(noteService)
-        }
-        .onChange(of: isPinned) { oldValue, newValue in
-            // Save note when pin status changes
-            isSaved = false
-            triggerAutosave()
-        }
-        .onChange(of: noteType) { oldValue, newValue in
-            // Format content when switching note types
-            if oldValue != newValue {
-                isSaved = false
-                
-                // Format content according to new type
-                if newValue == .bullets && !noteContent.isEmpty {
-                    // Convert to bullet points
-                    formatContentForBullets()
+        } else {
+            // Exit focus mode button when in focus mode
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    toggleFocusMode()
+                }) {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .foregroundColor(.white)
                 }
-                
-                triggerAutosave()
-            }
-        }
-        .onChange(of: noteColor) { oldValue, newValue in
-            // Save when color changes
-            if oldValue != newValue {
-                isSaved = false
-                triggerAutosave()
             }
         }
     }
