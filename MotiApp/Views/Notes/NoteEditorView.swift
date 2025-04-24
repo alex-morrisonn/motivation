@@ -276,13 +276,13 @@ struct NoteEditorView: View {
             // Set up autosave
             autosaveCancellable = autosaveSubject
                 .debounce(for: .seconds(1.0), scheduler: RunLoop.main)
-                .sink { [weak self] _ in
-                    self?.saveNote()
+                .sink { _ in
+                    self.saveNote()
                     
                     // Show save indicator briefly
-                    self?.showingSaveIndicator = true
+                    self.showingSaveIndicator = true
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                        self?.showingSaveIndicator = false
+                        self.showingSaveIndicator = false
                     }
                 }
         }
