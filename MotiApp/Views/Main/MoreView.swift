@@ -329,8 +329,7 @@ struct MoreView: View {
     @State private var showingRewardedAdView = false
     @State private var showingComingSoonAlert = false
     @State private var showingWidgetGuide = false
-    
-    // Removed selectedCategories state variable
+    @State private var showingPomodoroTimer = false
     
     // MARK: - View Body
     
@@ -478,16 +477,20 @@ struct MoreView: View {
                                 .background(Color.white.opacity(0.1))
                                 .padding(.horizontal, 16)
                             
-                            // Pomodoro Timer
+                            // Pomodoro Timer - Now active and clickable
                             EnhancedFeatureRow(
                                 icon: "timer",
                                 iconColor: .orange,
                                 title: "Pomodoro Timer",
                                 description: "Focus mode with 25/5 minute sessions, ambient sounds, and encouraging messages.",
-                                badge: "Soon",
-                                badgeColor: .blue
+                                badge: "New",
+                                badgeColor: .green
                             )
                             .padding(.horizontal, 16)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                showingPomodoroTimer = true
+                            }
                             
                             Divider()
                                 .background(Color.white.opacity(0.1))
@@ -665,8 +668,6 @@ struct MoreView: View {
                         .padding(.horizontal, 20)
                     }
                     
-                    // Categories Section removed as requested
-                    
                     // Clear Cache Section
                     VStack(spacing: 12) {
                         SectionContainer {
@@ -744,6 +745,9 @@ struct MoreView: View {
         }
         .sheet(isPresented: $showingWidgetGuide) {
             WidgetsShowcaseView()
+        }
+        .sheet(isPresented: $showingPomodoroTimer) {
+            PomodoroTimerView()
         }
         .alert("Notification Permission", isPresented: $showingPermissionAlert) {
             Button("Cancel", role: .cancel) {

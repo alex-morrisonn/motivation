@@ -83,22 +83,31 @@ struct ContentView: View {
                     .tag(2)
                     .trackNavigationForAds() // Track navigation for interstitials
                 
-                // Favorites Tab
+                // Pomodoro Timer Tab (New)
+                PomodoroTimerView()
+                    .tabItem {
+                        Image(systemName: "timer")
+                        Text("Pomodoro")
+                    }
+                    .tag(3)
+                    .trackNavigationForAds() // Track navigation for interstitials
+                
+                // Favorites Tab (moved to index 4)
                 FavoritesView()
                     .tabItem {
                         Image(systemName: "heart.fill")
                         Text("Favorites")
                     }
-                    .tag(3)
+                    .tag(4)
                     .trackNavigationForAds() // Track navigation for interstitials
                 
-                // More Tab
+                // More Tab (moved to index 5)
                 MoreView()
                     .tabItem {
                         Image(systemName: "ellipsis")
                         Text("More")
                     }
-                    .tag(4)
+                    .tag(5)
                     .trackNavigationForAds() // Track navigation for interstitials
             }
             .accentColor(.white) // Active tab color
@@ -164,6 +173,9 @@ struct ContentView: View {
                 } else if url.host == "quotes" {
                     // Navigate to quotes tab
                     self.selectedTab = 1
+                } else if url.host == "timer" || url.host == "pomodoro" {
+                    // Navigate to pomodoro tab
+                    self.selectedTab = 3
                 } else if url.host == "premium" {
                     // Show premium alert instead of view
                     showPremiumComingSoonAlert()
@@ -176,7 +188,7 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenStreakDetails"))) { _ in
             // Open streak details when a streak notification is tapped
-            self.selectedTab = 4 // Index of the More tab
+            self.selectedTab = 5 // Index of the More tab (now at position 5)
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("StreakUpdated"))) { _ in
             // Check if streak increased (but not first day)
@@ -213,8 +225,9 @@ struct ContentView: View {
         case 0: return "HomeView"
         case 1: return "CategoriesView"
         case 2: return "TodoListView"
-        case 3: return "FavoritesView"
-        case 4: return "MoreView"
+        case 3: return "PomodoroTimerView"
+        case 4: return "FavoritesView"
+        case 5: return "MoreView"
         default: return "Default"
         }
     }
