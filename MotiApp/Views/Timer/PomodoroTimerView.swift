@@ -12,7 +12,7 @@ struct PomodoroTimerView: View {
     @State private var showingSettings = false
     @State private var animationAmount: CGFloat = 1.0
     @State private var ringProgress: CGFloat = 0.0
-    @State private var currentQuote = QuoteService.shared.getRandomQuote()
+    @State private var currentQuote: Quote? = QuoteService.shared.getRandomQuote()
     @State private var quoteTimer: Timer? = nil
     
     // Haptic feedback
@@ -254,7 +254,7 @@ struct PomodoroTimerView: View {
                             // Set up the timer to change quotes every minute
                             quoteTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
                                 // In your timer callback
-                                currentQuote = getRandomMotivationQuote() ?? QuoteService.shared.getDefaultQuote()
+                                currentQuote = getRandomMotivationQuote() ?? QuoteService.shared.getFallbackQuote()
                             }
                         }
                         .onDisappear {
@@ -264,7 +264,7 @@ struct PomodoroTimerView: View {
                         }
                     }
                 }
-                .padding(.top, 10) // Minimal top padding
+                .ignoresSafeArea(.container, edges: .top) // Ignore container insets at top
             }
             .navigationBarHidden(true) // Hide the navigation bar completely
             
