@@ -196,7 +196,16 @@ class Note: Identifiable, Codable, Equatable {
         previewText = previewText.replacingOccurrences(of: #"\[(.*?)\]\(.*?\)"#, with: "$1", options: .regularExpression)
         
         // Cleanup bullet points
-        previewText = previewText.replacingOccurrences(of: #"^\s*[-•*]\s"#, with: "", options: [.regularExpression, .anchorsMatchLines])
+        // Process line by line to strip bullet points
+        let lines = previewText.components(separatedBy: .newlines)
+        let processedLines = lines.map { line in
+            return line.replacingOccurrences(
+                of: "^\\s*[-*•]\\s*",
+                with: "",
+                options: .regularExpression
+            )
+        }
+        previewText = processedLines.joined(separator: "\n")
         
         if previewText.count <= maxLength {
             return previewText
@@ -433,14 +442,5 @@ extension Color {
             blue: Double(b) / 255,
             opacity: Double(a) / 255
         )
-    }
-}
-
-// MARK: - Extensions to NoteService
-
-extension NoteService {
-    /// For convenient access to the triggerAutosave method
-    func triggerAutosave() {
-        saveSubject.send(())
     }
 }

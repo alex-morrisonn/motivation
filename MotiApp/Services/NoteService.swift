@@ -327,7 +327,7 @@ class NoteService: ObservableObject {
     }
     
     /// Trigger autosave with debouncing
-    private func triggerAutosave() {
+    public func triggerAutosave() {
         saveSubject.send(())
     }
     
@@ -353,7 +353,7 @@ class NoteService: ObservableObject {
         // Check if data is corrupted
         if isDataCorrupted() && isBackupAvailable() {
             print("Detected corrupted notes data, attempting to restore from backup")
-            restoreFromBackup()
+            _ = restoreFromBackup()
             return
         }
         

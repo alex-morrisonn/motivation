@@ -541,8 +541,8 @@ struct FocusModeView: View {
         
         autoSaveCancellable = autosaveSubject
             .debounce(for: .seconds(2.0), scheduler: RunLoop.main)
-            .sink { [weak self] _ in
-                self?.saveNote()
+            .sink { [self] _ in
+                saveNote()
             }
         
         // Trigger initial save
@@ -556,8 +556,8 @@ struct FocusModeView: View {
         
         autoSaveCancellable = autosaveSubject
             .debounce(for: .seconds(2.0), scheduler: RunLoop.main)
-            .sink { [weak self] _ in
-                self?.saveNote()
+            .sink { [self] _ in
+                saveNote()
             }
         
         autosaveSubject.send()
