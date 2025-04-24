@@ -65,14 +65,14 @@ struct ContentView: View {
                     .tag(0)
                     .trackNavigationForAds() // Track navigation for interstitials
                 
-                // Categories Tab
-                CategoriesView()
-                    .tabItem {
-                        Image(systemName: "list.bullet")
-                        Text("Categories")
-                    }
-                    .tag(1)
-                    .trackNavigationForAds() // Track navigation for interstitials
+                // Mind Dump Tab (NEW)
+                   MindDumpTabView()
+                       .tabItem {
+                           Image(systemName: "note.text")
+                           Text("Mind Dump")
+                       }
+                       .tag(4)
+                       .trackNavigationForAds()
                 
                 // To-Do Tab
                 TodoListView()
