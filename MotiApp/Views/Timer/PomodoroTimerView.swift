@@ -12,6 +12,8 @@ struct PomodoroTimerView: View {
     @State private var showingSettings = false
     @State private var animationAmount: CGFloat = 1.0
     @State private var ringProgress: CGFloat = 0.0
+    @State private var currentQuote = QuoteService.shared.getRandomQuote()
+    @State private var quoteTimer: Timer? = nil
     
     // Haptic feedback
     private let notificationGenerator = UINotificationFeedbackGenerator()
@@ -50,9 +52,26 @@ struct PomodoroTimerView: View {
                 
                 // Main content with proper safe area insets
                 VStack(spacing: 10) {
-                    // Settings button moved to top-right with less spacing
+                    // Header with title and settings button
                     HStack {
+                        // Mode title indicator with improved visibility
+                        Text(modeTitle)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 20)
+                            .background(
+                                Capsule()
+                                    .fill(timerColor.opacity(0.3))
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(timerColor, lineWidth: 1.5)
+                                    )
+                            )
+                        
                         Spacer()
+                        
+                        // Settings button moved into header row
                         Button(action: {
                             showingSettings = true
                         }) {
@@ -65,23 +84,8 @@ struct PomodoroTimerView: View {
                                         .fill(Color.white.opacity(0.1))
                                 )
                         }
-                        .padding(.trailing, 5)
                     }
-                    // Timer mode indicator with improved visibility
-                    Text(modeTitle)
-                        .font(.headline)
-                        .foregroundColor(.white) // Changed to white for better visibility
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 20)
-                        .background(
-                            Capsule()
-                                .fill(timerColor.opacity(0.3))
-                                .overlay(
-                                    Capsule()
-                                        .stroke(timerColor, lineWidth: 1.5)
-                                )
-                        )
-                        .padding(.top, 10) // Extra padding at the top
+                    .padding(.horizontal)
                     
                     // Timer circle with reduced padding
                     ZStack {
@@ -104,11 +108,12 @@ struct PomodoroTimerView: View {
                             .padding(10)
                             .animation(.linear(duration: 0.2), value: pomodoroManager.progress)
                         
-                        // Time display
+                        // Time display - only this should have the breathing animation
                         VStack {
                             Text(pomodoroManager.timeString)
                                 .font(.system(size: 70, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
+                                .scaleEffect(animationAmount) // Breathing animation only on the timer text
                             
                             if pomodoroManager.isRunning {
                                 Text("In progress")
@@ -124,12 +129,11 @@ struct PomodoroTimerView: View {
                                     .foregroundColor(.gray)
                             }
                         }
-                        .scaleEffect(animationAmount)
                     }
                     .frame(width: 280, height: 280)
                     .padding(.bottom, 5)
                     .onAppear {
-                        // Subtle breathing animation
+                        // Subtle breathing animation - now only applied to the timer text
                         withAnimation(
                             Animation.easeInOut(duration: 2)
                                 .repeatForever(autoreverses: true)
@@ -228,8 +232,8 @@ struct PomodoroTimerView: View {
                     }
                     .padding(.top, 5)
                     
-                    // Motivation quote with better spacing
-                    if let quote = getRandomMotivationQuote() {
+                    // Motivation quote with better spacing - now changes every minute
+                    if let quote = currentQuote {
                         VStack(spacing: 4) {
                             Text(quote.text)
                                 .font(.system(size: 15, weight: .medium))
@@ -245,11 +249,22 @@ struct PomodoroTimerView: View {
                         .padding(.horizontal, 30)
                         .padding(.top, 10)
                         .padding(.bottom, 30) // Ensure quote is fully visible above tab bar
+                        .id("motivation-quote-\(quote.id)") // Force refresh when quote changes
+                        .onAppear {
+                            // Set up the timer to change quotes every minute
+                            quoteTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
+                                // In your timer callback
+                                currentQuote = getRandomMotivationQuote() ?? QuoteService.shared.getDefaultQuote()
+                            }
+                        }
+                        .onDisappear {
+                            // Clean up timer when view disappears
+                            quoteTimer?.invalidate()
+                            quoteTimer = nil
+                        }
                     }
                 }
-                .padding(.horizontal)
                 .padding(.top, 10) // Minimal top padding
-                .padding(.bottom, 5) // Minimal bottom padding
             }
             .navigationBarHidden(true) // Hide the navigation bar completely
             
@@ -282,6 +297,10 @@ struct PomodoroTimerView: View {
                 name: NSNotification.Name("PomodoroTimerCompleted"),
                 object: nil
             )
+            
+            // Clean up the quote timer
+            quoteTimer?.invalidate()
+            quoteTimer = nil
         }
         .sheet(isPresented: $showingSettings) {
             PomodoroSettingsView()
@@ -314,35 +333,6 @@ struct PomodoroTimerView: View {
                 "You've earned a longer rest. Step away from the screen and recharge before your next session."
             )
         }
-    }
-    
-    /// Get the safe area insets
-    private var safeAreaInsets: EdgeInsets {
-        let keyWindow = UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .foregroundActive }
-            .compactMap { $0 as? UIWindowScene }
-            .first?.windows
-            .filter { $0.isKeyWindow }
-            .first
-        
-        return EdgeInsets(
-            top: keyWindow?.safeAreaInsets.top ?? 0,
-            leading: keyWindow?.safeAreaInsets.left ?? 0,
-            bottom: keyWindow?.safeAreaInsets.bottom ?? 0,
-            trailing: keyWindow?.safeAreaInsets.right ?? 0
-        )
-    }
-    
-    /// Get just the top safe area inset for spacing
-    private func getSafeAreaTopInset() -> CGFloat {
-        let keyWindow = UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .foregroundActive }
-            .compactMap { $0 as? UIWindowScene }
-            .first?.windows
-            .filter { $0.isKeyWindow }
-            .first
-        
-        return keyWindow?.safeAreaInsets.top ?? 0
     }
 }
 
