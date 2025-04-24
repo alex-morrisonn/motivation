@@ -11,13 +11,33 @@ struct NotesView: View {
     @State private var showingSidebar = true
     @State private var isSaved = false
     @State private var newNoteType: Note.NoteType = .basic
+    @State private var showingSortMenu = false
+    @State private var sortOption: SortOption = .lastEdited
+    @State private var showingDeleteConfirmation = false
+    @State private var showingTagManager = false
+    @State private var showingBackupOptions = false
     
     // For environment adaptations
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.scenePhase) private var scenePhase
     
     // Enum for tab navigation
     enum NoteTab {
         case all, pinned, tags
+    }
+    
+    // Enum for sorting options
+    enum SortOption {
+        case lastEdited, title, created
+        
+        var description: String {
+            switch self {
+            case .lastEdited: return "Last Edited"
+            case .title: return "Title"
+            case .created: return "Created Date"
+            }
+        }
     }
     
     // MARK: - Body
@@ -45,6 +65,13 @@ struct NotesView: View {
                                 .id(note.id)
                                 .environmentObject(noteService)
                                 .transition(.opacity)
+                                .onChange(of: noteService.refreshTrigger) { oldValue, newValue in
+                                    // Check if the selected note still exists
+                                    // This handles cases where the note was deleted in the editor
+                                    if !noteService.notes.contains(where: { $0.id == note.id }) {
+                                        selectedNote = nil
+                                    }
+                                }
                         } else {
                             // Empty state when no note is selected
                             emptyStateView
@@ -72,6 +99,32 @@ struct NotesView: View {
                 }
                 .accentColor(.white)
             }
+            .onChange(of: selectedNote) { oldValue, newValue in
+                // Make the sidebar disappear on small devices when a note is selected
+                if horizontalSizeClass == .compact && newValue != nil {
+                    withAnimation {
+                        showingSidebar = false
+                    }
+                }
+            }
+            .onChange(of: scenePhase) { oldPhase, newPhase in
+                // When app moves to background, make sure notes are saved
+                if newPhase == .background {
+                    // This triggers a save in the NoteService
+                    noteService.triggerAutosave()
+                }
+            }
+            .alert(isPresented: $showingDeleteConfirmation) {
+                Alert(
+                    title: Text("Delete All Notes"),
+                    message: Text("Are you sure you want to delete all notes? This action cannot be undone."),
+                    primaryButton: .destructive(Text("Delete All")) {
+                        noteService.deleteAllNotes()
+                        selectedNote = nil
+                    },
+                    secondaryButton: .cancel()
+                )
+            }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // Leading items - toggle sidebar and title
@@ -85,6 +138,17 @@ struct NotesView: View {
                                 }
                             }) {
                                 Image(systemName: "sidebar.left")
+                                    .foregroundColor(.white)
+                            }
+                        } else if !showingSidebar {
+                            // On smaller screens, allow going back to sidebar
+                            Button(action: {
+                                withAnimation {
+                                    selectedNote = nil
+                                    showingSidebar = true
+                                }
+                            }) {
+                                Image(systemName: "chevron.left")
                                     .foregroundColor(.white)
                             }
                         }
@@ -116,6 +180,21 @@ struct NotesView: View {
                                 }
                         }
                         
+                        // Only show sort button in sidebar
+                        if showingSidebar {
+                            Menu {
+                                Picker("Sort by", selection: $sortOption) {
+                                    Text("Last Edited").tag(SortOption.lastEdited)
+                                    Text("Title").tag(SortOption.title)
+                                    Text("Created Date").tag(SortOption.created)
+                                }
+                                .pickerStyle(InlinePickerStyle())
+                            } label: {
+                                Image(systemName: "arrow.up.arrow.down")
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        
                         // New note button - with menu for different note types
                         Menu {
                             Button(action: {
@@ -144,6 +223,28 @@ struct NotesView: View {
                                 showingNewNote = true
                             }) {
                                 Label("Sketch", systemImage: "pencil.line")
+                            }
+                            
+                            Divider()
+                            
+                            Button(action: {
+                                showingTagManager = true
+                            }) {
+                                Label("Manage Tags", systemImage: "tag")
+                            }
+                            
+                            Button(action: {
+                                showingBackupOptions = true
+                            }) {
+                                Label("Backup & Restore", systemImage: "arrow.triangle.2.circlepath")
+                            }
+                            
+                            Divider()
+                            
+                            Button(role: .destructive, action: {
+                                showingDeleteConfirmation = true
+                            }) {
+                                Label("Delete All Notes", systemImage: "trash")
                             }
                         } label: {
                             Image(systemName: "square.and.pencil")
@@ -253,9 +354,7 @@ struct NotesView: View {
                     let filteredNotes = filterNotes()
                     
                     if filteredNotes.isEmpty {
-                        Text("No notes found")
-                            .foregroundColor(.gray)
-                            .padding(.top, 20)
+                        emptyFilterStateView
                     } else {
                         ForEach(filteredNotes) { note in
                             NoteListItem(
@@ -316,6 +415,78 @@ struct NotesView: View {
             }
         }
         .background(Color.black)
+    }
+    
+    // View for empty results when filtering
+    private var emptyFilterStateView: some View {
+        VStack(spacing: 12) {
+            if !searchText.isEmpty {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 40))
+                    .foregroundColor(.gray)
+                    .padding(.bottom, 8)
+                
+                Text("No results for \"\(searchText)\"")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                
+                Button(action: {
+                    searchText = ""
+                }) {
+                    Text("Clear Search")
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                        .padding(.top, 8)
+                }
+            } else {
+                switch activeTab {
+                case .all:
+                    Text("No notes yet")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Button(action: {
+                        createNote(type: .basic)
+                    }) {
+                        Text("Create Note")
+                            .font(.subheadline)
+                            .foregroundColor(.blue)
+                            .padding(.top, 8)
+                    }
+                case .pinned:
+                    Image(systemName: "pin")
+                        .font(.system(size: 40))
+                        .foregroundColor(.gray)
+                        .padding(.bottom, 8)
+                    
+                    Text("No pinned notes")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Text("Pin your most important notes")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .padding(.top, 4)
+                case .tags:
+                    Image(systemName: "tag")
+                        .font(.system(size: 40))
+                        .foregroundColor(.gray)
+                        .padding(.bottom, 8)
+                    
+                    Text("No tagged notes")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Text("Add tags to categorize your notes")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .padding(.top, 4)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
+        .padding(.horizontal, 20)
     }
     
     // MARK: - Sidebar Tab Button
@@ -395,6 +566,20 @@ struct NotesView: View {
             .background(Color.gray.opacity(0.1))
             .cornerRadius(12)
             .padding(.top, 30)
+            
+            // On small screens, provide a way to return to the sidebar
+            if horizontalSizeClass == .compact && !showingSidebar {
+                Button(action: {
+                    withAnimation {
+                        showingSidebar = true
+                    }
+                }) {
+                    Label("Show Notes List", systemImage: "list.bullet")
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                        .padding(.top, 40)
+                }
+            }
         }
         .padding()
         .frame(maxWidth: 500) // Limit max width for better readability
@@ -425,7 +610,7 @@ struct NotesView: View {
     
     // MARK: - Helper Methods
     
-    /// Filter notes based on active tab and search text
+    /// Filter notes based on active tab, search text, and sort option
     private func filterNotes() -> [Note] {
         // First filter by tab
         var filteredNotes: [Note]
@@ -433,7 +618,7 @@ struct NotesView: View {
         switch activeTab {
         case .all:
             filteredNotes = searchText.isEmpty ?
-                noteService.notes.sorted(by: { $0.lastEditedDate > $1.lastEditedDate }) :
+                noteService.notes :
                 noteService.searchNotes(searchText)
         case .pinned:
             filteredNotes = noteService.getPinnedNotes()
@@ -446,10 +631,22 @@ struct NotesView: View {
             }
         case .tags:
             if searchText.isEmpty {
-                filteredNotes = noteService.notes.sorted(by: { $0.lastEditedDate > $1.lastEditedDate })
+                filteredNotes = noteService.notes
             } else {
                 filteredNotes = noteService.getNotesByTag(searchText)
             }
+        }
+        
+        // Then sort by selected sort option
+        switch sortOption {
+        case .lastEdited:
+            filteredNotes.sort { $0.lastEditedDate > $1.lastEditedDate }
+        case .title:
+            filteredNotes.sort { $0.title.lowercased() < $1.title.lowercased() }
+        case .created:
+            // This would require adding a createdDate property to the Note model
+            // For now, just sort by lastEditedDate as a fallback
+            filteredNotes.sort { $0.lastEditedDate > $1.lastEditedDate }
         }
         
         return filteredNotes
@@ -624,11 +821,17 @@ struct NoteListItem: View {
     }
 }
 
-// MARK: - Previews
+// MARK: - Preview
 
 struct NotesView_Previews: PreviewProvider {
     static var previews: some View {
         NotesView()
             .preferredColorScheme(.dark)
+            .onAppear {
+                // Create sample notes for preview
+                for note in Note.samples {
+                    NoteService.shared.addNote(note)
+                }
+            }
     }
 }

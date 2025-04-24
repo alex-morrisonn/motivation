@@ -7,6 +7,7 @@ struct NoteEditorView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var noteService: NoteService
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    @Environment(\.scenePhase) private var scenePhase
     
     // MARK: - State Properties
     
@@ -276,13 +277,13 @@ struct NoteEditorView: View {
             // Set up autosave
             autosaveCancellable = autosaveSubject
                 .debounce(for: .seconds(1.0), scheduler: RunLoop.main)
-                .sink { _ in
-                    self.saveNote()
+                .sink { [weak self] _ in
+                    self?.saveNote()
                     
                     // Show save indicator briefly
-                    self.showingSaveIndicator = true
+                    self?.showingSaveIndicator = true
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                        self.showingSaveIndicator = false
+                        self?.showingSaveIndicator = false
                     }
                 }
         }
@@ -293,6 +294,47 @@ struct NoteEditorView: View {
             // Clean up cancellable
             autosaveCancellable?.cancel()
             autosaveCancellable = nil
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            // Save when app moves to background
+            if newPhase == .background {
+                saveNote()
+            }
+        }
+        .fullScreenCover(isPresented: $showingFocusMode) {
+            FocusModeView(
+                noteContent: $noteContent,
+                noteTitle: $noteTitle,
+                noteType: noteType,
+                noteColor: noteColor
+            )
+            .environmentObject(noteService)
+        }
+        .onChange(of: isPinned) { oldValue, newValue in
+            // Save note when pin status changes
+            isSaved = false
+            triggerAutosave()
+        }
+        .onChange(of: noteType) { oldValue, newValue in
+            // Format content when switching note types
+            if oldValue != newValue {
+                isSaved = false
+                
+                // Format content according to new type
+                if newValue == .bullets && !noteContent.isEmpty {
+                    // Convert to bullet points
+                    formatContentForBullets()
+                }
+                
+                triggerAutosave()
+            }
+        }
+        .onChange(of: noteColor) { oldValue, newValue in
+            // Save when color changes
+            if oldValue != newValue {
+                isSaved = false
+                triggerAutosave()
+            }
         }
     }
     
@@ -411,6 +453,25 @@ struct NoteEditorView: View {
         }
         
         isSaved = true
+        lastSaveTimestamp = Date().timeIntervalSince1970
+    }
+    
+    /// Format content for bullet point type
+    private func formatContentForBullets() {
+        if !noteContent.isEmpty {
+            // Split by lines and add bullets
+            let lines = noteContent.components(separatedBy: .newlines)
+            let bulletedLines = lines.map { line -> String in
+                if line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    return line
+                }
+                if line.hasPrefix("• ") || line.isEmpty {
+                    return line
+                }
+                return "• \(line)"
+            }
+            noteContent = bulletedLines.joined(separator: "\n")
+        }
     }
     
     /// Trigger autosave
@@ -433,18 +494,13 @@ struct NoteEditorView: View {
         presentationMode.wrappedValue.dismiss()
     }
     
+    // State for focus mode
+    @State private var showingFocusMode = false
+    
     /// Toggle focus mode
     private func toggleFocusMode() {
-        withAnimation {
-            focusMode.toggle()
-            
-            // Hide toolbar and other UI elements in focus mode
-            if focusMode {
-                isShowingToolbar = false
-            } else {
-                isShowingToolbar = true
-            }
-        }
+        // Show the full-screen focus mode
+        showingFocusMode = true
     }
     
     /// Handle content changes with special formatting for bullet points
@@ -627,6 +683,7 @@ struct FloatingToolbar: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 8)
             }
+            .help("Enter Focus Mode")
             
             // Delete button
             Button(action: onDelete) {

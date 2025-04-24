@@ -26,6 +26,7 @@ class NoteService: ObservableObject {
     /// UserDefaults keys
     private let notesKey = "savedNotes"
     private let backupNotesKey = "savedNotes_backup"
+    private let corruptedDataKey = "savedNotes_corrupted"
     
     // MARK: - Error Types
     
@@ -35,6 +36,7 @@ class NoteService: ObservableObject {
         case failedToSaveNotes
         case invalidNote
         case noteNotFound
+        case dataCorruption(String)
         
         var errorDescription: String? {
             switch self {
@@ -42,6 +44,7 @@ class NoteService: ObservableObject {
             case .failedToSaveNotes: return "Failed to save notes"
             case .invalidNote: return "Invalid note data"
             case .noteNotFound: return "Note not found"
+            case .dataCorruption(let details): return "Data corruption: \(details)"
             }
         }
     }
@@ -67,6 +70,22 @@ class NoteService: ObservableObject {
             saveNotes()
             #endif
         }
+        
+        // Register for app lifecycle notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillResignActive),
+            name: UIApplication.willResignActiveNotification,
+            object: nil
+        )
+    }
+    
+    deinit {
+        // Clean up notification observers
+        NotificationCenter.default.removeObserver(self)
+        
+        // Clean up cancellables
+        autosaveCancellable?.cancel()
     }
     
     // MARK: - Public Methods - CRUD
@@ -257,7 +276,55 @@ class NoteService: ObservableObject {
         )
     }
     
+    /// Delete all notes (with confirmation option in UI)
+    func deleteAllNotes() {
+        notes.removeAll()
+        saveNotes()
+        refreshTrigger = UUID() // Force UI update
+    }
+    
+    /// Export notes to a data format
+    /// - Returns: Data object containing notes
+    func exportNotes() -> Data? {
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
+            let data = try encoder.encode(notes)
+            return data
+        } catch {
+            print("Error exporting notes: \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
+    /// Import notes from data
+    /// - Parameter data: Data containing encoded notes
+    /// - Returns: Boolean indicating success
+    func importNotes(from data: Data) -> Bool {
+        do {
+            let decodedNotes = try JSONDecoder().decode([Note].self, from: data)
+            
+            // Merge with existing notes - don't replace duplicates
+            let existingIds = notes.map { $0.id }
+            let newNotes = decodedNotes.filter { !existingIds.contains($0.id) }
+            
+            notes.append(contentsOf: newNotes)
+            saveNotes()
+            refreshTrigger = UUID() // Force UI update
+            
+            return true
+        } catch {
+            print("Error importing notes: \(error.localizedDescription)")
+            return false
+        }
+    }
+    
     // MARK: - Private Methods
+    
+    /// Save notes when app becomes inactive
+    @objc private func appWillResignActive() {
+        saveNotes()
+    }
     
     /// Trigger autosave with debouncing
     private func triggerAutosave() {
@@ -283,6 +350,13 @@ class NoteService: ObservableObject {
     
     /// Load notes from UserDefaults with error handling
     private func loadNotes() {
+        // Check if data is corrupted
+        if isDataCorrupted() && isBackupAvailable() {
+            print("Detected corrupted notes data, attempting to restore from backup")
+            restoreFromBackup()
+            return
+        }
+        
         if let savedNotes = UserDefaults.standard.data(forKey: notesKey) {
             do {
                 let decodedNotes = try JSONDecoder().decode([Note].self, from: savedNotes)
@@ -302,12 +376,34 @@ class NoteService: ObservableObject {
         }
     }
     
+    /// Check if data appears to be corrupted
+    private func isDataCorrupted() -> Bool {
+        if let savedData = UserDefaults.standard.data(forKey: notesKey) {
+            do {
+                // Try to decode the data
+                _ = try JSONDecoder().decode([Note].self, from: savedData)
+                return false // Successfully decoded, not corrupted
+            } catch {
+                return true // Failed to decode, likely corrupted
+            }
+        }
+        
+        return false // No data, so not corrupted
+    }
+    
+    /// Check if backup is available
+    private func isBackupAvailable() -> Bool {
+        return UserDefaults.standard.data(forKey: backupNotesKey) != nil
+    }
+    
     /// Create a backup of notes data
     private func createBackup() {
         // Only backup if we have valid data
         if !notes.isEmpty {
             if let encoded = try? JSONEncoder().encode(notes) {
                 UserDefaults.standard.set(encoded, forKey: backupNotesKey)
+                // Add timestamp of backup
+                UserDefaults.standard.set(Date(), forKey: "notes_backup_timestamp")
                 print("Notes backup created")
             }
         }
@@ -322,10 +418,25 @@ class NoteService: ObservableObject {
                 if !recoveredNotes.isEmpty {
                     print("Recovered \(recoveredNotes.count) notes from backup")
                     notes = recoveredNotes
+                    
+                    // Save the recovered notes to the primary storage
+                    do {
+                        let encoded = try JSONEncoder().encode(notes)
+                        UserDefaults.standard.set(encoded, forKey: notesKey)
+                    } catch {
+                        print("Warning: Failed to save recovered notes: \(error.localizedDescription)")
+                    }
+                    
                     return true
                 }
             } catch {
                 print("Backup restoration failed: \(error.localizedDescription)")
+                
+                // Store the corrupted backup for debugging
+                if let backupData = UserDefaults.standard.data(forKey: backupNotesKey) {
+                    UserDefaults.standard.set(backupData, forKey: corruptedDataKey)
+                    print("Stored corrupted backup data for debugging")
+                }
             }
         }
         return false
@@ -333,6 +444,7 @@ class NoteService: ObservableObject {
     
     /// Attempt to save only valid notes
     private func attemptPartialSave() {
+        // Filter out notes that have problems like empty required fields
         let validNotes = notes.filter { !$0.title.isEmpty || !$0.content.isEmpty }
         
         if validNotes.count < notes.count {
@@ -346,6 +458,30 @@ class NoteService: ObservableObject {
             print("Partial save successful")
         } catch {
             print("Partial save also failed: \(error.localizedDescription)")
+            
+            // Last resort: try to save individual notes
+            var individualSavedNotes: [Note] = []
+            
+            for note in notes {
+                do {
+                    // Try to encode each note individually
+                    _ = try JSONEncoder().encode(note)
+                    individualSavedNotes.append(note)
+                } catch {
+                    print("Failed to encode note \(note.id): \(error.localizedDescription)")
+                }
+            }
+            
+            if !individualSavedNotes.isEmpty {
+                notes = individualSavedNotes
+                do {
+                    let encoded = try JSONEncoder().encode(notes)
+                    UserDefaults.standard.set(encoded, forKey: notesKey)
+                    print("Saved \(individualSavedNotes.count) individual verified notes")
+                } catch {
+                    print("Failed to save even individually verified notes: \(error.localizedDescription)")
+                }
+            }
         }
     }
 }

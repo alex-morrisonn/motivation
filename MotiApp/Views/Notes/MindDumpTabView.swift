@@ -6,24 +6,41 @@ struct MindDumpTabView: View {
     
     @ObservedObject private var noteService = NoteService.shared
     @State private var showingOnboarding = false
+    @State private var isFirstLaunch: Bool = false
     
     // MARK: - Body
     
     var body: some View {
         NotesView()
+            .environmentObject(noteService)
             .onAppear {
+                // Check if this is the first launch
+                checkFirstLaunch()
+                
                 // Show onboarding if this is the first time (no notes and not in debug)
-                #if !DEBUG
-                if noteService.notes.isEmpty {
+                if isFirstLaunch {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         showingOnboarding = true
                     }
                 }
-                #endif
             }
             .sheet(isPresented: $showingOnboarding) {
                 OnboardingView(isPresented: $showingOnboarding)
             }
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Check if this is the first launch of the Mind Dump feature
+    private func checkFirstLaunch() {
+        let defaults = UserDefaults.standard
+        let hasLaunchedBefore = defaults.bool(forKey: "MindDumpHasLaunchedBefore")
+        
+        isFirstLaunch = !hasLaunchedBefore && noteService.notes.isEmpty
+        
+        if !hasLaunchedBefore {
+            defaults.set(true, forKey: "MindDumpHasLaunchedBefore")
+        }
     }
 }
 
@@ -124,6 +141,8 @@ struct OnboardingView: View {
                     } else {
                         Button(action: {
                             isPresented = false
+                            // Create a first sample note when onboarding completes
+                            createWelcomeNote()
                         }) {
                             Text("Get Started")
                                 .fontWeight(.bold)
@@ -140,6 +159,20 @@ struct OnboardingView: View {
             }
             .padding(.horizontal)
         }
+    }
+    
+    // Create a welcome note for first-time users
+    private func createWelcomeNote() {
+        let welcomeNote = Note(
+            title: "Welcome to Mind Dump",
+            content: "# Welcome to Mind Dump!\n\nThis is your first note. Here are some tips to get started:\n\n- **Create different types of notes** using the + button\n- **Format your content** using the toolbar at the bottom\n- **Pin important notes** to keep them at the top\n- **Add tags** to organize related notes\n- **Enter focus mode** when you need to concentrate\n\nEnjoy capturing your thoughts!",
+            color: .blue,
+            type: .markdown,
+            isPinned: true,
+            tags: ["welcome", "getting-started"]
+        )
+        
+        NoteService.shared.addNote(welcomeNote)
     }
 }
 
