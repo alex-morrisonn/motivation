@@ -48,22 +48,47 @@ struct PomodoroTimerView: View {
                 // Background
                 Color.black.edgesIgnoringSafeArea(.all)
                 
-                VStack(spacing: 25) {
-                    // Timer mode indicator
+                // Main content with proper safe area insets
+                VStack(spacing: 10) {
+                    // Settings button moved to top-right with less spacing
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            showingSettings = true
+                        }) {
+                            Image(systemName: "gear")
+                                .foregroundColor(.white)
+                                .font(.system(size: 16))
+                                .padding(8)
+                                .background(
+                                    Circle()
+                                        .fill(Color.white.opacity(0.1))
+                                )
+                        }
+                        .padding(.trailing, 5)
+                    }
+                    // Timer mode indicator with improved visibility
                     Text(modeTitle)
                         .font(.headline)
-                        .foregroundColor(timerColor)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 16)
-                        .background(timerColor.opacity(0.2))
-                        .cornerRadius(20)
+                        .foregroundColor(.white) // Changed to white for better visibility
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 20)
+                        .background(
+                            Capsule()
+                                .fill(timerColor.opacity(0.3))
+                                .overlay(
+                                    Capsule()
+                                        .stroke(timerColor, lineWidth: 1.5)
+                                )
+                        )
+                        .padding(.top, 10) // Extra padding at the top
                     
-                    // Timer circle
+                    // Timer circle with reduced padding
                     ZStack {
                         // Background circle
                         Circle()
                             .stroke(timerColor.opacity(0.2), lineWidth: 15)
-                            .padding(20)
+                            .padding(10)
                         
                         // Progress circle
                         Circle()
@@ -76,7 +101,7 @@ struct PomodoroTimerView: View {
                                 )
                             )
                             .rotationEffect(.degrees(-90))
-                            .padding(20)
+                            .padding(10)
                             .animation(.linear(duration: 0.2), value: pomodoroManager.progress)
                         
                         // Time display
@@ -101,7 +126,7 @@ struct PomodoroTimerView: View {
                         }
                         .scaleEffect(animationAmount)
                     }
-                    .frame(width: 300, height: 300)
+                    .frame(width: 280, height: 280)
                     .padding(.bottom, 5)
                     .onAppear {
                         // Subtle breathing animation
@@ -113,32 +138,33 @@ struct PomodoroTimerView: View {
                         }
                     }
                     
-                    // Session count
-                    HStack(spacing: 40) {
-                        VStack {
-                            Text("\(pomodoroManager.completedSessions)")
-                                .font(.system(size: 28, weight: .bold))
-                                .foregroundColor(.white)
-                            
-                            Text("Sessions")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
+                    // Dynamic work/break info section with tips instead of just stats
+                    VStack(spacing: 4) {
+                        // Show relevant timer information based on current mode
+                        let modeInfo = getModeInfo()
                         
-                        VStack {
-                            Text(String(format: "%02d:%02d", pomodoroManager.totalFocusMinutes / 60, pomodoroManager.totalFocusMinutes % 60))
-                                .font(.system(size: 28, weight: .bold))
-                                .foregroundColor(.white)
-                            
-                            Text("Focus Time")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
+                        Text(modeInfo.title)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                            .padding(.top, 4)
+                        
+                        Text(modeInfo.description)
+                            .font(.system(size: 13))
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 4)
                     }
-                    .padding(.vertical, 16)
-                    .padding(.horizontal, 40)
-                    .background(Color.white.opacity(0.05))
-                    .cornerRadius(20)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.white.opacity(0.05))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                            )
+                    )
                     
                     // Control buttons
                     HStack(spacing: 20) {
@@ -151,8 +177,14 @@ struct PomodoroTimerView: View {
                                 .font(.system(size: 24))
                                 .foregroundColor(.white)
                                 .padding(20)
-                                .background(Color.white.opacity(0.1))
-                                .clipShape(Circle())
+                                .background(
+                                    Circle()
+                                        .fill(Color.white.opacity(0.1))
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                        )
+                                )
                         }
                         
                         // Start/Pause button
@@ -168,9 +200,11 @@ struct PomodoroTimerView: View {
                                 .font(.system(size: 24))
                                 .foregroundColor(.black)
                                 .padding(24)
-                                .background(timerColor)
-                                .clipShape(Circle())
-                                .shadow(color: timerColor.opacity(0.5), radius: 10, x: 0, y: 5)
+                                .background(
+                                    Circle()
+                                        .fill(timerColor)
+                                        .shadow(color: timerColor.opacity(0.5), radius: 10, x: 0, y: 5)
+                                )
                         }
                         
                         // Skip button
@@ -182,47 +216,43 @@ struct PomodoroTimerView: View {
                                 .font(.system(size: 24))
                                 .foregroundColor(.white)
                                 .padding(20)
-                                .background(Color.white.opacity(0.1))
-                                .clipShape(Circle())
+                                .background(
+                                    Circle()
+                                        .fill(Color.white.opacity(0.1))
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                        )
+                                )
                         }
                     }
                     .padding(.top, 5)
                     
-                    Spacer(minLength: 20)
-                    
-                    // Motivation quote
+                    // Motivation quote with better spacing
                     if let quote = getRandomMotivationQuote() {
-                        VStack(spacing: 6) {
+                        VStack(spacing: 4) {
                             Text(quote.text)
                                 .font(.system(size: 15, weight: .medium))
                                 .foregroundColor(.white.opacity(0.9))
                                 .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
                                 .lineLimit(2)
                             
                             Text("— \(quote.author)")
                                 .font(.system(size: 13))
                                 .foregroundColor(.gray)
                         }
-                        .padding(.horizontal, 40)
-                        .padding(.bottom, 20)
+                        .padding(.horizontal, 30)
+                        .padding(.top, 10)
+                        .padding(.bottom, 30) // Ensure quote is fully visible above tab bar
                     }
                 }
                 .padding(.horizontal)
-                .padding(.top, 10)
-                .padding(.bottom, safeAreaInsets.bottom)
+                .padding(.top, 10) // Minimal top padding
+                .padding(.bottom, 5) // Minimal bottom padding
             }
-            .navigationTitle("Pomodoro Timer")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingSettings = true
-                    }) {
-                        Image(systemName: "gear")
-                            .foregroundColor(.white)
-                    }
-                }
-            }
+            .navigationBarHidden(true) // Hide the navigation bar completely
+            
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
@@ -265,6 +295,27 @@ struct PomodoroTimerView: View {
         return QuoteService.shared.getRandomQuote()
     }
     
+    // Helper method to get relevant mode information
+    private func getModeInfo() -> (title: String, description: String) {
+        switch pomodoroManager.mode {
+        case .work:
+            return (
+                "Focus Session",
+                "Stay on task and avoid distractions. Consider the one thing you want to accomplish."
+            )
+        case .shortBreak:
+            return (
+                "Short Break",
+                "Take a moment to stretch, breathe, or rest your eyes. Movement helps refresh your mind."
+            )
+        case .longBreak:
+            return (
+                "Long Break",
+                "You've earned a longer rest. Step away from the screen and recharge before your next session."
+            )
+        }
+    }
+    
     /// Get the safe area insets
     private var safeAreaInsets: EdgeInsets {
         let keyWindow = UIApplication.shared.connectedScenes
@@ -280,6 +331,18 @@ struct PomodoroTimerView: View {
             bottom: keyWindow?.safeAreaInsets.bottom ?? 0,
             trailing: keyWindow?.safeAreaInsets.right ?? 0
         )
+    }
+    
+    /// Get just the top safe area inset for spacing
+    private func getSafeAreaTopInset() -> CGFloat {
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows
+            .filter { $0.isKeyWindow }
+            .first
+        
+        return keyWindow?.safeAreaInsets.top ?? 0
     }
 }
 
