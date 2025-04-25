@@ -380,10 +380,29 @@ struct MindDumpView: View {
         .background(Color.black)
     }
     
-    // New note floating action button
+    // New note floating action button with improved menu
     private var newNoteButton: some View {
-        ZStack {
-            // Main button
+        VStack(spacing: 0) {
+            // Menu options (appear above the FAB)
+            if showingNewNoteMenu {
+                VStack(spacing: 8) {
+                    noteTypeButton(type: .markdown, icon: "text.badge.checkmark", label: "Markdown")
+                    noteTypeButton(type: .bullets, icon: "list.bullet", label: "Bullets")
+                    noteTypeButton(type: .sketch, icon: "pencil.line", label: "Sketch")
+                    noteTypeButton(type: .basic, icon: "text.alignleft", label: "Basic")
+                }
+                .padding(.vertical, 12)
+                .padding(.horizontal, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.gray.opacity(0.2))
+                    .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 3)
+                )
+                .transition(.scale.combined(with: .opacity))
+                .padding(.bottom, 16) // Space between menu and FAB
+            }
+            
+            // FAB button
             Button(action: {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     showingNewNoteMenu.toggle()
@@ -409,26 +428,6 @@ struct MindDumpView: View {
                 }
             }
             .buttonStyle(ScaleButtonStyle())
-            
-            // Menu options that appear when the button is tapped
-            if showingNewNoteMenu {
-                VStack(alignment: .trailing, spacing: 16) {
-                    // Position the menu options above the FAB with proper spacing
-                    noteTypeButton(type: .markdown, icon: "text.badge.checkmark", label: "Markdown")
-                        .offset(y: -220)
-                    
-                    noteTypeButton(type: .bullets, icon: "list.bullet", label: "Bullets")
-                        .offset(y: -170)
-                    
-                    noteTypeButton(type: .sketch, icon: "pencil.line", label: "Sketch")
-                        .offset(y: -120)
-                    
-                    noteTypeButton(type: .basic, icon: "text.alignleft", label: "Basic")
-                        .offset(y: -70)
-                }
-                .transition(.scale.combined(with: .opacity))
-                .zIndex(1)
-            }
         }
     }
     
@@ -444,23 +443,23 @@ struct MindDumpView: View {
                 animateNewNoteButton = false
             }
         }) {
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {  // Reduced spacing
                 Text(label)
                     .font(.subheadline)
                     .foregroundColor(.white)
-                    .frame(width: 90, alignment: .leading)
+                    .frame(width: 80, alignment: .leading)  // Fixed width
                 
                 Image(systemName: icon)
                     .font(.system(size: 16))
                     .foregroundColor(.white)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 32, height: 32)  // Fixed dimensions
                     .background(Color.blue.opacity(0.3))
                     .clipShape(Circle())
             }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 16)
+            .padding(.vertical, 8)  // Reduced vertical padding
+            .padding(.horizontal, 12)  // Reduced horizontal padding
             .background(Color.gray.opacity(0.2))
-            .cornerRadius(20)
+            .cornerRadius(16)
         }
     }
     
