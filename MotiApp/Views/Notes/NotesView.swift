@@ -48,16 +48,20 @@ struct NotesView: View {
                 // Background
                 Color.black.edgesIgnoringSafeArea(.all)
                 
-                // Main content with sidebar and note view
-                HStack(spacing: 0) {
-                    // Sidebar with notes list - conditionally shown based on state and size class
-                    if showingSidebar {
+                // Main content
+                if showingSidebar {
+                    // Two-column layout with fixed sidebar width
+                    HStack(spacing: 0) {
+                        // Sidebar - with fixed narrow width
                         notesSidebar
-                            .frame(width: 300)
+                            .frame(width: UIScreen.main.bounds.width * 0.75) // 75% of screen width
+                            .background(Color.black)
                             .transition(.move(edge: .leading))
+                        
+                        Spacer() // Push sidebar to the left edge
                     }
-                    
-                    // Note view or empty state
+                } else {
+                    // Note view or empty state when sidebar is hidden
                     ZStack {
                         if let note = selectedNote {
                             // Note editor view when a note is selected
@@ -67,7 +71,6 @@ struct NotesView: View {
                                 .transition(.opacity)
                                 .onChange(of: noteService.refreshTrigger) { oldValue, newValue in
                                     // Check if the selected note still exists
-                                    // This handles cases where the note was deleted in the editor
                                     if !noteService.notes.contains(where: { $0.id == note.id }) {
                                         selectedNote = nil
                                     }
@@ -129,35 +132,13 @@ struct NotesView: View {
             .toolbar {
                 // Leading items - toggle sidebar and title
                 ToolbarItem(placement: .navigationBarLeading) {
-                    HStack {
-                        // Only show toggle on iPad/larger screens
-                        if horizontalSizeClass == .regular {
-                            Button(action: {
-                                withAnimation {
-                                    showingSidebar.toggle()
-                                }
-                            }) {
-                                Image(systemName: "sidebar.left")
-                                    .foregroundColor(.white)
-                            }
-                        } else if !showingSidebar {
-                            // On smaller screens, allow going back to sidebar
-                            Button(action: {
-                                withAnimation {
-                                    selectedNote = nil
-                                    showingSidebar = true
-                                }
-                            }) {
-                                Image(systemName: "chevron.left")
-                                    .foregroundColor(.white)
-                            }
+                    Button(action: {
+                        withAnimation {
+                            showingSidebar.toggle()
                         }
-                        
-                        if !showingSidebar || horizontalSizeClass == .compact {
-                            Text("Mind Dump")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                        }
+                    }) {
+                        Image(systemName: showingSidebar ? "sidebar.left" : "sidebar.right")
+                            .foregroundColor(.white)
                     }
                 }
                 
@@ -254,10 +235,8 @@ struct NotesView: View {
                 }
             }
             .onAppear {
-                // For small devices, hide sidebar by default when the view appears
-                if horizontalSizeClass == .compact {
-                    showingSidebar = false
-                }
+                // For small devices, start with the sidebar shown
+                showingSidebar = true
             }
         }
         .navigationViewStyle(StackNavigationViewStyle())
@@ -270,9 +249,10 @@ struct NotesView: View {
             // Header with title
             HStack {
                 Text("Mind Dump")
-                    .font(.title)
+                    .font(.title2) // Smaller font
                     .fontWeight(.bold)
                     .foregroundColor(.white)
+                    .padding(.leading, 8) // Add left padding
                 
                 Spacer()
                 
@@ -306,20 +286,19 @@ struct NotesView: View {
                         .foregroundColor(.blue)
                         .font(.system(size: 24))
                 }
+                .padding(.trailing, 8) // Add right padding
             }
-            .padding(.horizontal)
-            .padding(.top)
-            .padding(.bottom, 8)
+            .padding(.vertical, 8) // Reduced vertical padding
             
-            // Search field
+            // Search field (tighter)
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.gray)
-                    .padding(.leading, 8)
+                    .padding(.leading, 4) // Reduced padding
                 
                 TextField("Search notes...", text: $searchText)
                     .foregroundColor(.white)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 6) // Reduced padding
                 
                 if !searchText.isEmpty {
                     Button(action: {
@@ -327,29 +306,29 @@ struct NotesView: View {
                     }) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(.gray)
-                            .padding(.trailing, 8)
+                            .padding(.trailing, 4) // Reduced padding
                     }
                 }
             }
             .background(Color.gray.opacity(0.2))
-            .cornerRadius(10)
-            .padding(.horizontal)
-            .padding(.bottom, 12)
+            .cornerRadius(8)
+            .padding(.horizontal, 8) // Reduced horizontal padding
+            .padding(.bottom, 8) // Reduced bottom padding
             
-            // Tab selector
+            // Tab selector (keep compact)
             HStack(spacing: 0) {
                 tabButton(title: "All", tab: .all)
                 tabButton(title: "Pinned", tab: .pinned)
                 tabButton(title: "Tags", tab: .tags)
             }
-            .padding(.bottom, 8)
+            .padding(.bottom, 4) // Reduced padding
             
             Divider()
                 .background(Color.gray.opacity(0.3))
             
-            // Notes list
+            // Notes list (keep as is)
             ScrollView {
-                LazyVStack(spacing: 8) {
+                LazyVStack(spacing: 4) { // Reduced spacing
                     // Display notes based on active tab and search text
                     let filteredNotes = filterNotes()
                     
@@ -383,34 +362,34 @@ struct NotesView: View {
                                     }
                                 }
                             )
-                            .padding(.horizontal)
+                            .padding(.horizontal, 8) // Reduced padding
                         }
                     }
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, 4) // Reduced padding
             }
             
-            // Tags section (only shown when Tags tab is active)
+            // Tags section (maintain if important)
             if activeTab == .tags {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 4) { // Reduced spacing
                         ForEach(noteService.getAllTags(), id: \.self) { tag in
                             Button(action: {
                                 searchText = tag
                             }) {
                                 Text("#\(tag)")
                                     .font(.caption)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 6) // Reduced padding
+                                    .padding(.vertical, 4) // Reduced padding
                                     .background(Color.blue.opacity(0.2))
-                                    .cornerRadius(12)
+                                    .cornerRadius(8)
                                     .foregroundColor(.white)
                             }
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, 8) // Reduced padding
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, 4) // Reduced padding
                 .background(Color.black.opacity(0.2))
             }
         }
@@ -419,74 +398,74 @@ struct NotesView: View {
     
     // View for empty results when filtering
     private var emptyFilterStateView: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) { // Reduced spacing
             if !searchText.isEmpty {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 40))
+                    .font(.system(size: 30)) // Smaller size
                     .foregroundColor(.gray)
-                    .padding(.bottom, 8)
+                    .padding(.bottom, 4) // Reduced padding
                 
                 Text("No results for \"\(searchText)\"")
-                    .font(.headline)
+                    .font(.subheadline) // Smaller font
                     .foregroundColor(.white)
                 
                 Button(action: {
                     searchText = ""
                 }) {
                     Text("Clear Search")
-                        .font(.subheadline)
+                        .font(.caption) // Smaller font
                         .foregroundColor(.blue)
-                        .padding(.top, 8)
+                        .padding(.top, 4) // Reduced padding
                 }
             } else {
                 switch activeTab {
                 case .all:
                     Text("No notes yet")
-                        .font(.headline)
+                        .font(.subheadline) // Smaller font
                         .foregroundColor(.white)
                     
                     Button(action: {
                         createNote(type: .basic)
                     }) {
                         Text("Create Note")
-                            .font(.subheadline)
+                            .font(.caption) // Smaller font
                             .foregroundColor(.blue)
-                            .padding(.top, 8)
+                            .padding(.top, 4) // Reduced padding
                     }
                 case .pinned:
                     Image(systemName: "pin")
-                        .font(.system(size: 40))
+                        .font(.system(size: 30)) // Smaller size
                         .foregroundColor(.gray)
-                        .padding(.bottom, 8)
+                        .padding(.bottom, 4) // Reduced padding
                     
                     Text("No pinned notes")
-                        .font(.headline)
+                        .font(.subheadline) // Smaller font
                         .foregroundColor(.white)
                     
                     Text("Pin your most important notes")
-                        .font(.subheadline)
+                        .font(.caption) // Smaller font
                         .foregroundColor(.gray)
-                        .padding(.top, 4)
+                        .padding(.top, 2) // Reduced padding
                 case .tags:
                     Image(systemName: "tag")
-                        .font(.system(size: 40))
+                        .font(.system(size: 30)) // Smaller size
                         .foregroundColor(.gray)
-                        .padding(.bottom, 8)
+                        .padding(.bottom, 4) // Reduced padding
                     
                     Text("No tagged notes")
-                        .font(.headline)
+                        .font(.subheadline) // Smaller font
                         .foregroundColor(.white)
                     
                     Text("Add tags to categorize your notes")
-                        .font(.subheadline)
+                        .font(.caption) // Smaller font
                         .foregroundColor(.gray)
-                        .padding(.top, 4)
+                        .padding(.top, 2) // Reduced padding
                 }
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
-        .padding(.horizontal, 20)
+        .padding(.vertical, 20) // Reduced padding
+        .padding(.horizontal, 16) // Reduced padding
     }
     
     // MARK: - Sidebar Tab Button
@@ -498,9 +477,9 @@ struct NotesView: View {
             }
         }) {
             Text(title)
-                .font(.subheadline)
+                .font(.footnote) // Smaller font
                 .fontWeight(activeTab == tab ? .semibold : .regular)
-                .padding(.vertical, 8)
+                .padding(.vertical, 6) // Reduced padding
                 .frame(maxWidth: .infinity)
                 .foregroundColor(activeTab == tab ? .white : .gray)
         }
@@ -685,7 +664,7 @@ struct NoteListItem: View {
     @State private var showingDeleteButton = false
     
     // The fixed width for the delete button
-    private let deleteButtonWidth: CGFloat = 80
+    private let deleteButtonWidth: CGFloat = 60 // Reduced width
     
     var body: some View {
         ZStack {
@@ -695,9 +674,9 @@ struct NoteListItem: View {
                 
                 Button(action: onDelete) {
                     Image(systemName: "trash")
-                        .font(.title3)
+                        .font(.system(size: 18)) // Smaller size
                         .foregroundColor(.white)
-                        .frame(width: deleteButtonWidth, height: 80)
+                        .frame(width: deleteButtonWidth, height: 70) // Reduced height
                         .background(Color.red)
                         .cornerRadius(8)
                 }
@@ -705,18 +684,18 @@ struct NoteListItem: View {
             }
             
             // Main content
-            HStack(spacing: 12) {
+            HStack(spacing: 8) { // Reduced spacing
                 // Color indicator
                 Rectangle()
                     .fill(note.color.color)
-                    .frame(width: 4)
-                    .cornerRadius(2)
+                    .frame(width: 3) // Narrower indicator
+                    .cornerRadius(1.5)
                 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 2) { // Reduced spacing
                     // Title and pin button
                     HStack {
                         Text(note.title.isEmpty ? "Untitled Note" : note.title)
-                            .font(.headline)
+                            .font(.subheadline) // Smaller font
                             .foregroundColor(.white)
                             .lineLimit(1)
                         
@@ -725,14 +704,14 @@ struct NoteListItem: View {
                         // Pin button
                         Button(action: onTogglePin) {
                             Image(systemName: note.isPinned ? "pin.fill" : "pin")
-                                .font(.subheadline)
+                                .font(.caption) // Smaller font
                                 .foregroundColor(note.isPinned ? .yellow : .gray)
                         }
                     }
                     
                     // Content preview
                     Text(note.getContentPreview())
-                        .font(.subheadline)
+                        .font(.caption) // Smaller font
                         .foregroundColor(.gray)
                         .lineLimit(2)
                     
@@ -740,35 +719,35 @@ struct NoteListItem: View {
                     HStack {
                         // Type icon and name
                         Image(systemName: note.type.iconName)
-                            .font(.caption)
+                            .font(.system(size: 9)) // Smaller icon
                             .foregroundColor(.gray)
                         
                         Text(note.type.rawValue)
-                            .font(.caption)
+                            .font(.system(size: 9)) // Smaller font
                             .foregroundColor(.gray)
                         
                         Spacer()
                         
                         // Date
                         Text(note.formattedDate)
-                            .font(.caption)
+                            .font(.system(size: 9)) // Smaller font
                             .foregroundColor(.gray)
                     }
                     
                     // Tags (if any)
                     if !note.tags.isEmpty {
                         ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 5) {
+                            HStack(spacing: 3) { // Reduced spacing
                                 ForEach(note.tags.prefix(3), id: \.self) { tag in
                                     Text("#\(tag)")
-                                        .font(.caption)
+                                        .font(.system(size: 9)) // Smaller font
                                         .foregroundColor(.blue.opacity(0.8))
                                         .lineLimit(1)
                                 }
                                 
                                 if note.tags.count > 3 {
                                     Text("+\(note.tags.count - 3)")
-                                        .font(.caption)
+                                        .font(.system(size: 9)) // Smaller font
                                         .foregroundColor(.gray)
                                 }
                             }
@@ -776,10 +755,10 @@ struct NoteListItem: View {
                     }
                 }
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 12)
+            .padding(.vertical, 8) // Reduced padding
+            .padding(.horizontal, 8) // Reduced padding
             .background(isSelected ? Color.gray.opacity(0.3) : Color.gray.opacity(0.1))
-            .cornerRadius(12)
+            .cornerRadius(8) // Smaller radius
             .contentShape(Rectangle())
             .offset(x: offset)
             .gesture(

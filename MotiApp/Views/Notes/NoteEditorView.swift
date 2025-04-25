@@ -7,6 +7,7 @@ struct NoteEditorView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var noteService: NoteService
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    @Environment(\.colorScheme) var colorScheme
     @Environment(\.scenePhase) private var scenePhase
     
     // MARK: - State Properties
@@ -26,7 +27,7 @@ struct NoteEditorView: View {
     @State private var showingTagEditor = false
     @State private var newTag: String = ""
     @State private var isShowingToolbar = true
-    @State private var isSaved = true
+    @State private var isSaved = false
     @State private var showingSaveIndicator = false
     @State private var lastSaveTimestamp: TimeInterval = 0
     @FocusState private var isContentFocused: Bool
@@ -75,11 +76,6 @@ struct NoteEditorView: View {
     
     // MARK: - Body
     var body: some View {
-        mainContent
-    }
-
-    // Main content container
-    private var mainContent: some View {
         ZStack(alignment: .bottom) {
             // Main content
             noteContentArea
@@ -94,7 +90,20 @@ struct NoteEditorView: View {
                     isMarkdownType: noteType == .markdown,
                     onFocusMode: toggleFocusMode,
                     onShowTags: { showingTagEditor = true },
-                    onDelete: { showingDeleteAlert = true }
+                    onDelete: { showingDeleteAlert = true },
+                    onSave: {
+                        saveNote()
+                        withAnimation {
+                            isSaved = true
+                        }
+                        
+                        // Show saved indicator for 2 seconds
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation {
+                                isSaved = false
+                            }
+                        }
+                    }
                 )
                 .padding(.horizontal, 16)
                 .padding(.bottom, 16)
@@ -124,10 +133,38 @@ struct NoteEditorView: View {
                 secondaryButton: .cancel()
             )
         }
-        // Add remaining modifiers here
+        .onAppear {
+            // Set up autosave with debouncing
+            autosaveCancellable = autosaveSubject
+                .debounce(for: .seconds(2.0), scheduler: RunLoop.main)
+                .sink { _ in
+                    self.saveNote()
+                }
+        }
+        .onDisappear {
+            // Clean up and ensure save when view disappears
+            autosaveCancellable?.cancel()
+            saveNote()
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            // Save when app goes to background
+            if newPhase == .background {
+                saveNote()
+            }
+        }
+        .sheet(isPresented: $focusMode) {
+            // Focus mode for distraction-free editing
+            FocusModeView(
+                noteContent: $noteContent,
+                noteTitle: $noteTitle,
+                noteType: noteType,
+                noteColor: noteColor
+            )
+            .environmentObject(noteService)
+        }
     }
 
-    // Note content area
+    // MARK: - Note content area
     private var noteContentArea: some View {
         VStack(spacing: 0) {
             // Editor area
@@ -426,6 +463,18 @@ struct NoteEditorView: View {
         
         isSaved = true
         lastSaveTimestamp = Date().timeIntervalSince1970
+        
+        // Show save indicator
+        withAnimation {
+            showingSaveIndicator = true
+        }
+        
+        // Hide save indicator after delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            withAnimation {
+                showingSaveIndicator = false
+            }
+        }
     }
     
     /// Format content for bullet point type
@@ -466,13 +515,10 @@ struct NoteEditorView: View {
         presentationMode.wrappedValue.dismiss()
     }
     
-    // State for focus mode
-    @State private var showingFocusMode = false
-    
     /// Toggle focus mode
     private func toggleFocusMode() {
         // Show the full-screen focus mode
-        showingFocusMode = true
+        focusMode = true
     }
     
     /// Handle content changes with special formatting for bullet points
@@ -522,6 +568,7 @@ struct FloatingToolbar: View {
     let onFocusMode: () -> Void
     let onShowTags: () -> Void
     let onDelete: () -> Void
+    let onSave: () -> Void  // New save action
     
     @State private var showingColorPicker = false
     @State private var showingTypeSelector = false
@@ -585,6 +632,20 @@ struct FloatingToolbar: View {
             }
             
             Spacer()
+            
+            // SAVE BUTTON - NEW ADDITION
+            Button(action: onSave) {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.down.doc.fill")
+                    Text("Save")
+                        .font(.caption)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.green.opacity(0.3))
+                .cornerRadius(16)
+            }
+            .padding(.horizontal, 4)
             
             // Show/Hide Markdown Preview (only for markdown notes)
             if isMarkdownType {
