@@ -66,7 +66,7 @@ struct ContentView: View {
                     .trackNavigationForAds() // Track navigation for interstitials
                 
                 // Mind Dump Tab (NEW)
-                   MindDumpTabView()
+                   MindDumpView()
                        .tabItem {
                            Image(systemName: "note.text")
                            Text("Mind Dump")
