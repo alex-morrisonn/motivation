@@ -1,7 +1,8 @@
 import SwiftUI
 import Combine
+import PencilKit
 
-/// Redesigned Note Editor View with simplified controls
+/// Redesigned Note Editor View with simplified controls and sketch support
 struct NoteEditorView: View {
     // MARK: - Environment & Dependencies
     
@@ -134,14 +135,10 @@ struct NoteEditorView: View {
                             .background(Color.gray.opacity(0.3))
                             .padding(.horizontal, 16)
                         
-                        // Content editor
-                        noteContentEditor
+                        // Content editor with support for sketches
+                        updatedNoteContentEditor
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
-                            .focused($isContentFocused)
-                            .onChange(of: noteContent) { oldValue, newValue in
-                                handleContentChange(from: oldValue, to: newValue)
-                            }
                         
                         // Tags section at bottom
                         tagsSection
@@ -229,24 +226,24 @@ struct NoteEditorView: View {
         .onDisappear {
             // Clean up on disappear
             autosaveCancellable?.cancel()
-            saveNote()
+            saveNoteWithSketch()
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             // Save when app moves to background
             if newPhase == .background {
-                saveNote()
+                saveNoteWithSketch()
             }
         }
     }
 
     // MARK: - Components
     
-    /// Content editor based on note type
+    /// Content editor based on note type with sketch support
     @ViewBuilder
-    private var noteContentEditor: some View {
+    var updatedNoteContentEditor: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Content placeholder
-            if noteContent.isEmpty && !isContentFocused {
+            if noteContent.isEmpty && !isContentFocused && noteType != .sketch {
                 Text(getPlaceholderText())
                     .font(.body)
                     .foregroundColor(.gray)
@@ -264,6 +261,7 @@ struct NoteEditorView: View {
                     .font(.system(.body, design: .monospaced))
                     .foregroundColor(.white)
                     .frame(minHeight: 300)
+                    .focused($isContentFocused)
             case .bullets:
                 TextEditor(text: $noteContent)
                     .scrollContentBackground(.hidden)
@@ -271,13 +269,34 @@ struct NoteEditorView: View {
                     .font(.body)
                     .foregroundColor(.white)
                     .frame(minHeight: 300)
+                    .focused($isContentFocused)
             case .sketch:
-                TextEditor(text: $noteContent)
-                    .scrollContentBackground(.hidden)
-                    .background(Color.clear)
-                    .font(.system(.body, design: .monospaced))
-                    .foregroundColor(.white)
-                    .frame(minHeight: 300)
+                // Use the new SketchNoteView for sketch type notes
+                // We need to bind to both text content and sketch data
+                if let note = getNoteForId(existingNoteId) {
+                    SketchNoteView(
+                        textContent: $noteContent,
+                        sketchData: Binding<Data?>(
+                            get: { note.sketchData },
+                            set: { note.sketchData = $0 }
+                        )
+                    )
+                    .frame(minHeight: 400)
+                } else {
+                    // For new notes
+                    SketchNoteView(
+                        textContent: $noteContent,
+                        sketchData: Binding<Data?>(
+                            get: { UserDefaults.standard.data(forKey: "temp_sketch_data") },
+                            set: {
+                                if let data = $0 {
+                                    UserDefaults.standard.set(data, forKey: "temp_sketch_data")
+                                }
+                            }
+                        )
+                    )
+                    .frame(minHeight: 400)
+                }
             case .basic:
                 TextEditor(text: $noteContent)
                     .scrollContentBackground(.hidden)
@@ -285,6 +304,7 @@ struct NoteEditorView: View {
                     .font(.body)
                     .foregroundColor(.white)
                     .frame(minHeight: 300)
+                    .focused($isContentFocused)
             }
         }
     }
@@ -368,7 +388,7 @@ struct NoteEditorView: View {
                     
                     // Focus mode button
                     toolbarButton(icon: "arrow.up.left.and.arrow.down.right", color: .white) {
-                        saveNote()
+                        saveNoteWithSketch()
                         focusMode = true
                     }
                     
@@ -567,12 +587,18 @@ struct NoteEditorView: View {
     
     // MARK: - Helper Methods
     
-    /// Set up autosave with debouncing
+    /// Helper method to get a note by ID
+    private func getNoteForId(_ id: UUID?) -> Note? {
+        guard let id = id else { return nil }
+        return noteService.notes.first { $0.id == id }
+    }
+    
+    /// Set up autosave functionality
     private func setupAutosave() {
         autosaveCancellable = autosaveSubject
             .debounce(for: .seconds(2.0), scheduler: RunLoop.main)
             .sink { _ in
-                self.saveNote()
+                self.saveNoteWithSketch()
             }
     }
     
@@ -581,29 +607,22 @@ struct NoteEditorView: View {
         autosaveSubject.send(())
     }
     
-    /// Show save indicator feedback
-    private func showSavedFeedback() {
-        withAnimation {
-            showingSaveIndicator = true
-        }
-        
-        // Hide indicator after delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            withAnimation {
-                showingSaveIndicator = false
-            }
-        }
+    /// Format time for display
+    private func formatTime(_ seconds: Int) -> String {
+        let minutes = seconds / 60
+        let remainingSeconds = seconds % 60
+        return String(format: "%02d:%02d", minutes, remainingSeconds)
     }
     
-    /// Save note to service
-    private func saveNote() {
+    /// Save the note with sketch support
+    func saveNoteWithSketch() {
         guard !noteTitle.isEmpty || !noteContent.isEmpty else {
             // Don't save empty notes
             return
         }
         
         if let id = existingNoteId {
-            // Update existing note
+            // Update existing note - sketch data is already managed by the binding
             let updatedNote = Note(
                 title: noteTitle,
                 content: noteContent,
@@ -627,23 +646,51 @@ struct NoteEditorView: View {
                 tags: tags
             )
             
-            // Add the note to service
+            // Save the note first to get an ID
             noteService.addNote(newNote)
+            
+            // Transfer any temporary sketch data to the permanent note storage
+            if noteType == .sketch,
+               let tempSketchData = UserDefaults.standard.data(forKey: "temp_sketch_data") {
+                newNote.sketchData = tempSketchData
+                
+                // Clear the temporary data
+                UserDefaults.standard.removeObject(forKey: "temp_sketch_data")
+            }
         }
         
         // Show save indicator
         showSavedFeedback()
     }
     
-    /// Delete note
+    /// Save note to service (wrapper for backwards compatibility)
+    private func saveNote() {
+        saveNoteWithSketch()
+    }
+    
+    /// Show save indicator feedback
+    private func showSavedFeedback() {
+        withAnimation {
+            showingSaveIndicator = true
+        }
+        
+        // Hide indicator after delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation {
+                showingSaveIndicator = false
+            }
+        }
+    }
+    
+    /// Delete note and any associated sketch data
     private func deleteNote() {
         if let id = existingNoteId {
             // Create a temporary note with the ID to delete
             let noteToDelete = Note()
             noteToDelete.id = id
             
-            // Delete the note
-            noteService.deleteNote(noteToDelete)
+            // Delete the note and its sketch data
+            noteService.deleteNoteWithSketch(noteToDelete)
         }
         
         // Dismiss the view
@@ -681,215 +728,12 @@ struct NoteEditorView: View {
         case .markdown:
             return "# Use markdown formatting\n\nStart writing here..."
         case .sketch:
-            return "Use this space for visual thinking..."
+            return "Add notes about your sketch here...\n\nYou can switch between text and drawing using the toggle at the top."
         }
     }
     
     /// Count words in text
     private func countWords(_ text: String) -> Int {
         return text.split(whereSeparator: { $0.isWhitespace }).count
-    }
-}
-
-// MARK: - Tag Editor View
-
-/// Simplified tag editor view
-struct TagEditorView: View {
-    @Environment(\.presentationMode) var presentationMode
-    @Binding var tags: [String]
-    @State private var newTag: String = ""
-    
-    var body: some View {
-        NavigationView {
-            ZStack {
-                Color.black.edgesIgnoringSafeArea(.all)
-                
-                VStack(spacing: 16) {
-                    // Tag input field
-                    HStack {
-                        Text("#")
-                            .foregroundColor(.blue)
-                            .font(.headline)
-                        
-                        TextField("Add new tag", text: $newTag)
-                            .foregroundColor(.white)
-                            .autocapitalization(.none)
-                            .autocorrectionDisabled()
-                            .submitLabel(.done)
-                            .onSubmit {
-                                addTag()
-                            }
-                        
-                        Button(action: addTag) {
-                            Text("Add")
-                                .fontWeight(.medium)
-                                .foregroundColor(.blue)
-                                .opacity(newTag.isEmpty ? 0.5 : 1.0)
-                        }
-                        .disabled(newTag.isEmpty)
-                    }
-                    .padding()
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(12)
-                    .padding(.horizontal)
-                    
-                    if tags.isEmpty {
-                        // Empty state
-                        VStack(spacing: 10) {
-                            Image(systemName: "tag")
-                                .font(.system(size: 40))
-                                .foregroundColor(.gray)
-                                .padding(.top, 40)
-                            
-                            Text("No Tags Yet")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                            
-                            Text("Add tags to organize your notes and find them easily")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 40)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                    } else {
-                        // Tags list
-                        List {
-                            ForEach(tags, id: \.self) { tag in
-                                HStack {
-                                    Text("#\(tag)")
-                                        .foregroundColor(.white)
-                                    
-                                    Spacer()
-                                    
-                                    Button(action: {
-                                        withAnimation {
-                                            tags.removeAll { $0 == tag }
-                                        }
-                                    }) {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .foregroundColor(.gray)
-                                    }
-                                    .buttonStyle(BorderlessButtonStyle())
-                                }
-                                .contentShape(Rectangle())
-                                .listRowBackground(Color.gray.opacity(0.2))
-                            }
-                        }
-                        .listStyle(InsetGroupedListStyle())
-                    }
-                    
-                    Spacer()
-                }
-                .padding(.top, 10)
-            }
-            .navigationTitle("Manage Tags")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                }
-            }
-        }
-        .accentColor(.white)
-        .preferredColorScheme(.dark)
-    }
-    
-    /// Add tag to the list
-    private func addTag() {
-        // Clean up tag: lowercase, no spaces, alphanumeric
-        let cleanedTag = newTag
-            .lowercased()
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: " ", with: "_")
-        
-        // Only add non-empty tags that don't already exist
-        if !cleanedTag.isEmpty && !tags.contains(cleanedTag) {
-            withAnimation {
-                tags.append(cleanedTag)
-                newTag = ""
-            }
-        }
-    }
-}
-
-// MARK: - Flowing Tags Layout
-
-/// Custom view for flowing tag layout
-struct FlowingTags<Content: View>: View {
-    let tags: [String]
-    let tagView: (String) -> Content
-    
-    init(tags: [String], @ViewBuilder tagView: @escaping (String) -> Content) {
-        self.tags = tags
-        self.tagView = tagView
-    }
-    
-    var body: some View {
-        GeometryReader { geometry in
-            self.generateContent(in: geometry)
-        }
-    }
-    
-    private func generateContent(in geometry: GeometryProxy) -> some View {
-        var width = CGFloat.zero
-        var height = CGFloat.zero
-        
-        return ZStack(alignment: .topLeading) {
-            ForEach(tags, id: \.self) { tag in
-                tagView(tag)
-                    .padding(.trailing, 6)
-                    .padding(.bottom, 6)
-                    .alignmentGuide(.leading) { dimension in
-                        if abs(width - dimension.width) > geometry.size.width {
-                            width = 0
-                            height -= dimension.height + 6
-                        }
-                        
-                        let result = width
-                        if tag == tags.last {
-                            width = 0
-                        } else {
-                            width -= dimension.width + 6
-                        }
-                        return result
-                    }
-                    .alignmentGuide(.top) { _ in
-                        let result = height
-                        if tag == tags.last {
-                            height = 0
-                        }
-                        return result
-                    }
-            }
-        }
-        .frame(height: calculateHeight(in: geometry))
-    }
-    
-    // Calculate the height needed for all tags
-    private func calculateHeight(in geometry: GeometryProxy) -> CGFloat {
-        let width = geometry.size.width
-        var totalHeight: CGFloat = 0
-        var lineWidth: CGFloat = 0
-        var lineHeight: CGFloat = 0
-        
-        for tag in tags {
-            // This is an estimation - in a real app you'd measure actual tag sizes
-            let tagWidth: CGFloat = CGFloat(tag.count * 10) + 40  // rough estimate
-            
-            if lineWidth + tagWidth > width {
-                totalHeight += lineHeight + 6
-                lineWidth = tagWidth
-                lineHeight = 30  // approximate tag height
-            } else {
-                lineWidth += tagWidth + 6
-                lineHeight = max(lineHeight, 30)
-            }
-        }
-        
-        return totalHeight + lineHeight + 10  // add padding
     }
 }

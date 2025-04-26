@@ -124,6 +124,16 @@ class NoteService: ObservableObject {
         triggerAutosave()
     }
     
+    /// Delete a note and its associated sketch data
+    /// - Parameter note: The note to delete
+    func deleteNoteWithSketch(_ note: Note) {
+        // Delete any associated sketch data
+        note.deleteSketch()
+        
+        // Delete the note itself
+        deleteNote(note)
+    }
+    
     /// Toggle pinned status for a note
     /// - Parameter note: The note to toggle
     func togglePinned(_ note: Note) {
@@ -263,7 +273,7 @@ class NoteService: ObservableObject {
         case .markdown:
             content = "# Heading\n## Subheading\n\nStart writing with **markdown** formatting...\n\n- List item 1\n- List item 2\n\n> Blockquote"
         case .sketch:
-            content = "Use this space for visual thinking and rough sketches with text...\n\nProduct Flow:\n[User] -> [Sign Up] -> [Dashboard]\n|                          |\n|                          v\n|                     [Features]"
+            content = "Add notes about your sketch here...\n\nYou can switch between text and drawing using the toggle at the top."
         }
         
         return Note(
@@ -278,6 +288,13 @@ class NoteService: ObservableObject {
     
     /// Delete all notes (with confirmation option in UI)
     func deleteAllNotes() {
+        // Delete associated sketch data for all notes
+        for note in notes {
+            if note.type == .sketch {
+                note.deleteSketch()
+            }
+        }
+        
         notes.removeAll()
         saveNotes()
         refreshTrigger = UUID() // Force UI update

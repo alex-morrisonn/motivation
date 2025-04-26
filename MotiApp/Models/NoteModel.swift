@@ -24,6 +24,23 @@ class Note: Identifiable, Codable, Equatable {
     var characterCount: Int = 0  // Cached character count
     var excerptText: String?  // Optional excerpt for quick views
     
+    // Sketch data property - stored separately to avoid increasing Codable size
+    var sketchData: Data? {
+        get {
+            guard let encoded = UserDefaults.standard.data(forKey: "sketch_\(id.uuidString)") else {
+                return nil
+            }
+            return encoded
+        }
+        set {
+            if let newValue = newValue {
+                UserDefaults.standard.set(newValue, forKey: "sketch_\(id.uuidString)")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "sketch_\(id.uuidString)")
+            }
+        }
+    }
+    
     // MARK: - Type Definitions
     
     // Type of note for different formatting options
@@ -250,6 +267,16 @@ class Note: Identifiable, Codable, Equatable {
                tags.contains { $0.lowercased().contains(lowercasedTerm) }
     }
     
+    /// Helper to check if this note has a sketch
+    var hasSketch: Bool {
+        return sketchData != nil
+    }
+    
+    /// Helper to delete sketch data when the note is deleted
+    func deleteSketch() {
+        UserDefaults.standard.removeObject(forKey: "sketch_\(id.uuidString)")
+    }
+    
     /// Export the note as clean text (removing formatting)
     func exportAsText() -> String {
         var exportText = title.isEmpty ? "Untitled Note" : title
@@ -314,6 +341,14 @@ class Note: Identifiable, Codable, Equatable {
             htmlContent += "</ul>"
             bodyContent = htmlContent
             
+        case .sketch:
+            // For sketch type, include a placeholder for the drawing
+            bodyContent = "<p>" + content.replacingOccurrences(of: "\n\n", with: "</p><p>")
+                .replacingOccurrences(of: "\n", with: "<br>") + "</p>" +
+                "<div class=\"sketch-placeholder\">" +
+                "<p><i>This note contains a sketch that cannot be displayed in HTML format.</i></p>" +
+                "</div>"
+            
         default:
             // Basic text with paragraphs
             bodyContent = "<p>" + content.replacingOccurrences(of: "\n\n", with: "</p><p>")
@@ -332,6 +367,7 @@ class Note: Identifiable, Codable, Equatable {
                 h1, h2, h3 { color: #333; }
                 blockquote { border-left: 3px solid #ccc; padding-left: 15px; color: #666; }
                 .tags { margin-top: 30px; color: #0066cc; }
+                .sketch-placeholder { padding: 20px; border: 1px dashed #ccc; text-align: center; margin: 20px 0; }
             </style>
         </head>
         <body>
