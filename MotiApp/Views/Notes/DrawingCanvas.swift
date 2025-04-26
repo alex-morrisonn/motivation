@@ -1,7 +1,7 @@
 import SwiftUI
 import PencilKit
 
-/// A drawing canvas view that allows users to create sketches
+/// A drawing canvas view that allows users to create sketches with full screen support
 struct DrawingCanvas: View {
     // Canvas state
     @Binding var canvasData: Data?
@@ -20,77 +20,90 @@ struct DrawingCanvas: View {
     ]
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Drawing toolbar
-            HStack {
-                // Color picker
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(colors, id: \.self) { color in
-                            Circle()
-                                .fill(color)
-                                .frame(width: 24, height: 24)
-                                .overlay(
+        // Use a ZStack instead of VStack to help maximize canvas space
+        GeometryReader { geometry in
+            ZStack(alignment: .top) {
+                // Canvas - positioned to fill the entire view
+                CanvasRepresentable(canvasView: canvasView, toolPicker: toolPicker, onSaved: saveCanvas)
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .edgesIgnoringSafeArea(.all)
+                    .zIndex(0)
+                
+                // Drawing toolbar - floating at the top
+                VStack {
+                    HStack {
+                        // Color picker
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 10) {
+                                ForEach(colors, id: \.self) { color in
                                     Circle()
-                                        .stroke(Color.white, lineWidth: selectedColor == color ? 2 : 0)
-                                )
-                                .onTapGesture {
-                                    selectedColor = color
-                                    isErasing = false
-                                    updateTool()
+                                        .fill(color)
+                                        .frame(width: 24, height: 24)
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.white, lineWidth: selectedColor == color ? 2 : 0)
+                                        )
+                                        .onTapGesture {
+                                            selectedColor = color
+                                            isErasing = false
+                                            updateTool()
+                                        }
                                 }
+                            }
+                            .padding(.horizontal, 10)
+                        }
+                        
+                        Spacer(minLength: 10)
+                        
+                        // Line width slider with more compact design
+                        VStack(alignment: .trailing) {
+                            Slider(value: $lineWidth, in: 1...10) { _ in
+                                updateTool()
+                            }
+                            .frame(width: 100)
+                            
+                            Text("Width: \(Int(lineWidth))")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                        
+                        Divider()
+                            .frame(height: 30)
+                            .padding(.horizontal, 10)
+                        
+                        // Eraser button
+                        Button(action: {
+                            isErasing.toggle()
+                            updateTool()
+                        }) {
+                            Image(systemName: isErasing ? "eraser.fill" : "eraser")
+                                .foregroundColor(isErasing ? .blue : .white)
+                                .font(.system(size: 20))
+                                .frame(width: 40, height: 40)
+                        }
+                        
+                        // Clear button
+                        Button(action: {
+                            clearCanvas()
+                        }) {
+                            Image(systemName: "trash")
+                                .foregroundColor(.red)
+                                .font(.system(size: 20))
+                                .frame(width: 40, height: 40)
                         }
                     }
-                    .padding(.horizontal, 10)
-                }
-                
-                Spacer(minLength: 10)
-                
-                // Line width slider
-                VStack(alignment: .trailing) {
-                    Slider(value: $lineWidth, in: 1...10) { _ in
-                        updateTool()
-                    }
-                    .frame(width: 100)
+                    .padding(.vertical, 8)
+                    .background(Color.black.opacity(0.7))
+                    .cornerRadius(8)
+                    .padding(.horizontal, 8)
+                    .padding(.top, 8)
                     
-                    Text("Width: \(Int(lineWidth))")
-                        .font(.caption)
-                        .foregroundColor(.gray)
+                    Spacer() // Push toolbar to the top
                 }
-                
-                Divider()
-                    .frame(height: 30)
-                    .padding(.horizontal, 10)
-                
-                // Eraser button
-                Button(action: {
-                    isErasing.toggle()
-                    updateTool()
-                }) {
-                    Image(systemName: isErasing ? "eraser.fill" : "eraser")
-                        .foregroundColor(isErasing ? .blue : .white)
-                        .font(.system(size: 20))
-                        .frame(width: 44, height: 44)
-                }
-                
-                // Clear button
-                Button(action: {
-                    clearCanvas()
-                }) {
-                    Image(systemName: "trash")
-                        .foregroundColor(.red)
-                        .font(.system(size: 20))
-                        .frame(width: 44, height: 44)
-                }
+                .zIndex(1) // Ensure toolbar stays on top
             }
-            .padding(.vertical, 10)
-            .background(Color.black.opacity(0.3))
-            
-            // Canvas
-            CanvasRepresentable(canvasView: canvasView, toolPicker: toolPicker, onSaved: saveCanvas)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.black.opacity(0.2))
         }
+        .edgesIgnoringSafeArea(.all) // Extend to all edges
         .onAppear {
             setupCanvas()
         }
@@ -160,12 +173,31 @@ struct CanvasRepresentable: UIViewRepresentable {
     func makeUIView(context: Context) -> PKCanvasView {
         canvasView.delegate = context.coordinator
         canvasView.drawingPolicy = .anyInput
+        canvasView.backgroundColor = .clear
+        
+        // Optimize for performance
+        canvasView.isOpaque = false
+        canvasView.maximumZoomScale = 3.0
+        canvasView.minimumZoomScale = 1.0
+        
+        // Make canvas use entire available space
+        canvasView.contentSize = UIScreen.main.bounds.size
+        canvasView.alwaysBounceVertical = true
+        canvasView.alwaysBounceHorizontal = true
+        
+        // Use full screen drawing canvas
+        if let window = UIApplication.shared.windows.first {
+            canvasView.contentSize = CGSize(
+                width: window.frame.width,
+                height: max(window.frame.height, 1000) // Ensure plenty of drawing space
+            )
+        }
         
         return canvasView
     }
     
     func updateUIView(_ uiView: PKCanvasView, context: Context) {
-        // Not needed
+        // Not needed for basic functionality
     }
     
     func makeCoordinator() -> Coordinator {
