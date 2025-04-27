@@ -1,9 +1,8 @@
 import SwiftUI
 import Combine
 import AppTrackingTransparency
-import FirebaseAnalytics  // Add explicit import
+import FirebaseAnalytics
 
-// Main ContentView serving as the tab container for the app
 struct ContentView: View {
     // MARK: - Properties
     
@@ -63,9 +62,9 @@ struct ContentView: View {
                         Text("Home")
                     }
                     .tag(0)
-                    .trackNavigationForAds() // Track navigation for interstitials
+                    .trackNavigationForAds()
                 
-                // Mind Dump Tab (NEW) - Fixed tag to be 1
+                // Mind Dump Tab
                 MindDumpView()
                     .tabItem {
                         Image(systemName: "note.text")
@@ -81,7 +80,7 @@ struct ContentView: View {
                         Text("To-Do")
                     }
                     .tag(2)
-                    .trackNavigationForAds() // Track navigation for interstitials
+                    .trackNavigationForAds()
                 
                 // Pomodoro Timer Tab
                 PomodoroTimerView()
@@ -90,25 +89,16 @@ struct ContentView: View {
                         Text("Pomodoro")
                     }
                     .tag(3)
-                    .trackNavigationForAds() // Track navigation for interstitials
+                    .trackNavigationForAds()
                 
-                // Favorites Tab
-                FavoritesView()
-                    .tabItem {
-                        Image(systemName: "heart.fill")
-                        Text("Favorites")
-                    }
-                    .tag(4)
-                    .trackNavigationForAds() // Track navigation for interstitials
-                
-                // More Tab - Direct access without any wrapping NavigationView
+                // More Tab - Direct access with no NavigationView wrapping
                 MoreView()
                     .tabItem {
                         Image(systemName: "ellipsis")
                         Text("More")
                     }
-                    .tag(5)
-                    .trackNavigationForAds() // Track navigation for interstitials
+                    .tag(4)
+                    .trackNavigationForAds()
             }
             .accentColor(.white) // Active tab color
             
@@ -117,7 +107,7 @@ struct ContentView: View {
                 VStack {
                     // Banner ad on top
                     EnhancedBannerAdView(screenName: currentScreenName)
-                        .padding(.top, getSafeAreaTopInset()) // Add padding for status bar
+                        .padding(.top, getSafeAreaTopInset())
                     
                     Spacer()
                 }
@@ -184,11 +174,11 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenQuotesTab"))) { _ in
             // When a notification is tapped, navigate to the quotes tab
-            self.selectedTab = 1 // Index of the Categories tab
+            self.selectedTab = 1 // Mind Dump tab
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenStreakDetails"))) { _ in
             // Open streak details when a streak notification is tapped
-            self.selectedTab = 5 // Index of the More tab (now at position 5)
+            self.selectedTab = 4 // Index of the More tab
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("StreakUpdated"))) { _ in
             // Check if streak increased (but not first day)
@@ -223,11 +213,10 @@ struct ContentView: View {
     private var currentScreenName: String {
         switch selectedTab {
         case 0: return "HomeView"
-        case 1: return "MindDumpView" // Updated to match new tag
+        case 1: return "MindDumpView"
         case 2: return "TodoListView"
         case 3: return "PomodoroTimerView"
-        case 4: return "FavoritesView"
-        case 5: return "MoreView"
+        case 4: return "MoreView"
         default: return "Default"
         }
     }

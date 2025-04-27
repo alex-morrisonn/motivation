@@ -9,6 +9,7 @@ struct MoreView: View {
     @ObservedObject var streakManager = StreakManager.shared
     @ObservedObject var adManager = AdManager.shared
     
+    // Sheet presentation states
     @State private var showingAbout = false
     @State private var showingFeedback = false
     @State private var showingShare = false
@@ -19,6 +20,8 @@ struct MoreView: View {
     @State private var showingTerms = false
     @State private var showingPremiumView = false
     @State private var showingWidgetGuide = false
+    @State private var showingFavorites = false
+    @State private var showingCategories = false
     
     // MARK: - View Body
     
@@ -52,6 +55,7 @@ struct MoreView: View {
                 .padding(.bottom, 30)
             }
         }
+        // Sheet presentations
         .sheet(isPresented: $showingAbout) {
             AboutView()
         }
@@ -72,6 +76,35 @@ struct MoreView: View {
         }
         .sheet(isPresented: $showingWidgetGuide) {
             WidgetsShowcaseView()
+        }
+        // New sheet presentations for Favorites and Categories
+        .sheet(isPresented: $showingFavorites) {
+            NavigationView {
+                FavoritesView()
+                    .navigationTitle("Favorites")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button("Done") {
+                                showingFavorites = false
+                            }
+                        }
+                    }
+            }
+        }
+        .sheet(isPresented: $showingCategories) {
+            NavigationView {
+                CategoriesView()
+                    .navigationTitle("Categories")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button("Done") {
+                                showingCategories = false
+                            }
+                        }
+                    }
+            }
         }
         .alert("Notification Permission", isPresented: $showingPermissionAlert) {
             Button("Cancel", role: .cancel) {
@@ -266,8 +299,10 @@ struct MoreView: View {
             sectionHeader("EXPLORE QUOTES")
             
             HStack(spacing: 16) {
-                // Favorites button
-                NavigationLink(destination: FavoritesView()) {
+                // Favorites button - now opens as a sheet
+                Button(action: {
+                    showingFavorites = true
+                }) {
                     quickAccessButton(
                         icon: "heart.fill",
                         title: "Favorites",
@@ -276,8 +311,10 @@ struct MoreView: View {
                     )
                 }
                 
-                // Categories button
-                NavigationLink(destination: CategoriesView()) {
+                // Categories button - now opens as a sheet
+                Button(action: {
+                    showingCategories = true
+                }) {
                     quickAccessButton(
                         icon: "square.grid.2x2",
                         title: "Categories",
@@ -667,11 +704,11 @@ struct MoreView: View {
     private func navigateToFeature(_ destination: FeatureDestination) {
         switch destination {
         case .todo:
-            TabNavigationHelper.shared.switchToTab(2) // Todo tab
+            TabNavigationHelper.shared.switchToTab(3) // Todo tab
         case .mindDump:
-            TabNavigationHelper.shared.switchToTab(1) // Mind Dump tab
+            TabNavigationHelper.shared.switchToTab(2) // Mind Dump tab
         case .pomodoro:
-            TabNavigationHelper.shared.switchToTab(3) // Pomodoro tab
+            TabNavigationHelper.shared.switchToTab(6) // Pomodoro tab (adjust if needed)
         }
     }
     
@@ -734,13 +771,5 @@ struct MoreView: View {
         } catch {
             print("Error clearing cache: \(error)")
         }
-    }
-}
-
-// MARK: - Previews
-struct MoreView_Previews: PreviewProvider {
-    static var previews: some View {
-        MoreView()
-            .preferredColorScheme(.dark)
     }
 }
