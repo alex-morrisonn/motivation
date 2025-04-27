@@ -65,14 +65,14 @@ struct ContentView: View {
                     .tag(0)
                     .trackNavigationForAds() // Track navigation for interstitials
                 
-                // Mind Dump Tab (NEW)
-                   MindDumpView()
-                       .tabItem {
-                           Image(systemName: "note.text")
-                           Text("Mind Dump")
-                       }
-                       .tag(4)
-                       .trackNavigationForAds()
+                // Mind Dump Tab (NEW) - Fixed tag to be 1
+                MindDumpView()
+                    .tabItem {
+                        Image(systemName: "note.text")
+                        Text("Mind Dump")
+                    }
+                    .tag(1)
+                    .trackNavigationForAds()
                 
                 // To-Do Tab
                 TodoListView()
@@ -83,7 +83,7 @@ struct ContentView: View {
                     .tag(2)
                     .trackNavigationForAds() // Track navigation for interstitials
                 
-                // Pomodoro Timer Tab (New)
+                // Pomodoro Timer Tab
                 PomodoroTimerView()
                     .tabItem {
                         Image(systemName: "timer")
@@ -92,7 +92,7 @@ struct ContentView: View {
                     .tag(3)
                     .trackNavigationForAds() // Track navigation for interstitials
                 
-                // Favorites Tab (moved to index 4)
+                // Favorites Tab
                 FavoritesView()
                     .tabItem {
                         Image(systemName: "heart.fill")
@@ -101,7 +101,7 @@ struct ContentView: View {
                     .tag(4)
                     .trackNavigationForAds() // Track navigation for interstitials
                 
-                // More Tab (moved to index 5)
+                // More Tab - Direct access without any wrapping NavigationView
                 MoreView()
                     .tabItem {
                         Image(systemName: "ellipsis")
@@ -223,7 +223,7 @@ struct ContentView: View {
     private var currentScreenName: String {
         switch selectedTab {
         case 0: return "HomeView"
-        case 1: return "CategoriesView"
+        case 1: return "MindDumpView" // Updated to match new tag
         case 2: return "TodoListView"
         case 3: return "PomodoroTimerView"
         case 4: return "FavoritesView"
@@ -263,24 +263,5 @@ struct ContentView: View {
             // Reset the flag for next time
             UserDefaults.standard.removeObject(forKey: "isFromSplashScreen")
         }
-    }
-}
-
-// MARK: - Preview Provider
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-            .environmentObject(NotificationManager.shared)
-            .preferredColorScheme(.dark)
-            .onAppear {
-                // Add some sample todos for preview
-                let todoService = TodoService.shared
-                if todoService.todos.isEmpty {
-                    for todo in TodoItem.samples {
-                        todoService.addTodo(todo)
-                    }
-                }
-            }
     }
 }
