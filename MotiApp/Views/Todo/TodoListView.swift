@@ -48,7 +48,7 @@ struct ProgressRingView: View {
     let ringColor: Color
     let size: CGFloat
 
-    init(progress: Double, totalTasks: Int, completedTasks: Int, streakDays: Int, ringColor: Color = .blue, size: CGFloat = 120) {
+    init(progress: Double, totalTasks: Int, completedTasks: Int, streakDays: Int, ringColor: Color = Color.themePrimary, size: CGFloat = 120) {
         self.progress = min(max(progress, 0.0), 1.0) // Clamp between 0 and 1
         self.totalTasks = totalTasks
         self.completedTasks = completedTasks
@@ -77,21 +77,21 @@ struct ProgressRingView: View {
             VStack(spacing: 4) {
                 Text("\(completedTasks)/\(totalTasks)")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.themeText)
                 
                 Text("Tasks")
                     .font(.system(size: 12))
-                    .foregroundColor(.gray)
+                    .foregroundColor(Color.themeSecondaryText)
                 
                 if streakDays > 0 {
                     HStack(spacing: 2) {
                         Image(systemName: "flame.fill")
                             .font(.system(size: 10))
-                            .foregroundColor(.orange)
+                            .foregroundColor(Color.themeWarning)
                         
                         Text("\(streakDays) days")
                             .font(.system(size: 10))
-                            .foregroundColor(.orange)
+                            .foregroundColor(Color.themeWarning)
                     }
                     .padding(.top, 4)
                 }
@@ -113,6 +113,7 @@ struct EnhancedTodoItemRow: View {
     
     // For forcing component refresh
     @ObservedObject private var todoService = TodoService.shared
+    @ObservedObject private var themeManager = ThemeManager.shared
     
     // State for animations and gestures
     @State private var offset: CGFloat = 0
@@ -131,9 +132,9 @@ struct EnhancedTodoItemRow: View {
                         Text("Delete")
                             .font(.subheadline)
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.themeText)
                     .frame(width: deleteButtonWidth, height: 50)
-                    .background(Color.red.opacity(0.8))
+                    .background(Color.themeError.opacity(0.8))
                     .cornerRadius(8)
                 }
                 .offset(x: min(0, offset + deleteButtonWidth))
@@ -146,14 +147,14 @@ struct EnhancedTodoItemRow: View {
                         Button(action: onToggle) {
                             Image(systemName: todo.isCompleted ? "checkmark.circle.fill" : "circle")
                                 .font(.system(size: 26))
-                                .foregroundColor(todo.isCompleted ? .green : getPriorityColor())
+                                .foregroundColor(todo.isCompleted ? Color.themeSuccess : getPriorityColor())
                         }
                         .buttonStyle(PlainButtonStyle())
                         
                         // Title
                         Text(todo.title)
                             .font(.title3)
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.themeText)
                             .strikethrough(todo.isCompleted)
                         
                         Spacer()
@@ -161,7 +162,7 @@ struct EnhancedTodoItemRow: View {
                         // Priority badge with appropriate color but smaller
                         Text(todo.priority.name)
                             .font(.caption)
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.themeText)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
                             .background(getPriorityColor())
@@ -171,7 +172,7 @@ struct EnhancedTodoItemRow: View {
                         Button(action: onEdit) {
                             Image(systemName: "pencil")
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.white)
+                                .foregroundColor(Color.themeText)
                                 .padding(.horizontal, 6)
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -188,19 +189,19 @@ struct EnhancedTodoItemRow: View {
                             HStack(spacing: 6) {
                                 Image(systemName: "calendar.badge.clock")
                                     .font(.system(size: 12))
-                                    .foregroundColor(todo.isOverdue ? .red.opacity(0.8) : .gray.opacity(0.8))
+                                    .foregroundColor(todo.isOverdue ? Color.themeError.opacity(0.8) : Color.themeSecondaryText.opacity(0.8))
                                 
                                 Text("Due \(formattedDueDate)")
                                     .font(.caption)
-                                    .foregroundColor(todo.isOverdue ? .red.opacity(0.8) : .gray.opacity(0.8))
+                                    .foregroundColor(todo.isOverdue ? Color.themeError.opacity(0.8) : Color.themeSecondaryText.opacity(0.8))
                                 
                                 if todo.isOverdue {
                                     Text("OVERDUE")
                                         .font(.system(size: 8, weight: .bold))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(Color.themeText)
                                         .padding(.horizontal, 4)
                                         .padding(.vertical, 1)
-                                        .background(Color.red.opacity(0.8))
+                                        .background(Color.themeError.opacity(0.8))
                                         .cornerRadius(3)
                                 }
                             }
@@ -212,7 +213,7 @@ struct EnhancedTodoItemRow: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(red: 0.15, green: 0.15, blue: 0.15))
+                .background(Color.themeCardBackground)
                 .cornerRadius(8)
                 .offset(x: offset)
             }
@@ -229,11 +230,11 @@ struct EnhancedTodoItemRow: View {
     private func getPriorityColor() -> Color {
         switch todo.priority {
         case .low:
-            return .green
+            return Color.themeSuccess
         case .normal:
-            return .blue
+            return Color.themePrimary
         case .high:
-            return .red
+            return Color.themeError
         }
     }
     
@@ -265,6 +266,7 @@ struct EnhancedTodoItemRow: View {
 // MARK: - Todo List View
 struct TodoListView: View {
     @ObservedObject private var todoService = TodoService.shared
+    @ObservedObject private var themeManager = ThemeManager.shared
     @State private var showingAddTodo = false
     @State private var editingTodo: TodoItem?
     @State private var showCompletedTodos = false
@@ -278,7 +280,7 @@ struct TodoListView: View {
     
     var body: some View {
         ZStack {
-            Color.black
+            Color.themeBackground
                 .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 16) {
@@ -286,7 +288,7 @@ struct TodoListView: View {
                 Text("To-Do List")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.themeText)
                     .padding(.top, 16)
                 
                 // Daily progress ring area
@@ -300,7 +302,7 @@ struct TodoListView: View {
                         totalTasks: totalTasks,
                         completedTasks: completedTasks,
                         streakDays: todoService.currentStreakDays,
-                        ringColor: progress >= 1.0 ? .green : .blue
+                        ringColor: progress >= 1.0 ? Color.themeSuccess : Color.themePrimary
                     )
                     .padding(.vertical, 20)
                     .animation(.spring(response: 0.5), value: completedTasks)
@@ -308,18 +310,18 @@ struct TodoListView: View {
                     if todoService.hasMomentumToday {
                         HStack(spacing: 5) {
                             Image(systemName: "flame.fill")
-                                .foregroundColor(.orange)
+                                .foregroundColor(Color.themeWarning)
                             Text("Momentum Streak: \(todoService.currentStreakDays) \(todoService.currentStreakDays == 1 ? "day" : "days")")
-                                .foregroundColor(.orange)
+                                .foregroundColor(Color.themeWarning)
                                 .font(.subheadline)
                         }
                         .padding(.vertical, 5)
                         .padding(.horizontal, 12)
-                        .background(Color.orange.opacity(0.1))
+                        .background(Color.themeWarning.opacity(0.1))
                         .cornerRadius(10)
                     } else if totalTasks > 0 {
                         Text("Complete \(max(3 - completedTasks, 0)) more tasks for Momentum")
-                            .foregroundColor(.gray)
+                            .foregroundColor(Color.themeSecondaryText)
                             .font(.caption)
                     }
                 }
@@ -330,9 +332,9 @@ struct TodoListView: View {
                     Toggle(isOn: $showCompletedTodos) {
                         Text("Show Completed")
                             .font(.subheadline)
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.themeText)
                     }
-                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+                    .toggleStyle(SwitchToggleStyle(tint: Color.themePrimary))
                     
                     Spacer()
                     
@@ -342,10 +344,10 @@ struct TodoListView: View {
                                 .font(.system(size: 16))
                             Text("Add Task")
                         }
-                        .foregroundColor(.white)
+                        .foregroundColor(Color.themeText)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(Color.blue.opacity(0.3))
+                        .background(Color.themePrimary.opacity(0.3))
                         .cornerRadius(20)
                     }
                 }
@@ -366,17 +368,17 @@ struct TodoListView: View {
                     Spacer()
                     HStack(alignment: .center, spacing: 12) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
+                            .foregroundColor(Color.themeSuccess)
                             .font(.system(size: 24))
                         
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Task Completed!")
                                 .font(.headline)
-                                .foregroundColor(.white)
+                                .foregroundColor(Color.themeText)
                             
                             Text(celebrationQuote)
                                 .font(.caption)
-                                .foregroundColor(.white.opacity(0.9))
+                                .foregroundColor(Color.themeText.opacity(0.9))
                                 .lineLimit(2)
                         }
                         
@@ -386,7 +388,7 @@ struct TodoListView: View {
                             dismissCelebrationToast()
                         }) {
                             Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundColor(Color.themeText.opacity(0.7))
                                 .font(.system(size: 20))
                         }
                     }
@@ -394,7 +396,7 @@ struct TodoListView: View {
                     .padding(.horizontal, 16)
                     .background(
                         LinearGradient(
-                            gradient: Gradient(colors: [Color.green.opacity(0.7), Color.blue.opacity(0.7)]),
+                            gradient: Gradient(colors: [Color.themeSuccess.opacity(0.7), Color.themePrimary.opacity(0.7)]),
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -436,23 +438,23 @@ struct TodoListView: View {
         VStack(spacing: 20) {
             Image(systemName: "checkmark.circle")
                 .font(.system(size: 60))
-                .foregroundColor(.gray)
+                .foregroundColor(Color.themeSecondaryText)
                 .padding()
             Text("No tasks yet")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(Color.themeText)
             Text("Tap the Add Task button to create your first task")
                 .font(.subheadline)
-                .foregroundColor(.gray)
+                .foregroundColor(Color.themeSecondaryText)
                 .multilineTextAlignment(.center)
                 .padding()
             Button(action: { showingAddTodo = true }) {
                 Text("Create Task")
                     .font(.headline)
-                    .foregroundColor(.black)
+                    .foregroundColor(themeManager.currentTheme.isDark ? Color.black : Color.white)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 10)
-                    .background(Color.white)
+                    .background(Color.themePrimary)
                     .cornerRadius(20)
             }
             .padding(.top, 10)
@@ -472,7 +474,7 @@ struct TodoListView: View {
                             Text("ACTIVE TASKS")
                                 .font(.caption)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.white.opacity(0.6))
+                                .foregroundColor(Color.themeText.opacity(0.6))
                                 .tracking(2)
                                 .padding(.leading, 20)
                             Spacer()
@@ -500,7 +502,7 @@ struct TodoListView: View {
                             Text("OVERDUE")
                                 .font(.caption)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.red.opacity(0.8))
+                                .foregroundColor(Color.themeError.opacity(0.8))
                                 .tracking(2)
                                 .padding(.leading, 20)
                             Spacer()
@@ -528,7 +530,7 @@ struct TodoListView: View {
                             Text("COMPLETED")
                                 .font(.caption)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.white.opacity(0.6))
+                                .foregroundColor(Color.themeText.opacity(0.6))
                                 .tracking(2)
                                 .padding(.leading, 20)
                             Spacer()
@@ -556,7 +558,7 @@ struct TodoListView: View {
                         VStack {
                             Text("No completed tasks")
                                 .font(.subheadline)
-                                .foregroundColor(.gray)
+                                .foregroundColor(Color.themeSecondaryText)
                                 .padding(.top, 30)
                         }
                     }

@@ -4,6 +4,7 @@ struct TodoEditorView: View {
     // MARK: - Environment & Observed Properties
     @Environment(\.presentationMode) var presentationMode
     @ObservedObject private var todoService = TodoService.shared
+    @ObservedObject private var themeManager = ThemeManager.shared
     
     // MARK: - State Properties
     @State private var title: String
@@ -107,13 +108,9 @@ struct TodoEditorView: View {
     // MARK: - Body
     var body: some View {
         ZStack {
-            // Background gradient
-            LinearGradient(
-                gradient: Gradient(colors: [Color.black, Color(red: 0.1, green: 0.1, blue: 0.2)]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .edgesIgnoringSafeArea(.all)
+            // Background gradient - Use theme background
+            Color.themeBackground
+                .edgesIgnoringSafeArea(.all)
             
             ScrollView {
                 VStack(spacing: 24) {
@@ -173,9 +170,9 @@ struct TodoEditorView: View {
             }) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.themeText)
                     .padding(12)
-                    .background(Color.white.opacity(0.15))
+                    .background(Color.themeText.opacity(0.15))
                     .clipShape(Circle())
             }
             
@@ -184,7 +181,7 @@ struct TodoEditorView: View {
             // Title
             Text(isNewTodo ? "New Task" : "Edit Task")
                 .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(Color.themeText)
             
             Spacer()
             
@@ -206,20 +203,20 @@ struct TodoEditorView: View {
                 ZStack(alignment: .leading) {
                     if title.isEmpty {
                         Text("What do you need to do?")
-                            .foregroundColor(.gray.opacity(0.7))
+                            .foregroundColor(Color.themeSecondaryText.opacity(0.7))
                             .padding(.leading, 16)
                             .padding(.top, 16)
                     }
                     
                     TextField("", text: $title)
                         .padding(16)
-                        .background(Color.white.opacity(0.07))
+                        .background(Color.themeText.opacity(0.07))
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                .stroke(Color.themeText.opacity(0.1), lineWidth: 1)
                         )
-                        .foregroundColor(.white)
+                        .foregroundColor(Color.themeText)
                         .font(.system(size: 16))
                         .focused($focusedField, equals: .title)
                 }
@@ -243,7 +240,7 @@ struct TodoEditorView: View {
                 ZStack(alignment: .topLeading) {
                     if notes.isEmpty {
                         Text("Add any details here...")
-                            .foregroundColor(.gray.opacity(0.7))
+                            .foregroundColor(Color.themeSecondaryText.opacity(0.7))
                             .padding(.horizontal, 16)
                             .padding(.top, 16)
                     }
@@ -253,13 +250,13 @@ struct TodoEditorView: View {
                         .background(Color.clear)
                         .frame(minHeight: 100)
                         .padding(12)
-                        .background(Color.white.opacity(0.07))
+                        .background(Color.themeText.opacity(0.07))
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                .stroke(Color.themeText.opacity(0.1), lineWidth: 1)
                         )
-                        .foregroundColor(.white)
+                        .foregroundColor(Color.themeText)
                         .focused($focusedField, equals: .notes)
                 }
             }
@@ -273,16 +270,16 @@ struct TodoEditorView: View {
                 }) {
                     HStack {
                         Image(systemName: "heart.text.square")
-                            .foregroundColor(.pink.opacity(0.8))
+                            .foregroundColor(Color.themeError.opacity(0.8))
                         
                         Text("Why This Matters")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(whyThisMatters.isEmpty ? .white.opacity(0.8) : .white)
+                            .foregroundColor(whyThisMatters.isEmpty ? Color.themeText.opacity(0.8) : Color.themeText)
                         
                         Spacer()
                         
                         Image(systemName: showWhyItMatters ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
-                            .foregroundColor(.gray)
+                            .foregroundColor(Color.themeSecondaryText)
                             .font(.system(size: 20))
                     }
                 }
@@ -291,7 +288,7 @@ struct TodoEditorView: View {
                     ZStack(alignment: .topLeading) {
                         if whyThisMatters.isEmpty {
                             Text("Why is this task important to you?")
-                                .foregroundColor(.gray.opacity(0.7))
+                                .foregroundColor(Color.themeSecondaryText.opacity(0.7))
                                 .padding(.leading, 16)
                                 .padding(.top, 16)
                         }
@@ -301,13 +298,13 @@ struct TodoEditorView: View {
                             .background(Color.clear)
                             .frame(minHeight: 80)
                             .padding(12)
-                            .background(Color.white.opacity(0.07))
+                            .background(Color.themeText.opacity(0.07))
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.pink.opacity(0.2), lineWidth: 1)
+                                    .stroke(Color.themeError.opacity(0.2), lineWidth: 1)
                             )
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.themeText)
                             .focused($focusedField, equals: .whyThisMatters)
                     }
                     .transition(.move(edge: .top).combined(with: .opacity))
@@ -324,23 +321,23 @@ struct TodoEditorView: View {
                 }) {
                     HStack {
                         Image(systemName: hasDueDate ? "calendar.badge.clock.fill" : "calendar.badge.plus")
-                            .foregroundColor(hasDueDate ? .blue : .gray)
+                            .foregroundColor(hasDueDate ? Color.themePrimary : Color.themeSecondaryText)
                             .font(.system(size: 18))
                         
                         Text(hasDueDate ? "Due Date Set" : "Add Due Date")
                             .font(.system(size: 16, weight: hasDueDate ? .medium : .regular))
-                            .foregroundColor(hasDueDate ? .white : .white.opacity(0.8))
+                            .foregroundColor(hasDueDate ? Color.themeText : Color.themeText.opacity(0.8))
                         
                         Spacer()
                         
                         if hasDueDate {
                             Image(systemName: "chevron.up")
                                 .font(.system(size: 14))
-                                .foregroundColor(.gray)
+                                .foregroundColor(Color.themeSecondaryText)
                         } else {
                             Image(systemName: "chevron.down")
                                 .font(.system(size: 14))
-                                .foregroundColor(.gray)
+                                .foregroundColor(Color.themeSecondaryText)
                         }
                     }
                     .padding(.vertical, 8)
@@ -353,7 +350,7 @@ struct TodoEditorView: View {
                             Text("DATE")
                                 .font(.caption)
                                 .fontWeight(.medium)
-                                .foregroundColor(.gray)
+                                .foregroundColor(Color.themeSecondaryText)
                         
                             // Custom date selector using buttons and calendar view
                             VStack(spacing: 10) {
@@ -361,7 +358,7 @@ struct TodoEditorView: View {
                                 HStack {
                                     Text(formattedSelectedDate)
                                         .font(.headline)
-                                        .foregroundColor(.white)
+                                        .foregroundColor(Color.themeText)
                                     
                                     Spacer()
                                     
@@ -377,7 +374,7 @@ struct TodoEditorView: View {
                                             .font(.caption)
                                             .padding(.horizontal, 10)
                                             .padding(.vertical, 5)
-                                            .background(Color.blue.opacity(0.3))
+                                            .background(Color.themePrimary.opacity(0.3))
                                             .cornerRadius(8)
                                     }
                                     
@@ -393,7 +390,7 @@ struct TodoEditorView: View {
                                             .font(.caption)
                                             .padding(.horizontal, 10)
                                             .padding(.vertical, 5)
-                                            .background(Color.blue.opacity(0.3))
+                                            .background(Color.themePrimary.opacity(0.3))
                                             .cornerRadius(8)
                                     }
                                 }
@@ -407,7 +404,7 @@ struct TodoEditorView: View {
                                         }
                                     }) {
                                         Image(systemName: "chevron.left")
-                                            .foregroundColor(.white)
+                                            .foregroundColor(Color.themeText)
                                     }
                                     
                                     Spacer()
@@ -415,7 +412,7 @@ struct TodoEditorView: View {
                                     // Month and year display
                                     Text(monthYearString)
                                         .font(.headline)
-                                        .foregroundColor(.white)
+                                        .foregroundColor(Color.themeText)
                                     
                                     Spacer()
                                     
@@ -426,7 +423,7 @@ struct TodoEditorView: View {
                                         }
                                     }) {
                                         Image(systemName: "chevron.right")
-                                            .foregroundColor(.white)
+                                            .foregroundColor(Color.themeText)
                                     }
                                 }
                                 .padding(.vertical, 8)
@@ -437,7 +434,7 @@ struct TodoEditorView: View {
                                         Text(symbol)
                                             .font(.caption)
                                             .fontWeight(.medium)
-                                            .foregroundColor(.gray)
+                                            .foregroundColor(Color.themeSecondaryText)
                                             .frame(maxWidth: .infinity)
                                     }
                                 }
@@ -463,12 +460,12 @@ struct TodoEditorView: View {
                                                 // Highlight current day
                                                 if isDaySelected(day) {
                                                     Circle()
-                                                        .fill(Color.blue)
+                                                        .fill(Color.themePrimary)
                                                         .frame(width: 38, height: 38)
                                                 }
                                                 
                                                 Text("\(day)")
-                                                    .foregroundColor(isDaySelected(day) ? .white : isToday(day) ? .blue : .white)
+                                                    .foregroundColor(isDaySelected(day) ? Color.themeText : isToday(day) ? Color.themePrimary : Color.themeText)
                                                     .font(.system(size: 16, weight: isDaySelected(day) ? .bold : .regular))
                                             }
                                             .frame(height: 40)
@@ -477,7 +474,7 @@ struct TodoEditorView: View {
                                 }
                             }
                             .padding(12)
-                            .background(Color.black.opacity(0.3))
+                            .background(Color.themeBackground.opacity(0.3))
                             .cornerRadius(12)
                         }
                         
@@ -486,7 +483,7 @@ struct TodoEditorView: View {
                             Text("TIME")
                                 .font(.caption)
                                 .fontWeight(.medium)
-                                .foregroundColor(.gray)
+                                .foregroundColor(Color.themeSecondaryText)
                             
                             // Time pickers in a centered layout
                             HStack(spacing: 8) {
@@ -494,7 +491,7 @@ struct TodoEditorView: View {
                                 Picker("Hour", selection: $selectedHour) {
                                     ForEach(0..<24, id: \.self) { hour in
                                         Text("\(hour)")
-                                            .foregroundColor(.white) // Improve text visibility
+                                            .foregroundColor(Color.themeText) // Improve text visibility
                                             .tag(hour)
                                     }
                                 }
@@ -504,18 +501,18 @@ struct TodoEditorView: View {
                                 .onChange(of: selectedHour) { oldHour, newHour in
                                     updateTimeInDueDate()
                                 }
-                                .accentColor(.white) // Set accent color to improve visibility
+                                .accentColor(Color.themeText) // Set accent color to improve visibility
                                 
                                 Text(":")
                                     .font(.title3)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Color.themeText)
                                     .padding(.horizontal, -4)
                                 
                                 // Minute picker with fixed height
                                 Picker("Minute", selection: $selectedMinute) {
                                     ForEach(0..<60, id: \.self) { minute in
                                         Text(String(format: "%02d", minute))
-                                            .foregroundColor(.white) // Improve text visibility
+                                            .foregroundColor(Color.themeText) // Improve text visibility
                                             .tag(minute)
                                     }
                                 }
@@ -525,33 +522,33 @@ struct TodoEditorView: View {
                                 .onChange(of: selectedMinute) { oldMinute, newMinute in
                                     updateTimeInDueDate()
                                 }
-                                .accentColor(.white) // Set accent color to improve visibility
+                                .accentColor(Color.themeText) // Set accent color to improve visibility
                             }
                             .padding(.vertical, 8)
                             .frame(maxWidth: .infinity, alignment: .center) // Center the time picker
                             .padding(12)
-                            .background(Color.black.opacity(0.3))
+                            .background(Color.themeBackground.opacity(0.3))
                             .cornerRadius(12)
                         }
                         
                         // Summary of selected date and time
                         HStack {
                             Image(systemName: "calendar.badge.clock")
-                                .foregroundColor(.blue)
+                                .foregroundColor(Color.themePrimary)
                                 .font(.system(size: 18))
                             
                             Text("Due: \(formatDueDate(dueDate))")
                                 .font(.headline)
-                                .foregroundColor(.white)
+                                .foregroundColor(Color.themeText)
                             
                             Spacer()
                         }
                         .padding(10)
-                        .background(Color.blue.opacity(0.2))
+                        .background(Color.themePrimary.opacity(0.2))
                         .cornerRadius(10)
                     }
                     .padding(16)
-                    .background(Color(UIColor.systemGray6).opacity(0.2))
+                    .background(Color.themeText.opacity(0.05))
                     .cornerRadius(16)
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
@@ -567,11 +564,11 @@ struct TodoEditorView: View {
                     HStack {
                         Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
                             .font(.system(size: 22))
-                            .foregroundColor(isCompleted ? .green : .gray)
+                            .foregroundColor(isCompleted ? Color.themeSuccess : Color.themeSecondaryText)
                         
                         Text("Mark as Completed")
                             .font(.system(size: 16))
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.themeText)
                         
                         Spacer()
                     }
@@ -583,7 +580,7 @@ struct TodoEditorView: View {
         .padding(24)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(red: 0.12, green: 0.12, blue: 0.18))
+                .fill(Color.themeCardBackground)
                 .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 5)
         )
     }
@@ -597,12 +594,12 @@ struct TodoEditorView: View {
             }) {
                 Text("Cancel")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.themeText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.white.opacity(0.1))
+                            .fill(Color.themeText.opacity(0.1))
                     )
             }
             
@@ -613,12 +610,12 @@ struct TodoEditorView: View {
             }) {
                 Text("Save")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.black)
+                    .foregroundColor(themeManager.currentTheme.isDark ? Color.black : Color.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(title.isEmpty ? Color.gray : Color.white)
+                            .fill(title.isEmpty ? Color.themeSecondaryText : Color.themePrimary)
                     )
             }
             .disabled(title.isEmpty)
@@ -633,7 +630,7 @@ struct TodoEditorView: View {
     private func formLabel(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 14, weight: .medium))
-            .foregroundColor(.gray)
+            .foregroundColor(Color.themeSecondaryText)
             .padding(.leading, 4)
     }
     
@@ -651,13 +648,13 @@ struct TodoEditorView: View {
                     .frame(width: 16, height: 16)
                     .overlay(
                         Circle()
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                            .stroke(Color.themeText.opacity(0.1), lineWidth: 1)
                     )
                 
                 // Priority label
                 Text(priorityOption.name)
                     .font(.system(size: 14, weight: priority == priorityOption ? .medium : .regular))
-                    .foregroundColor(priority == priorityOption ? .white : .gray)
+                    .foregroundColor(priority == priorityOption ? Color.themeText : Color.themeSecondaryText)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
@@ -665,14 +662,14 @@ struct TodoEditorView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(priority == priorityOption ?
                           priorityColor(for: priorityOption).opacity(0.2) :
-                          Color.white.opacity(0.05))
+                          Color.themeText.opacity(0.05))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
                         priority == priorityOption ?
                         priorityColor(for: priorityOption).opacity(0.5) :
-                        Color.white.opacity(0.05),
+                        Color.themeText.opacity(0.05),
                         lineWidth: 1
                     )
             )
@@ -690,11 +687,11 @@ struct TodoEditorView: View {
     private func priorityColor(for priority: TodoItem.Priority) -> Color {
         switch priority {
         case .low:
-            return .green
+            return Color.themeSuccess
         case .normal:
-            return .blue
+            return Color.themePrimary
         case .high:
-            return .red
+            return Color.themeError
         }
     }
     
