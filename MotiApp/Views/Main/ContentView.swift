@@ -14,6 +14,9 @@ struct ContentView: View {
     @ObservedObject var streakManager = StreakManager.shared
     @ObservedObject var adManager = AdManager.shared
     
+    // Theme manager
+    @ObservedObject var themeManager = ThemeManager.shared
+    
     // UI state properties
     @State private var showingStreakCelebration = false
     @State private var previousStreak = 0
@@ -30,10 +33,13 @@ struct ContentView: View {
     // MARK: - Initialization
     
     init() {
-        // Ensure proper dark mode appearance for tab bar
+        // Ensure proper appearance for tab bar based on theme
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor.black
+        
+        // The background color will now be determined by the theme
+        let theme = ThemeManager.shared.currentTheme
+        appearance.backgroundColor = UIColor(theme.background)
         
         // Set the tab bar appearance for all states
         UITabBar.appearance().standardAppearance = appearance
@@ -44,10 +50,10 @@ struct ContentView: View {
         }
         
         // Increase contrast for unselected tab items for better visibility
-        appearance.stackedLayoutAppearance.normal.iconColor = UIColor.lightGray
-        appearance.stackedLayoutAppearance.normal.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.lightGray]
+        appearance.stackedLayoutAppearance.normal.iconColor = theme.isDark ? UIColor.lightGray : UIColor.darkGray
+        appearance.stackedLayoutAppearance.normal.titleTextAttributes = [NSAttributedString.Key.foregroundColor: theme.isDark ? UIColor.lightGray : UIColor.darkGray]
         
-        print("Tab bar appearance configured with black background")
+        print("Tab bar appearance configured with theme background")
     }
     
     // MARK: - Body
@@ -100,7 +106,7 @@ struct ContentView: View {
                     .tag(4)
                     .trackNavigationForAds()
             }
-            .accentColor(.white) // Active tab color
+            .accentColor(Color.themePrimary) // Use theme primary color instead of hard-coded .white
             
             // Banner ad at the top - non-intrusive
             if !adManager.isPremiumUser {
@@ -118,10 +124,12 @@ struct ContentView: View {
                 Spacer()
                 Rectangle()
                     .frame(height: 0.5)
-                    .foregroundColor(Color.white.opacity(0.3))
+                    .foregroundColor(Color.themeDivider) // Use theme divider color
                     .padding(.bottom, 49) // Tab bar height
             }
         }
+        .environment(\.appTheme, themeManager.currentTheme) // Pass theme through environment
+        .preferredColorScheme(themeManager.currentTheme.isDark ? .dark : .light) // Set color scheme based on theme
         .edgesIgnoringSafeArea(.top) // Allow the banner ad to extend to the top edge
         .sheet(isPresented: $showingPremiumOffer) {
             PremiumView()
@@ -139,6 +147,16 @@ struct ContentView: View {
                         self.selectedTab = newTab
                     }
                 }
+            }
+            
+            // Add observer for theme changes to update UI components
+            NotificationCenter.default.addObserver(
+                forName: NSNotification.Name("ThemeChanged"),
+                object: nil,
+                queue: .main
+            ) { _ in
+                // Update UI for theme changes
+                updateUIForTheme()
             }
         }
         .onDisappear {
@@ -203,6 +221,25 @@ struct ContentView: View {
     }
     
     // MARK: - Helper Methods
+    
+    /// Update UI components for theme changes
+    private func updateUIForTheme() {
+        // Update tab bar appearance for the new theme
+        let theme = themeManager.currentTheme
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(theme.background)
+        
+        // Update tab item colors
+        appearance.stackedLayoutAppearance.normal.iconColor = theme.isDark ? UIColor.lightGray : UIColor.darkGray
+        appearance.stackedLayoutAppearance.normal.titleTextAttributes = [NSAttributedString.Key.foregroundColor: theme.isDark ? UIColor.lightGray : UIColor.darkGray]
+        
+        // Set updated appearance
+        UITabBar.appearance().standardAppearance = appearance
+        if #available(iOS 15.0, *) {
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+        }
+    }
     
     /// Helper to show premium coming soon alert
     private func showPremiumComingSoonAlert() {

@@ -8,6 +8,7 @@ struct MoreView: View {
     @ObservedObject var notificationManager = NotificationManager.shared
     @ObservedObject var streakManager = StreakManager.shared
     @ObservedObject var adManager = AdManager.shared
+    @ObservedObject var themeManager = ThemeManager.shared
     
     // Sheet presentation states
     @State private var showingAbout = false
@@ -22,13 +23,14 @@ struct MoreView: View {
     @State private var showingWidgetGuide = false
     @State private var showingFavorites = false
     @State private var showingCategories = false
+    @State private var showingThemeSettings = false
     
     // MARK: - View Body
     
     var body: some View {
         ZStack {
-            // Background
-            Color.black.edgesIgnoringSafeArea(.all)
+            // Background - use theme background color
+            Color.themeBackground.edgesIgnoringSafeArea(.all)
             
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
@@ -37,6 +39,9 @@ struct MoreView: View {
                     
                     // New features section
                     newFeaturesSection
+                    
+                    // Theme settings section - new section
+                    themeSection
                     
                     // Quick access to favorites and categories
                     quickAccessSection
@@ -76,6 +81,9 @@ struct MoreView: View {
         }
         .sheet(isPresented: $showingWidgetGuide) {
             WidgetsShowcaseView()
+        }
+        .sheet(isPresented: $showingThemeSettings) {
+            ThemeSettingsView()
         }
         // New sheet presentations for Favorites and Categories
         .sheet(isPresented: $showingFavorites) {
@@ -142,6 +150,66 @@ struct MoreView: View {
     
     // MARK: - Component Views
     
+    // Theme selection section - new section
+    private var themeSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            sectionHeader("APPEARANCE")
+            
+            Button(action: {
+                showingThemeSettings = true
+            }) {
+                HStack {
+                    // Icon with pretty visualization of current theme
+                    ZStack {
+                        Circle()
+                            .fill(themeManager.currentTheme.primary.opacity(0.15))
+                            .frame(width: 50, height: 50)
+                        
+                        HStack(spacing: 2) {
+                            Circle()
+                                .fill(themeManager.currentTheme.primary)
+                                .frame(width: 12, height: 12)
+                            
+                            Circle()
+                                .fill(themeManager.currentTheme.secondary)
+                                .frame(width: 12, height: 12)
+                                .offset(x: -4, y: 8)
+                            
+                            Circle()
+                                .fill(themeManager.currentTheme.accent)
+                                .frame(width: 12, height: 12)
+                                .offset(x: -8)
+                        }
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("App Theme")
+                            .font(.headline)
+                            .foregroundColor(Color.themeText)
+                        
+                        Text(themeManager.currentTheme.name)
+                            .font(.subheadline)
+                            .foregroundColor(Color.themeSecondaryText)
+                    }
+                    .padding(.leading, 8)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color.themeSecondaryText)
+                }
+                .padding()
+                .background(Color.themeCardBackground)
+                .cornerRadius(16)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.themeDivider, lineWidth: 1)
+                )
+            }
+        }
+    }
+    
     // Premium subscription card with engaging design
     private var premiumCardView: some View {
         Button(action: { showingPremiumView = true }) {
@@ -151,22 +219,22 @@ struct MoreView: View {
                     // Crown icon with glowing effect
                     ZStack {
                         Circle()
-                            .fill(Color.yellow.opacity(0.2))
+                            .fill(Color.themeWarning.opacity(0.2))
                             .frame(width: 50, height: 50)
                         
                         Image(systemName: "crown.fill")
                             .font(.system(size: 24))
-                            .foregroundColor(.yellow)
+                            .foregroundColor(Color.themeWarning)
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Premium Version")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.themeText)
                         
                         Text("Coming Soon!")
                             .font(.subheadline)
-                            .foregroundColor(.yellow)
+                            .foregroundColor(Color.themeWarning)
                     }
                     
                     Spacer()
@@ -175,12 +243,12 @@ struct MoreView: View {
                     Text("Premium")
                         .font(.caption)
                         .fontWeight(.bold)
-                        .foregroundColor(.black)
+                        .foregroundColor(themeManager.currentTheme.isDark ? .black : .white)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(
                             LinearGradient(
-                                gradient: Gradient(colors: [Color.yellow, Color.orange]),
+                                gradient: Gradient(colors: [Color.themeWarning, Color.themeError.opacity(0.7)]),
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
@@ -201,12 +269,12 @@ struct MoreView: View {
                     Spacer()
                     Text("Learn More")
                         .font(.subheadline)
-                        .foregroundColor(.black)
+                        .foregroundColor(themeManager.currentTheme.isDark ? .black : .white)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
                         .background(
                             LinearGradient(
-                                gradient: Gradient(colors: [Color.yellow, Color.orange]),
+                                gradient: Gradient(colors: [Color.themeWarning, Color.themeError.opacity(0.7)]),
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
@@ -219,8 +287,8 @@ struct MoreView: View {
             .background(
                 LinearGradient(
                     gradient: Gradient(colors: [
-                        Color(red: 0.15, green: 0.15, blue: 0.3),
-                        Color(red: 0.1, green: 0.1, blue: 0.2)
+                        themeManager.currentTheme.cardBackground,
+                        themeManager.currentTheme.background
                     ]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -230,7 +298,7 @@ struct MoreView: View {
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
-                            gradient: Gradient(colors: [.yellow, .orange.opacity(0.5)]),
+                            gradient: Gradient(colors: [Color.themeWarning, Color.themeError.opacity(0.5)]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
@@ -246,11 +314,11 @@ struct MoreView: View {
         HStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.system(size: 12))
-                .foregroundColor(.yellow)
+                .foregroundColor(Color.themeWarning)
             
             Text(text)
                 .font(.caption)
-                .foregroundColor(.white)
+                .foregroundColor(Color.themeText)
                 .lineLimit(1)
             
             Spacer()
@@ -268,7 +336,7 @@ struct MoreView: View {
                     icon: "checkmark.circle.fill",
                     title: "To-Do List",
                     description: "Organize tasks and build momentum with our streak system",
-                    color: .green,
+                    color: Color.themeSuccess,
                     destination: .todo
                 )
                 
@@ -277,7 +345,7 @@ struct MoreView: View {
                     icon: "note.text",
                     title: "Mind Dump",
                     description: "Capture thoughts, ideas and reflections in one place",
-                    color: .blue,
+                    color: Color.themePrimary,
                     destination: .mindDump
                 )
                 
@@ -286,7 +354,7 @@ struct MoreView: View {
                     icon: "timer",
                     title: "Pomodoro Timer",
                     description: "Boost productivity with focused work sessions",
-                    color: .orange,
+                    color: Color.themeWarning,
                     destination: .pomodoro
                 )
             }
@@ -307,7 +375,7 @@ struct MoreView: View {
                         icon: "heart.fill",
                         title: "Favorites",
                         count: quoteService.favorites.count,
-                        color: .red
+                        color: Color.themeError
                     )
                 }
                 
@@ -319,7 +387,7 @@ struct MoreView: View {
                         icon: "square.grid.2x2",
                         title: "Categories",
                         count: quoteService.getAllCategories().count,
-                        color: .purple
+                        color: Color.themeSecondary
                     )
                 }
             }
@@ -337,15 +405,15 @@ struct MoreView: View {
                     // Icon with background
                     Image(systemName: "bell.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.white)
+                        .foregroundColor(Color.themeText)
                         .frame(width: 18, height: 18)
                         .padding(8)
-                        .background(Color.blue.opacity(0.15))
+                        .background(Color.themePrimary.opacity(0.15))
                         .clipShape(Circle())
                     
                     Text("Daily Quote Reminder")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundColor(Color.themeText)
                     
                     Spacer()
                     
@@ -360,7 +428,7 @@ struct MoreView: View {
                             }
                         }
                     ))
-                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+                    .toggleStyle(SwitchToggleStyle(tint: Color.themePrimary))
                 }
                 .padding(.vertical, 14)
                 .padding(.horizontal, 16)
@@ -368,22 +436,22 @@ struct MoreView: View {
                 // Show reminder time picker when notifications are enabled
                 if notificationManager.isNotificationsEnabled {
                     Divider()
-                        .background(Color.white.opacity(0.1))
+                        .background(Color.themeDivider)
                         .padding(.horizontal, 16)
                     
                     HStack {
                         // Icon with background
                         Image(systemName: "clock.fill")
                             .font(.system(size: 16))
-                            .foregroundColor(.blue)
+                            .foregroundColor(Color.themePrimary)
                             .frame(width: 18, height: 18)
                             .padding(8)
-                            .background(Color.blue.opacity(0.15))
+                            .background(Color.themePrimary.opacity(0.15))
                             .clipShape(Circle())
                         
                         Text("Reminder Time")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.themeText)
                         
                         Spacer()
                         
@@ -391,7 +459,7 @@ struct MoreView: View {
                         DatePicker("", selection: $notificationManager.reminderTime, displayedComponents: .hourAndMinute)
                             .labelsHidden()
                             .frame(width: 100)
-                            .colorScheme(.dark)
+                            .colorScheme(themeManager.currentTheme.isDark ? .dark : .light)
                             .onChange(of: notificationManager.reminderTime) { oldValue, newValue in
                                 notificationManager.updateReminderTime(newValue)
                             }
@@ -401,13 +469,13 @@ struct MoreView: View {
                 }
                 
                 Divider()
-                    .background(Color.white.opacity(0.1))
+                    .background(Color.themeDivider)
                     .padding(.horizontal, 16)
                 
                 // Widget Guide option
                 OptionRow(
                     icon: "square.grid.2x2",
-                    iconColor: .purple,
+                    iconColor: Color.themeSecondary,
                     title: "Widget Guide",
                     action: { showingWidgetGuide.toggle() }
                 )
@@ -425,66 +493,66 @@ struct MoreView: View {
                 // About
                 OptionRow(
                     icon: "info.circle",
-                    iconColor: .blue,
+                    iconColor: Color.themePrimary,
                     title: "About",
                     action: { showingAbout.toggle() }
                 )
                 .padding(.horizontal, 16)
                 
                 Divider()
-                    .background(Color.white.opacity(0.1))
+                    .background(Color.themeDivider)
                     .padding(.horizontal, 16)
                 
                 // Privacy Policy
                 OptionRow(
                     icon: "lock.shield",
-                    iconColor: .teal,
+                    iconColor: Color.themeSecondary,
                     title: "Privacy Policy",
                     action: { showingPrivacyPolicy.toggle() }
                 )
                 .padding(.horizontal, 16)
                 
                 Divider()
-                    .background(Color.white.opacity(0.1))
+                    .background(Color.themeDivider)
                     .padding(.horizontal, 16)
                 
                 // Terms of Service
                 OptionRow(
                     icon: "doc.text",
-                    iconColor: .gray,
+                    iconColor: Color.themeSecondaryText,
                     title: "Terms of Service",
                     action: { showingTerms.toggle() }
                 )
                 .padding(.horizontal, 16)
                 
                 Divider()
-                    .background(Color.white.opacity(0.1))
+                    .background(Color.themeDivider)
                     .padding(.horizontal, 16)
                 
                 // Send Feedback
                 OptionRow(
                     icon: "envelope",
-                    iconColor: .green,
+                    iconColor: Color.themeSuccess,
                     title: "Send Feedback",
                     action: { showingFeedback.toggle() }
                 )
                 .padding(.horizontal, 16)
                 
                 Divider()
-                    .background(Color.white.opacity(0.1))
+                    .background(Color.themeDivider)
                     .padding(.horizontal, 16)
                 
                 // Share App
                 OptionRow(
                     icon: "square.and.arrow.up",
-                    iconColor: .blue,
+                    iconColor: Color.themePrimary,
                     title: "Share App",
                     action: { showingShare.toggle() }
                 )
                 .padding(.horizontal, 16)
                 
                 Divider()
-                    .background(Color.white.opacity(0.1))
+                    .background(Color.themeDivider)
                     .padding(.horizontal, 16)
                 
                 // Clear cache button with red text
@@ -495,15 +563,15 @@ struct MoreView: View {
                         // Icon with background
                         Image(systemName: "trash")
                             .font(.system(size: 16))
-                            .foregroundColor(.red)
+                            .foregroundColor(Color.themeError)
                             .frame(width: 18, height: 18)
                             .padding(8)
-                            .background(Color.red.opacity(0.15))
+                            .background(Color.themeError.opacity(0.15))
                             .clipShape(Circle())
                         
                         Text("Clear Cache")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.red)
+                            .foregroundColor(Color.themeError)
                         
                         Spacer()
                     }
@@ -520,20 +588,20 @@ struct MoreView: View {
             // App logo
             Image(systemName: "quote.bubble.fill")
                 .font(.system(size: 30))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(Color.themeText.opacity(0.5))
                 .padding(.bottom, 8)
             
             Text("Motii")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(Color.themeText)
             
             Text("Version 1.1.1")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(Color.themeText.opacity(0.5))
             
             Text("© 2025 Motii Team")
                 .font(.caption2)
-                .foregroundColor(.white.opacity(0.3))
+                .foregroundColor(Color.themeText.opacity(0.3))
                 .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
@@ -547,7 +615,7 @@ struct MoreView: View {
         Text(title)
             .font(.caption)
             .fontWeight(.semibold)
-            .foregroundColor(.white.opacity(0.6))
+            .foregroundColor(Color.themeText.opacity(0.6))
             .tracking(2)
     }
     
@@ -563,7 +631,7 @@ struct MoreView: View {
             VStack(spacing: 0) {
                 content
             }
-            .background(Color.white.opacity(0.05))
+            .background(Color.themeCardBackground)
             .cornerRadius(16)
         }
     }
@@ -589,12 +657,12 @@ struct MoreView: View {
                     HStack {
                         Text(title)
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.themeText)
                         
                         Text("NEW")
                             .font(.caption2)
                             .fontWeight(.bold)
-                            .foregroundColor(.black)
+                            .foregroundColor(themeManager.currentTheme.isDark ? .black : .white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(color)
@@ -603,7 +671,7 @@ struct MoreView: View {
                     
                     Text(description)
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color.themeSecondaryText)
                         .lineLimit(2)
                 }
                 
@@ -611,10 +679,10 @@ struct MoreView: View {
                 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14))
-                    .foregroundColor(.gray)
+                    .foregroundColor(Color.themeSecondaryText)
             }
             .padding(16)
-            .background(Color.white.opacity(0.05))
+            .background(Color.themeCardBackground)
             .cornerRadius(12)
         }
     }
@@ -635,15 +703,15 @@ struct MoreView: View {
             
             Text(title)
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(Color.themeText)
             
             Text("\(count)")
                 .font(.system(size: 14))
-                .foregroundColor(.gray)
+                .foregroundColor(Color.themeSecondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
-        .background(Color.white.opacity(0.05))
+        .background(Color.themeCardBackground)
         .cornerRadius(16)
     }
     
@@ -680,13 +748,13 @@ struct MoreView: View {
                     
                     Text(title)
                         .font(.system(size: 16))
-                        .foregroundColor(.white)
+                        .foregroundColor(Color.themeText)
                     
                     Spacer()
                     
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.3))
+                        .foregroundColor(Color.themeText.opacity(0.3))
                 }
                 .padding(.vertical, 14)
             }
@@ -704,11 +772,11 @@ struct MoreView: View {
     private func navigateToFeature(_ destination: FeatureDestination) {
         switch destination {
         case .todo:
-            TabNavigationHelper.shared.switchToTab(3) // Todo tab
+            TabNavigationHelper.shared.switchToTab(2) // Todo tab
         case .mindDump:
-            TabNavigationHelper.shared.switchToTab(2) // Mind Dump tab
+            TabNavigationHelper.shared.switchToTab(1) // Mind Dump tab
         case .pomodoro:
-            TabNavigationHelper.shared.switchToTab(6) // Pomodoro tab (adjust if needed)
+            TabNavigationHelper.shared.switchToTab(3) // Pomodoro tab
         }
     }
     
@@ -758,7 +826,8 @@ struct MoreView: View {
                 defaults.dictionaryRepresentation().keys.forEach { key in
                     // Skip specific keys we want to preserve
                     let keysToPreserve = ["savedFavorites", "savedEvents", "notificationsEnabled", "reminderTime",
-                                          "streak_lastOpenDate", "streak_currentStreak", "streak_longestStreak", "streak_daysRecord"]
+                                          "streak_lastOpenDate", "streak_currentStreak", "streak_longestStreak", "streak_daysRecord",
+                                          "selectedThemeId"] // Keep theme preference
                     if !keysToPreserve.contains(key) && key.hasPrefix(bundleID) {
                         defaults.removeObject(forKey: key)
                     }
