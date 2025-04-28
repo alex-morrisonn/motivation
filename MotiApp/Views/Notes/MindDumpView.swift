@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// Main view for the Mind Dump tab - fully rewritten with improved UI
+/// Main view for the Mind Dump tab - fully rewritten with improved UI and theme support
 struct MindDumpView: View {
     // MARK: - Properties
     
     @ObservedObject private var noteService = NoteService.shared
+    @ObservedObject private var themeManager = ThemeManager.shared // Add theme manager
     @State private var searchText = ""
     @State private var selectedNote: Note? = nil
     @State private var showingNewNoteMenu = false
@@ -62,8 +63,8 @@ struct MindDumpView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Background
-                Color.black.edgesIgnoringSafeArea(.all)
+                // Background - use theme background color
+                Color.themeBackground.edgesIgnoringSafeArea(.all)
                 
                 VStack(spacing: 0) {
                     // Main content with notes list and editor
@@ -74,7 +75,7 @@ struct MindDumpView: View {
                                 .frame(width: 320)
                             
                             Divider()
-                                .background(Color.gray.opacity(0.3))
+                                .background(Color.themeDivider)
                             
                             noteEditorOrEmptyState
                         }
@@ -107,7 +108,7 @@ struct MindDumpView: View {
             .sheet(isPresented: $showingNewNote) {
                 NoteEditorView(isNewNote: true, initialType: newNoteType)
                     .environmentObject(noteService)
-                    .accentColor(.white)
+                    .accentColor(Color.themeText)
             }
             .sheet(isPresented: $showingSettings) {
                 settingsMenu
@@ -143,7 +144,7 @@ struct MindDumpView: View {
                                 Image(systemName: "chevron.left")
                                 Text("Notes")
                             }
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.themeText)
                         }
                     }
                 }
@@ -155,7 +156,7 @@ struct MindDumpView: View {
                         }
                     }) {
                         Image(systemName: "ellipsis.circle")
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.themeText)
                     }
                 }
             }
@@ -173,11 +174,11 @@ struct MindDumpView: View {
                 // Search field
                 HStack {
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color.themeSecondaryText)
                         .padding(.leading, 8)
                     
                     TextField("Search notes...", text: $searchText)
-                        .foregroundColor(.white)
+                        .foregroundColor(Color.themeText)
                         .autocapitalization(.none)
                         .autocorrectionDisabled()
                     
@@ -186,13 +187,13 @@ struct MindDumpView: View {
                             searchText = ""
                         }) {
                             Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.gray)
+                                .foregroundColor(Color.themeSecondaryText)
                         }
                         .padding(.trailing, 8)
                     }
                 }
                 .padding(10)
-                .background(Color.gray.opacity(0.15))
+                .background(Color.themeCardBackground.opacity(0.15))
                 .cornerRadius(10)
                 .padding(.horizontal)
                 
@@ -212,11 +213,11 @@ struct MindDumpView: View {
                 }
             }
             .padding(.top, 12)
-            .background(Color.black)
+            .background(Color.themeBackground)
             
             // Divider
             Rectangle()
-                .fill(Color.gray.opacity(0.2))
+                .fill(Color.themeDivider)
                 .frame(height: 1)
             
             // Notes list
@@ -254,7 +255,7 @@ struct MindDumpView: View {
                                 }) {
                                     Label("Delete", systemImage: "trash")
                                 }
-                                .foregroundColor(.red)
+                                .foregroundColor(Color.themeError)
                             }
                         }
                         .padding(.bottom, 4)
@@ -264,7 +265,7 @@ struct MindDumpView: View {
                 }
             }
         }
-        .background(Color.black)
+        .background(Color.themeBackground)
     }
     
     // Note editor or empty state
@@ -296,16 +297,16 @@ struct MindDumpView: View {
                 // No notes at all
                 Image(systemName: "note.text")
                     .font(.system(size: 70))
-                    .foregroundColor(.gray)
+                    .foregroundColor(Color.themeSecondaryText)
                 
                 Text("No Notes Yet")
                     .font(.title2)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.themeText)
                 
                 Text("Tap the + button to create your first note")
                     .font(.body)
-                    .foregroundColor(.gray)
+                    .foregroundColor(Color.themeSecondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
                 
@@ -315,10 +316,10 @@ struct MindDumpView: View {
                 }) {
                     Text("Create Note")
                         .fontWeight(.medium)
-                        .foregroundColor(.black)
+                        .foregroundColor(themeManager.currentTheme.isDark ? Color.themeBackground : Color.themeText)
                         .padding(.horizontal, 24)
                         .padding(.vertical, 12)
-                        .background(Color.white)
+                        .background(Color.themePrimary)
                         .cornerRadius(8)
                 }
                 .padding(.top, 8)
@@ -326,50 +327,50 @@ struct MindDumpView: View {
                 // No pinned notes
                 Image(systemName: "pin")
                     .font(.system(size: 50))
-                    .foregroundColor(.gray)
+                    .foregroundColor(Color.themeSecondaryText)
                 
                 Text("No Pinned Notes")
                     .font(.title3)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.themeText)
                 
                 Text("Pin your important notes to find them quickly")
                     .font(.body)
-                    .foregroundColor(.gray)
+                    .foregroundColor(Color.themeSecondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
             } else if filterMode == .tagged && selectedTag != nil {
                 // No notes with selected tag
                 Image(systemName: "tag")
                     .font(.system(size: 50))
-                    .foregroundColor(.gray)
+                    .foregroundColor(Color.themeSecondaryText)
                 
                 Text("No Notes with #\(selectedTag!)")
                     .font(.title3)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.themeText)
                 
                 Text("Add this tag to notes you want to see here")
                     .font(.body)
-                    .foregroundColor(.gray)
+                    .foregroundColor(Color.themeSecondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
             } else if !searchText.isEmpty {
                 // No search results
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 50))
-                    .foregroundColor(.gray)
+                    .foregroundColor(Color.themeSecondaryText)
                 
                 Text("No matches for \"\(searchText)\"")
                     .font(.title3)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.themeText)
                 
                 Button(action: {
                     searchText = ""
                 }) {
                     Text("Clear Search")
-                        .foregroundColor(.blue)
+                        .foregroundColor(Color.themePrimary)
                 }
                 .padding(.top, 8)
             }
@@ -377,7 +378,7 @@ struct MindDumpView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black)
+        .background(Color.themeBackground)
     }
     
     // New note floating action button with improved menu
@@ -395,8 +396,8 @@ struct MindDumpView: View {
                 .padding(.horizontal, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.gray.opacity(0.2))
-                    .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 3)
+                    .fill(Color.themeCardBackground.opacity(0.2))
+                    .shadow(color: Color.themeBackground.opacity(0.2), radius: 5, x: 0, y: 3)
                 )
                 .transition(.scale.combined(with: .opacity))
                 .padding(.bottom, 16) // Space between menu and FAB
@@ -413,17 +414,17 @@ struct MindDumpView: View {
                     Circle()
                         .fill(
                             LinearGradient(
-                                gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.8)]),
+                                gradient: Gradient(colors: [Color.themePrimary, Color.themePrimary.opacity(0.8)]),
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                         .frame(width: 60, height: 60)
-                        .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 3)
+                        .shadow(color: Color.themeBackground.opacity(0.3), radius: 5, x: 0, y: 3)
                     
                     Image(systemName: showingNewNoteMenu ? "xmark" : "plus")
                         .font(.system(size: 24, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundColor(Color.themeText)
                         .rotationEffect(.degrees(animateNewNoteButton ? 45 : 0))
                 }
             }
@@ -446,19 +447,19 @@ struct MindDumpView: View {
             HStack(spacing: 10) {  // Reduced spacing
                 Text(label)
                     .font(.subheadline)
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.themeText)
                     .frame(width: 80, alignment: .leading)  // Fixed width
                 
                 Image(systemName: icon)
                     .font(.system(size: 16))
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.themeText)
                     .frame(width: 32, height: 32)  // Fixed dimensions
-                    .background(Color.blue.opacity(0.3))
+                    .background(Color.themePrimary.opacity(0.3))
                     .clipShape(Circle())
             }
             .padding(.vertical, 8)  // Reduced vertical padding
             .padding(.horizontal, 12)  // Reduced horizontal padding
-            .background(Color.gray.opacity(0.2))
+            .background(Color.themeCardBackground.opacity(0.2))
             .cornerRadius(16)
         }
     }
@@ -474,13 +475,13 @@ struct MindDumpView: View {
             Text(title)
                 .font(.subheadline)
                 .fontWeight(filterMode == mode ? .medium : .regular)
-                .foregroundColor(filterMode == mode ? .white : .gray)
+                .foregroundColor(filterMode == mode ? Color.themeText : Color.themeSecondaryText)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(
                     filterMode == mode ?
-                        Color.blue.opacity(0.3) :
-                        Color.gray.opacity(0.15)
+                        Color.themePrimary.opacity(0.3) :
+                        Color.themeCardBackground.opacity(0.15)
                 )
                 .cornerRadius(16)
         }
@@ -501,13 +502,13 @@ struct MindDumpView: View {
                 Text(tag)
                     .font(.subheadline)
             }
-            .foregroundColor(selectedTag == tag ? .white : .gray)
+            .foregroundColor(selectedTag == tag ? Color.themeText : Color.themeSecondaryText)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(
                 selectedTag == tag ?
-                    Color.blue.opacity(0.3) :
-                    Color.gray.opacity(0.15)
+                    Color.themePrimary.opacity(0.3) :
+                    Color.themeCardBackground.opacity(0.15)
             )
             .cornerRadius(16)
         }
@@ -524,7 +525,7 @@ struct MindDumpView: View {
                     }) {
                         HStack {
                             Image(systemName: "arrow.triangle.2.circlepath")
-                                .foregroundColor(.blue)
+                                .foregroundColor(Color.themePrimary)
                             Text("Backup & Restore")
                         }
                     }
@@ -535,7 +536,7 @@ struct MindDumpView: View {
                     }) {
                         HStack {
                             Image(systemName: "tag")
-                                .foregroundColor(.blue)
+                                .foregroundColor(Color.themePrimary)
                             Text("Manage Tags")
                         }
                     }
@@ -548,7 +549,7 @@ struct MindDumpView: View {
                         }) {
                             HStack {
                                 Image(systemName: option.icon)
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(Color.themePrimary)
                                 
                                 Text(option.description)
                                 
@@ -556,7 +557,7 @@ struct MindDumpView: View {
                                 
                                 if sortOption == option {
                                     Image(systemName: "checkmark")
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(Color.themePrimary)
                                 }
                             }
                         }
@@ -570,9 +571,9 @@ struct MindDumpView: View {
                     }) {
                         HStack {
                             Image(systemName: "trash")
-                                .foregroundColor(.red)
+                                .foregroundColor(Color.themeError)
                             Text("Delete All Notes")
-                                .foregroundColor(.red)
+                                .foregroundColor(Color.themeError)
                         }
                     }
                 }
@@ -588,7 +589,7 @@ struct MindDumpView: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(themeManager.currentTheme.isDark ? .dark : .light)
     }
     
     // MARK: - Helper Methods
@@ -633,11 +634,12 @@ struct MindDumpView: View {
 
 // MARK: - Supporting Views
 
-/// Redesigned note card with cleaner layout
+/// Redesigned note card with cleaner layout and theme support
 struct NoteCard: View {
     let note: Note
     let isSelected: Bool
     let onSelect: () -> Void
+    @ObservedObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         Button(action: onSelect) {
@@ -647,12 +649,12 @@ struct NoteCard: View {
                     if !note.title.isEmpty {
                         Text(note.title)
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.themeText)
                             .lineLimit(1)
                     } else {
                         Text("Untitled Note")
                             .font(.headline)
-                            .foregroundColor(.gray)
+                            .foregroundColor(Color.themeSecondaryText)
                             .lineLimit(1)
                     }
                     
@@ -661,14 +663,14 @@ struct NoteCard: View {
                     if note.isPinned {
                         Image(systemName: "pin.fill")
                             .font(.caption)
-                            .foregroundColor(.yellow)
+                            .foregroundColor(Color.themeWarning)
                     }
                 }
                 
                 // Preview content
                 Text(note.getContentPreview(maxLength: 120))
                     .font(.subheadline)
-                    .foregroundColor(.gray)
+                    .foregroundColor(Color.themeSecondaryText)
                     .lineLimit(2)
                 
                 // Bottom row with metadata
@@ -676,14 +678,14 @@ struct NoteCard: View {
                     // Note type
                     Label(note.type.rawValue, systemImage: note.type.iconName)
                         .font(.caption2)
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color.themeSecondaryText)
                     
                     Spacer()
                     
                     // Date
                     Text(note.formattedDate)
                         .font(.caption2)
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color.themeSecondaryText)
                 }
                 
                 // Tags (if any)
@@ -693,24 +695,24 @@ struct NoteCard: View {
                             ForEach(note.tags.prefix(3), id: \.self) { tag in
                                 Text("#\(tag)")
                                     .font(.caption)
-                                    .foregroundColor(.blue.opacity(0.8))
+                                    .foregroundColor(Color.themePrimary.opacity(0.8))
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
-                                    .background(Color.blue.opacity(0.1))
+                                    .background(Color.themePrimary.opacity(0.1))
                                     .cornerRadius(4)
                             }
                             
                             if note.tags.count > 3 {
                                 Text("+\(note.tags.count - 3)")
                                     .font(.caption)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(Color.themeSecondaryText)
                             }
                         }
                     }
                 }
             }
             .padding(16)
-            .background(isSelected ? Color.blue.opacity(0.15) : Color.gray.opacity(0.1))
+            .background(isSelected ? Color.themePrimary.opacity(0.15) : Color.themeCardBackground.opacity(0.1))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)

@@ -135,6 +135,9 @@ class ThemeManager: ObservableObject {
     // Key for storing theme preference
     private let themeKey = "selectedThemeId"
     
+    // Notification name for theme changes
+    static let themeChangedNotification = NSNotification.Name("ThemeChanged")
+    
     // Singleton instance
     static let shared = ThemeManager()
     
@@ -153,6 +156,11 @@ class ThemeManager: ObservableObject {
     func setTheme(_ theme: AppTheme) {
         self.currentTheme = theme
         UserDefaults.standard.set(theme.id, forKey: themeKey)
+        
+        // Post notification for theme change - IMPORTANT for UI updates
+        NotificationCenter.default.post(name: ThemeManager.themeChangedNotification, object: nil)
+        
+        print("Theme changed to: \(theme.name)")
     }
     
     /// Get all available themes

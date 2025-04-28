@@ -30,32 +30,6 @@ struct ContentView: View {
     // Add observer for tab selection changes
     @State private var tabNavigationCancellable: NSObjectProtocol? = nil
     
-    // MARK: - Initialization
-    
-    init() {
-        // Ensure proper appearance for tab bar based on theme
-        let appearance = UITabBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        
-        // The background color will now be determined by the theme
-        let theme = ThemeManager.shared.currentTheme
-        appearance.backgroundColor = UIColor(theme.background)
-        
-        // Set the tab bar appearance for all states
-        UITabBar.appearance().standardAppearance = appearance
-        
-        // For iOS 15+ we need to set scrollEdgeAppearance as well
-        if #available(iOS 15.0, *) {
-            UITabBar.appearance().scrollEdgeAppearance = appearance
-        }
-        
-        // Increase contrast for unselected tab items for better visibility
-        appearance.stackedLayoutAppearance.normal.iconColor = theme.isDark ? UIColor.lightGray : UIColor.darkGray
-        appearance.stackedLayoutAppearance.normal.titleTextAttributes = [NSAttributedString.Key.foregroundColor: theme.isDark ? UIColor.lightGray : UIColor.darkGray]
-        
-        print("Tab bar appearance configured with theme background")
-    }
-    
     // MARK: - Body
     
     var body: some View {
@@ -106,7 +80,7 @@ struct ContentView: View {
                     .tag(4)
                     .trackNavigationForAds()
             }
-            .accentColor(Color.themePrimary) // Use theme primary color instead of hard-coded .white
+            .accentColor(Color.themePrimary) // Use theme primary color for accent
             
             // Banner ad at the top - non-intrusive
             if !adManager.isPremiumUser {
@@ -147,16 +121,6 @@ struct ContentView: View {
                         self.selectedTab = newTab
                     }
                 }
-            }
-            
-            // Add observer for theme changes to update UI components
-            NotificationCenter.default.addObserver(
-                forName: NSNotification.Name("ThemeChanged"),
-                object: nil,
-                queue: .main
-            ) { _ in
-                // Update UI for theme changes
-                updateUIForTheme()
             }
         }
         .onDisappear {
@@ -221,25 +185,6 @@ struct ContentView: View {
     }
     
     // MARK: - Helper Methods
-    
-    /// Update UI components for theme changes
-    private func updateUIForTheme() {
-        // Update tab bar appearance for the new theme
-        let theme = themeManager.currentTheme
-        let appearance = UITabBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor(theme.background)
-        
-        // Update tab item colors
-        appearance.stackedLayoutAppearance.normal.iconColor = theme.isDark ? UIColor.lightGray : UIColor.darkGray
-        appearance.stackedLayoutAppearance.normal.titleTextAttributes = [NSAttributedString.Key.foregroundColor: theme.isDark ? UIColor.lightGray : UIColor.darkGray]
-        
-        // Set updated appearance
-        UITabBar.appearance().standardAppearance = appearance
-        if #available(iOS 15.0, *) {
-            UITabBar.appearance().scrollEdgeAppearance = appearance
-        }
-    }
     
     /// Helper to show premium coming soon alert
     private func showPremiumComingSoonAlert() {

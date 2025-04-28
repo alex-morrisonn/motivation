@@ -29,6 +29,7 @@ struct MotiApp: App {
         WindowGroup {
             SplashScreenView()
                 .environmentObject(notificationManager)
+                .withTabBarTheming() // Add this modifier to handle tab bar theme updates
                 .onOpenURL { url in
                     handleDeepLink(url)
                 }
