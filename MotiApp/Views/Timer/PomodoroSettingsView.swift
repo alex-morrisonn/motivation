@@ -6,6 +6,7 @@ struct PomodoroSettingsView: View {
     
     @Environment(\.presentationMode) var presentationMode
     @ObservedObject private var pomodoroManager = PomodoroManager.shared
+    @ObservedObject private var themeManager = ThemeManager.shared // Add theme manager
     
     // Local state for settings
     @State private var workMinutes: Double
@@ -44,8 +45,8 @@ struct PomodoroSettingsView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Background
-                Color.black.edgesIgnoringSafeArea(.all)
+                // Background - use theme background color
+                Color.themeBackground.edgesIgnoringSafeArea(.all)
                 
                 // Content
                 ScrollView {
@@ -55,99 +56,99 @@ struct PomodoroSettingsView: View {
                             Text("TIMER DURATIONS")
                                 .font(.caption)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.white.opacity(0.6))
+                                .foregroundColor(Color.themeText.opacity(0.6))
                                 .tracking(2)
                             
                             // Focus time setting
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Focus Time")
                                     .font(.headline)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Color.themeText)
                                 
                                 HStack {
                                     Text("\(Int(workMinutes)) minutes")
                                         .font(.system(size: 15, weight: .medium))
-                                        .foregroundColor(.red)
+                                        .foregroundColor(Color.themeError)
                                         .frame(width: 100, alignment: .leading)
                                     
                                     Slider(value: $workMinutes, in: 1...60, step: 1)
-                                        .tint(.red)
+                                        .tint(Color.themeError)
                                         .onChange(of: workMinutes) { oldValue, newValue in
                                             pomodoroManager.updateWorkMinutes(Int(newValue))
                                         }
                                 }
                             }
                             .padding()
-                            .background(Color.white.opacity(0.05))
+                            .background(Color.themeCardBackground.opacity(0.5))
                             .cornerRadius(12)
                             
                             // Short break setting
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Short Break")
                                     .font(.headline)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Color.themeText)
                                 
                                 HStack {
                                     Text("\(Int(shortBreakMinutes)) minutes")
                                         .font(.system(size: 15, weight: .medium))
-                                        .foregroundColor(.green)
+                                        .foregroundColor(Color.themeSuccess)
                                         .frame(width: 100, alignment: .leading)
                                     
                                     Slider(value: $shortBreakMinutes, in: 1...30, step: 1)
-                                        .tint(.green)
+                                        .tint(Color.themeSuccess)
                                         .onChange(of: shortBreakMinutes) { oldValue, newValue in
                                             pomodoroManager.updateShortBreakMinutes(Int(newValue))
                                         }
                                 }
                             }
                             .padding()
-                            .background(Color.white.opacity(0.05))
+                            .background(Color.themeCardBackground.opacity(0.5))
                             .cornerRadius(12)
                             
                             // Long break setting
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Long Break")
                                     .font(.headline)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Color.themeText)
                                 
                                 HStack {
                                     Text("\(Int(longBreakMinutes)) minutes")
                                         .font(.system(size: 15, weight: .medium))
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(Color.themeAccent)
                                         .frame(width: 100, alignment: .leading)
                                     
                                     Slider(value: $longBreakMinutes, in: 1...60, step: 1)
-                                        .tint(.blue)
+                                        .tint(Color.themeAccent)
                                         .onChange(of: longBreakMinutes) { oldValue, newValue in
                                             pomodoroManager.updateLongBreakMinutes(Int(newValue))
                                         }
                                 }
                             }
                             .padding()
-                            .background(Color.white.opacity(0.05))
+                            .background(Color.themeCardBackground.opacity(0.5))
                             .cornerRadius(12)
                             
                             // Sessions before long break
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Sessions Before Long Break")
                                     .font(.headline)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Color.themeText)
                                 
                                 HStack {
                                     Text("\(Int(sessionsBeforeLongBreak)) sessions")
                                         .font(.system(size: 15, weight: .medium))
-                                        .foregroundColor(.purple)
+                                        .foregroundColor(Color.themePrimary)
                                         .frame(width: 100, alignment: .leading)
                                     
                                     Slider(value: $sessionsBeforeLongBreak, in: 1...8, step: 1)
-                                        .tint(.purple)
+                                        .tint(Color.themePrimary)
                                         .onChange(of: sessionsBeforeLongBreak) { oldValue, newValue in
                                             pomodoroManager.updateSessionsBeforeLongBreak(Int(newValue))
                                         }
                                 }
                             }
                             .padding()
-                            .background(Color.white.opacity(0.05))
+                            .background(Color.themeCardBackground.opacity(0.5))
                             .cornerRadius(12)
                         }
                         .padding(.horizontal)
@@ -157,53 +158,53 @@ struct PomodoroSettingsView: View {
                             Text("NOTIFICATIONS")
                                 .font(.caption)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.white.opacity(0.6))
+                                .foregroundColor(Color.themeText.opacity(0.6))
                                 .tracking(2)
                             
                             // Sound toggle
                             HStack {
                                 Image(systemName: "speaker.wave.2")
                                     .font(.system(size: 18))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Color.themeText)
                                     .frame(width: 26)
                                 
                                 Text("Sound Notifications")
                                     .font(.headline)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Color.themeText)
                                 
                                 Spacer()
                                 
                                 Toggle("", isOn: $soundEnabled)
-                                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+                                    .toggleStyle(SwitchToggleStyle(tint: Color.themePrimary))
                                     .onChange(of: soundEnabled) { oldValue, newValue in
                                         pomodoroManager.updateSoundEnabled(newValue)
                                     }
                             }
                             .padding()
-                            .background(Color.white.opacity(0.05))
+                            .background(Color.themeCardBackground.opacity(0.5))
                             .cornerRadius(12)
                             
                             // Vibration toggle
                             HStack {
                                 Image(systemName: "iphone.radiowaves.left.and.right")
                                     .font(.system(size: 18))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Color.themeText)
                                     .frame(width: 26)
                                 
                                 Text("Vibration")
                                     .font(.headline)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Color.themeText)
                                 
                                 Spacer()
                                 
                                 Toggle("", isOn: $vibrationEnabled)
-                                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+                                    .toggleStyle(SwitchToggleStyle(tint: Color.themePrimary))
                                     .onChange(of: vibrationEnabled) { oldValue, newValue in
                                         pomodoroManager.updateVibrationEnabled(newValue)
                                     }
                             }
                             .padding()
-                            .background(Color.white.opacity(0.05))
+                            .background(Color.themeCardBackground.opacity(0.5))
                             .cornerRadius(12)
                         }
                         .padding(.horizontal)
@@ -213,30 +214,30 @@ struct PomodoroSettingsView: View {
                             Text("BEHAVIOR")
                                 .font(.caption)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.white.opacity(0.6))
+                                .foregroundColor(Color.themeText.opacity(0.6))
                                 .tracking(2)
                             
                             // Auto-start toggle
                             HStack {
                                 Image(systemName: "timer")
                                     .font(.system(size: 18))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Color.themeText)
                                     .frame(width: 26)
                                 
                                 Text("Auto-start Next Session")
                                     .font(.headline)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Color.themeText)
                                 
                                 Spacer()
                                 
                                 Toggle("", isOn: $autoStartNextSession)
-                                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+                                    .toggleStyle(SwitchToggleStyle(tint: Color.themePrimary))
                                     .onChange(of: autoStartNextSession) { oldValue, newValue in
                                         pomodoroManager.updateAutoStartNextSession(newValue)
                                     }
                             }
                             .padding()
-                            .background(Color.white.opacity(0.05))
+                            .background(Color.themeCardBackground.opacity(0.5))
                             .cornerRadius(12)
                         }
                         .padding(.horizontal)
@@ -249,10 +250,10 @@ struct PomodoroSettingsView: View {
                                 Image(systemName: "arrow.triangle.2.circlepath")
                                 Text("Reset to Defaults")
                             }
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.themeText)
                             .padding()
                             .frame(maxWidth: .infinity)
-                            .background(Color.red.opacity(0.2))
+                            .background(Color.themeError.opacity(0.2))
                             .cornerRadius(12)
                         }
                         .padding(.horizontal)
@@ -262,15 +263,15 @@ struct PomodoroSettingsView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("About the Pomodoro Technique")
                                 .font(.headline)
-                                .foregroundColor(.white)
+                                .foregroundColor(Color.themeText)
                             
                             Text("The Pomodoro Technique is a time management method that uses a timer to break work into intervals, traditionally 25 minutes in length, separated by short breaks. These intervals are called \"pomodoros\". After a set of pomodoros, take a longer break to recharge.")
                                 .font(.subheadline)
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundColor(Color.themeSecondaryText)
                                 .lineSpacing(4)
                         }
                         .padding()
-                        .background(Color.white.opacity(0.05))
+                        .background(Color.themeCardBackground.opacity(0.5))
                         .cornerRadius(12)
                         .padding(.horizontal)
                         
@@ -286,9 +287,11 @@ struct PomodoroSettingsView: View {
                     Button("Done") {
                         presentationMode.wrappedValue.dismiss()
                     }
+                    .foregroundColor(Color.themePrimary)
                 }
             }
         }
+        .preferredColorScheme(themeManager.currentTheme.isDark ? .dark : .light)
     }
     
     // MARK: - Helper Methods

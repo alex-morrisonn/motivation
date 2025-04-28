@@ -7,6 +7,7 @@ struct PomodoroTimerView: View {
     
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var pomodoroManager = PomodoroManager.shared
+    @ObservedObject private var themeManager = ThemeManager.shared // Add theme manager
     
     // Local UI state
     @State private var showingSettings = false
@@ -23,11 +24,11 @@ struct PomodoroTimerView: View {
     private var timerColor: Color {
         switch pomodoroManager.mode {
         case .work:
-            return .red
+            return Color.themeError // Use theme error color for work mode
         case .shortBreak:
-            return .green
+            return Color.themeSuccess // Use theme success color for short breaks
         case .longBreak:
-            return .blue
+            return Color.themeAccent // Use theme accent color for long breaks
         }
     }
     
@@ -47,8 +48,8 @@ struct PomodoroTimerView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Background
-                Color.black.edgesIgnoringSafeArea(.all)
+                // Background - use theme background color
+                Color.themeBackground.edgesIgnoringSafeArea(.all)
                 
                 // Main content with proper safe area insets
                 VStack(spacing: 10) {
@@ -57,7 +58,7 @@ struct PomodoroTimerView: View {
                         // Mode title indicator with improved visibility
                         Text(modeTitle)
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.themeText)
                             .padding(.vertical, 10)
                             .padding(.horizontal, 20)
                             .background(
@@ -76,12 +77,12 @@ struct PomodoroTimerView: View {
                             showingSettings = true
                         }) {
                             Image(systemName: "gear")
-                                .foregroundColor(.white)
+                                .foregroundColor(Color.themeText)
                                 .font(.system(size: 16))
                                 .padding(8)
                                 .background(
                                     Circle()
-                                        .fill(Color.white.opacity(0.1))
+                                        .fill(Color.themeText.opacity(0.1))
                                 )
                         }
                     }
@@ -112,21 +113,21 @@ struct PomodoroTimerView: View {
                         VStack {
                             Text(pomodoroManager.timeString)
                                 .font(.system(size: 70, weight: .bold, design: .rounded))
-                                .foregroundColor(.white)
+                                .foregroundColor(Color.themeText)
                                 .scaleEffect(animationAmount) // Breathing animation only on the timer text
                             
                             if pomodoroManager.isRunning {
                                 Text("In progress")
                                     .font(.subheadline)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(Color.themeSecondaryText)
                             } else if pomodoroManager.isReset {
                                 Text("Ready to focus")
                                     .font(.subheadline)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(Color.themeSecondaryText)
                             } else {
                                 Text("Timer paused")
                                     .font(.subheadline)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(Color.themeSecondaryText)
                             }
                         }
                     }
@@ -149,12 +150,12 @@ struct PomodoroTimerView: View {
                         
                         Text(modeInfo.title)
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.themeText)
                             .padding(.top, 4)
                         
                         Text(modeInfo.description)
                             .font(.system(size: 13))
-                            .foregroundColor(.gray)
+                            .foregroundColor(Color.themeSecondaryText)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 16)
                             .padding(.bottom, 4)
@@ -163,10 +164,10 @@ struct PomodoroTimerView: View {
                     .frame(maxWidth: .infinity)
                     .background(
                         RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.white.opacity(0.05))
+                            .fill(Color.themeCardBackground.opacity(0.5))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                    .stroke(Color.themeDivider, lineWidth: 1)
                             )
                     )
                     
@@ -179,14 +180,14 @@ struct PomodoroTimerView: View {
                         }) {
                             Image(systemName: "arrow.counterclockwise")
                                 .font(.system(size: 24))
-                                .foregroundColor(.white)
+                                .foregroundColor(Color.themeText)
                                 .padding(20)
                                 .background(
                                     Circle()
-                                        .fill(Color.white.opacity(0.1))
+                                        .fill(Color.themeCardBackground)
                                         .overlay(
                                             Circle()
-                                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                                .stroke(Color.themeDivider, lineWidth: 1)
                                         )
                                 )
                         }
@@ -202,7 +203,7 @@ struct PomodoroTimerView: View {
                         }) {
                             Image(systemName: pomodoroManager.isRunning ? "pause.fill" : "play.fill")
                                 .font(.system(size: 24))
-                                .foregroundColor(.black)
+                                .foregroundColor(themeManager.currentTheme.isDark ? Color.themeBackground : Color.themeText)
                                 .padding(24)
                                 .background(
                                     Circle()
@@ -218,14 +219,14 @@ struct PomodoroTimerView: View {
                         }) {
                             Image(systemName: "forward.fill")
                                 .font(.system(size: 24))
-                                .foregroundColor(.white)
+                                .foregroundColor(Color.themeText)
                                 .padding(20)
                                 .background(
                                     Circle()
-                                        .fill(Color.white.opacity(0.1))
+                                        .fill(Color.themeCardBackground)
                                         .overlay(
                                             Circle()
-                                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                                .stroke(Color.themeDivider, lineWidth: 1)
                                         )
                                 )
                         }
@@ -237,14 +238,14 @@ struct PomodoroTimerView: View {
                         VStack(spacing: 4) {
                             Text(quote.text)
                                 .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.white.opacity(0.9))
+                                .foregroundColor(Color.themeText.opacity(0.9))
                                 .multilineTextAlignment(.center)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .lineLimit(2)
                             
                             Text("— \(quote.author)")
                                 .font(.system(size: 13))
-                                .foregroundColor(.gray)
+                                .foregroundColor(Color.themeSecondaryText)
                         }
                         .padding(.horizontal, 30)
                         .padding(.top, 10)
