@@ -1,38 +1,49 @@
 import SwiftUI
 
-/// Main view for the Mind Dump tab - fully rewritten with improved UI and theme support
+/// Main view for the Mind Dump tab - redesigned for simplicity and intuitive use
 struct MindDumpView: View {
     // MARK: - Properties
     
     @ObservedObject private var noteService = NoteService.shared
-    @ObservedObject private var themeManager = ThemeManager.shared // Add theme manager
+    @ObservedObject private var themeManager = ThemeManager.shared
     @State private var searchText = ""
     @State private var selectedNote: Note? = nil
     @State private var showingNewNoteMenu = false
-    @State private var showingNewNote = false
-    @State private var showingSettings = false
-    @State private var showingTagManager = false
-    @State private var showingBackupOptions = false
-    @State private var showingDeleteConfirmation = false
-    @State private var newNoteType: Note.NoteType = .basic
+    @State private var isCreatingNote = false
+    @State private var newNoteType: NoteType = .basic
     @State private var sortOption: SortOption = .lastEdited
-    @State private var filterMode: FilterMode = .all
-    @State private var selectedTag: String? = nil
-    @State private var animateNewNoteButton = false
+    @State private var filterTag: String? = nil
+    @State private var showingSettings = false
+    
+    // Animation states
+    @State private var menuOffset: CGFloat = 200
+    @State private var fabRotation: Double = 0
     
     // For environment adaptations
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    @Environment(\.colorScheme) private var colorScheme
     
-    // Enum for filtering options
-    enum FilterMode {
-        case all, pinned, tagged
+    // Simplified note types
+    enum NoteType {
+        case basic, sketch
         
         var title: String {
             switch self {
-            case .all: return "All Notes"
-            case .pinned: return "Pinned"
-            case .tagged: return "Tags"
+            case .basic: return "Note"
+            case .sketch: return "Sketch"
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .basic: return "note.text"
+            case .sketch: return "scribble"
+            }
+        }
+        
+        var modelType: Note.NoteType {
+            switch self {
+            case .basic: return .basic
+            case .sketch: return .sketch
             }
         }
     }
@@ -48,14 +59,6 @@ struct MindDumpView: View {
             case .created: return "Created Date"
             }
         }
-        
-        var icon: String {
-            switch self {
-            case .lastEdited: return "clock"
-            case .title: return "textformat.abc"
-            case .created: return "calendar"
-            }
-        }
     }
     
     // MARK: - Body
@@ -67,7 +70,7 @@ struct MindDumpView: View {
                 Color.themeBackground.edgesIgnoringSafeArea(.all)
                 
                 VStack(spacing: 0) {
-                    // Main content with notes list and editor
+                    // Notes list or selected note
                     if horizontalSizeClass == .regular {
                         // For iPads - side-by-side layout
                         HStack(spacing: 0) {
@@ -89,6 +92,31 @@ struct MindDumpView: View {
                     }
                 }
                 
+                // Floating menu for new note types
+                if showingNewNoteMenu {
+                    Color.black.opacity(0.4)
+                        .edgesIgnoringSafeArea(.all)
+                        .onTapGesture {
+                            hideNewNoteMenu()
+                        }
+                    
+                    VStack {
+                        Spacer()
+                        
+                        VStack(spacing: 16) {
+                            newNoteTypeButton(type: .basic)
+                            newNoteTypeButton(type: .sketch)
+                        }
+                        .padding(.vertical, 20)
+                        .padding(.horizontal, 24)
+                        .background(Color.themeCardBackground)
+                        .cornerRadius(16)
+                        .shadow(color: Color.black.opacity(0.2), radius: 15)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 80) // Space for the FAB
+                    }
+                }
+                
                 // New note FAB (Floating Action Button)
                 if selectedNote == nil || horizontalSizeClass == .regular {
                     VStack {
@@ -97,40 +125,39 @@ struct MindDumpView: View {
                         HStack {
                             Spacer()
                             
-                            newNoteButton
+                            Button(action: toggleNewNoteMenu) {
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [Color.themePrimary, Color.themePrimary.opacity(0.8)]),
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 60, height: 60)
+                                        .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
+                                    
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 24, weight: .medium))
+                                        .foregroundColor(.white)
+                                        .rotationEffect(.degrees(fabRotation))
+                                }
+                            }
+                            .padding(.trailing, 24)
+                            .padding(.bottom, 24)
                         }
-                        .padding(.trailing, 24)
-                        .padding(.bottom, 24)
                     }
                     .ignoresSafeArea(.keyboard)
                 }
             }
-            .sheet(isPresented: $showingNewNote) {
-                NoteEditorView(isNewNote: true, initialType: newNoteType)
+            .sheet(isPresented: $isCreatingNote) {
+                NoteEditorView(isNewNote: true, initialType: newNoteType.modelType)
                     .environmentObject(noteService)
-                    .accentColor(Color.themeText)
+                    .accentColor(Color.themePrimary)
             }
             .sheet(isPresented: $showingSettings) {
-                settingsMenu
-            }
-            .sheet(isPresented: $showingTagManager) {
-                TagManagementView()
-            }
-            .sheet(isPresented: $showingBackupOptions) {
-                NotesBackupView()
-            }
-            .onChange(of: selectedNote) { oldValue, newValue in
-                // Hide new note menu if note selection changes
-                showingNewNoteMenu = false
-            }
-            .alert("Delete All Notes", isPresented: $showingDeleteConfirmation) {
-                Button("Cancel", role: .cancel) { }
-                Button("Delete All", role: .destructive) {
-                    noteService.deleteAllNotes()
-                    selectedNote = nil
-                }
-            } message: {
-                Text("Are you sure you want to delete all notes? This action cannot be undone.")
+                NoteSettingsView()
             }
             .navigationTitle("Mind Dump")
             .navigationBarTitleDisplayMode(.inline)
@@ -150,13 +177,22 @@ struct MindDumpView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        withAnimation {
-                            showingSettings = true
+                    HStack(spacing: 16) {
+                        // Search button
+                        Button(action: {
+                            // Show search bar
+                        }) {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(Color.themeText)
                         }
-                    }) {
-                        Image(systemName: "ellipsis.circle")
-                            .foregroundColor(Color.themeText)
+                        
+                        // Settings button
+                        Button(action: {
+                            showingSettings = true
+                        }) {
+                            Image(systemName: "slider.horizontal.3")
+                                .foregroundColor(Color.themeText)
+                        }
                     }
                 }
             }
@@ -169,13 +205,13 @@ struct MindDumpView: View {
     // Notes list view
     private var notesList: some View {
         VStack(spacing: 0) {
-            // Search bar with filter pills
+            // Search bar with filter tags
             VStack(spacing: 12) {
                 // Search field
                 HStack {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(Color.themeSecondaryText)
-                        .padding(.leading, 8)
+                        .padding(.leading, 12)
                     
                     TextField("Search notes...", text: $searchText)
                         .foregroundColor(Color.themeText)
@@ -189,7 +225,7 @@ struct MindDumpView: View {
                             Image(systemName: "xmark.circle.fill")
                                 .foregroundColor(Color.themeSecondaryText)
                         }
-                        .padding(.trailing, 8)
+                        .padding(.trailing, 12)
                     }
                 }
                 .padding(10)
@@ -197,22 +233,50 @@ struct MindDumpView: View {
                 .cornerRadius(10)
                 .padding(.horizontal)
                 
-                // Filter pills
+                // Tags scroll for filtering
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        filterPill(title: "All", mode: .all)
-                        filterPill(title: "Pinned", mode: .pinned)
+                    HStack(spacing: 12) {
+                        // All notes filter
+                        Button(action: {
+                            filterTag = nil
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "tray.fill")
+                                    .font(.caption)
+                                Text("All")
+                                    .font(.subheadline)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(filterTag == nil ? Color.themePrimary.opacity(0.3) : Color.themeCardBackground.opacity(0.5))
+                            .cornerRadius(20)
+                            .foregroundColor(filterTag == nil ? Color.themeText : Color.themeSecondaryText)
+                        }
                         
-                        // Tags pills
+                        // Tags as filters
                         ForEach(noteService.getAllTags(), id: \.self) { tag in
-                            tagPill(tag: tag)
+                            Button(action: {
+                                filterTag = tag
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "tag.fill")
+                                        .font(.caption)
+                                    Text(tag)
+                                        .font(.subheadline)
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background(filterTag == tag ? Color.themePrimary.opacity(0.3) : Color.themeCardBackground.opacity(0.5))
+                                .cornerRadius(20)
+                                .foregroundColor(filterTag == tag ? Color.themeText : Color.themeSecondaryText)
+                            }
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.bottom, 4)
                 }
             }
             .padding(.top, 12)
+            .padding(.bottom, 8)
             .background(Color.themeBackground)
             
             // Divider
@@ -245,6 +309,28 @@ struct MindDumpView: View {
                                     )
                                 }
                                 
+                                // Add tag menu
+                                Menu {
+                                    // List existing tags
+                                    ForEach(noteService.getAllTags(), id: \.self) { tag in
+                                        Button(action: {
+                                            noteService.addTag(tag, to: note)
+                                        }) {
+                                            Label(tag, systemImage: "tag")
+                                        }
+                                    }
+                                    
+                                    Divider()
+                                    
+                                    Button(action: {
+                                        // Add new tag UI would go here
+                                    }) {
+                                        Label("Add New Tag...", systemImage: "plus")
+                                    }
+                                } label: {
+                                    Label("Add Tag", systemImage: "tag")
+                                }
+                                
                                 Divider()
                                 
                                 Button(action: {
@@ -258,7 +344,6 @@ struct MindDumpView: View {
                                 .foregroundColor(Color.themeError)
                             }
                         }
-                        .padding(.bottom, 4)
                     }
                     .padding(.vertical, 12)
                     .padding(.bottom, 80) // Extra space for FAB
@@ -293,7 +378,52 @@ struct MindDumpView: View {
         VStack(spacing: 24) {
             Spacer()
             
-            if filterMode == .all && searchText.isEmpty && noteService.notes.isEmpty {
+            if filterTag != nil && filteredNotes.isEmpty {
+                // No notes with selected tag
+                Image(systemName: "tag")
+                    .font(.system(size: 60))
+                    .foregroundColor(Color.themeSecondaryText)
+                
+                Text("No Notes with #\(filterTag!)")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(Color.themeText)
+                
+                Text("Notes with this tag will appear here.")
+                    .font(.body)
+                    .foregroundColor(Color.themeSecondaryText)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            } else if !searchText.isEmpty && filteredNotes.isEmpty {
+                // No search results
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 60))
+                    .foregroundColor(Color.themeSecondaryText)
+                
+                Text("No Results")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(Color.themeText)
+                
+                Text("No notes match '\(searchText)'")
+                    .font(.body)
+                    .foregroundColor(Color.themeSecondaryText)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+                
+                Button(action: {
+                    searchText = ""
+                }) {
+                    Text("Clear Search")
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.themePrimary)
+                        .cornerRadius(8)
+                }
+                .padding(.top, 8)
+            } else if noteService.notes.isEmpty {
                 // No notes at all
                 Image(systemName: "note.text")
                     .font(.system(size: 70))
@@ -304,75 +434,66 @@ struct MindDumpView: View {
                     .fontWeight(.bold)
                     .foregroundColor(Color.themeText)
                 
-                Text("Tap the + button to create your first note")
+                Text("Create your first note to get started")
                     .font(.body)
                     .foregroundColor(Color.themeSecondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
                 
-                Button(action: {
-                    newNoteType = .basic
-                    showingNewNote = true
-                }) {
-                    Text("Create Note")
-                        .fontWeight(.medium)
-                        .foregroundColor(themeManager.currentTheme.isDark ? Color.themeBackground : Color.themeText)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(Color.themePrimary)
-                        .cornerRadius(8)
+                HStack(spacing: 16) {
+                    Button(action: {
+                        newNoteType = .basic
+                        isCreatingNote = true
+                    }) {
+                        VStack(spacing: 12) {
+                            Image(systemName: NoteType.basic.icon)
+                                .font(.system(size: 30))
+                                .foregroundColor(.white)
+                                .frame(width: 60, height: 60)
+                                .background(Color.themePrimary)
+                                .cornerRadius(30)
+                            
+                            Text("New Note")
+                                .font(.headline)
+                                .foregroundColor(Color.themeText)
+                        }
+                    }
+                    
+                    Button(action: {
+                        newNoteType = .sketch
+                        isCreatingNote = true
+                    }) {
+                        VStack(spacing: 12) {
+                            Image(systemName: NoteType.sketch.icon)
+                                .font(.system(size: 30))
+                                .foregroundColor(.white)
+                                .frame(width: 60, height: 60)
+                                .background(Color.themePrimary)
+                                .cornerRadius(30)
+                            
+                            Text("New Sketch")
+                                .font(.headline)
+                                .foregroundColor(Color.themeText)
+                        }
+                    }
                 }
-                .padding(.top, 8)
-            } else if filterMode == .pinned {
-                // No pinned notes
-                Image(systemName: "pin")
-                    .font(.system(size: 50))
+                .padding(.top, 24)
+            } else {
+                // Default empty state when a note isn't selected
+                Image(systemName: "square.and.pencil")
+                    .font(.system(size: 60))
                     .foregroundColor(Color.themeSecondaryText)
                 
-                Text("No Pinned Notes")
-                    .font(.title3)
+                Text("Select a Note")
+                    .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(Color.themeText)
                 
-                Text("Pin your important notes to find them quickly")
+                Text("Choose a note from the list or create a new one")
                     .font(.body)
                     .foregroundColor(Color.themeSecondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
-            } else if filterMode == .tagged && selectedTag != nil {
-                // No notes with selected tag
-                Image(systemName: "tag")
-                    .font(.system(size: 50))
-                    .foregroundColor(Color.themeSecondaryText)
-                
-                Text("No Notes with #\(selectedTag!)")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(Color.themeText)
-                
-                Text("Add this tag to notes you want to see here")
-                    .font(.body)
-                    .foregroundColor(Color.themeSecondaryText)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-            } else if !searchText.isEmpty {
-                // No search results
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 50))
-                    .foregroundColor(Color.themeSecondaryText)
-                
-                Text("No matches for \"\(searchText)\"")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(Color.themeText)
-                
-                Button(action: {
-                    searchText = ""
-                }) {
-                    Text("Clear Search")
-                        .foregroundColor(Color.themePrimary)
-                }
-                .padding(.top, 8)
             }
             
             Spacer()
@@ -381,237 +502,84 @@ struct MindDumpView: View {
         .background(Color.themeBackground)
     }
     
-    // New note floating action button with improved menu
-    private var newNoteButton: some View {
-        VStack(spacing: 0) {
-            // Menu options (appear above the FAB)
-            if showingNewNoteMenu {
-                VStack(spacing: 8) {
-                    noteTypeButton(type: .markdown, icon: "text.badge.checkmark", label: "Markdown")
-                    noteTypeButton(type: .bullets, icon: "list.bullet", label: "Bullets")
-                    noteTypeButton(type: .sketch, icon: "pencil.line", label: "Sketch")
-                    noteTypeButton(type: .basic, icon: "text.alignleft", label: "Basic")
-                }
-                .padding(.vertical, 12)
-                .padding(.horizontal, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.themeCardBackground.opacity(0.2))
-                    .shadow(color: Color.themeBackground.opacity(0.2), radius: 5, x: 0, y: 3)
-                )
-                .transition(.scale.combined(with: .opacity))
-                .padding(.bottom, 16) // Space between menu and FAB
-            }
-            
-            // FAB button
-            Button(action: {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    showingNewNoteMenu.toggle()
-                    animateNewNoteButton.toggle()
-                }
-            }) {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.themePrimary, Color.themePrimary.opacity(0.8)]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 60, height: 60)
-                        .shadow(color: Color.themeBackground.opacity(0.3), radius: 5, x: 0, y: 3)
-                    
-                    Image(systemName: showingNewNoteMenu ? "xmark" : "plus")
-                        .font(.system(size: 24, weight: .medium))
-                        .foregroundColor(Color.themeText)
-                        .rotationEffect(.degrees(animateNewNoteButton ? 45 : 0))
-                }
-            }
-            .buttonStyle(ScaleButtonStyle())
-        }
-    }
-    
-    // Button for creating a specific note type
-    private func noteTypeButton(type: Note.NoteType, icon: String, label: String) -> some View {
+    // New note type button
+    private func newNoteTypeButton(type: NoteType) -> some View {
         Button(action: {
             newNoteType = type
-            showingNewNote = true
-            
-            // Close the menu after selection
-            withAnimation {
-                showingNewNoteMenu = false
-                animateNewNoteButton = false
-            }
+            isCreatingNote = true
+            hideNewNoteMenu()
         }) {
-            HStack(spacing: 10) {  // Reduced spacing
-                Text(label)
-                    .font(.subheadline)
-                    .foregroundColor(Color.themeText)
-                    .frame(width: 80, alignment: .leading)  // Fixed width
+            HStack(spacing: 16) {
+                Image(systemName: type.icon)
+                    .font(.system(size: 24))
+                    .foregroundColor(.white)
+                    .frame(width: 50, height: 50)
+                    .background(Color.themePrimary)
+                    .cornerRadius(25)
                 
-                Image(systemName: icon)
-                    .font(.system(size: 16))
-                    .foregroundColor(Color.themeText)
-                    .frame(width: 32, height: 32)  // Fixed dimensions
-                    .background(Color.themePrimary.opacity(0.3))
-                    .clipShape(Circle())
-            }
-            .padding(.vertical, 8)  // Reduced vertical padding
-            .padding(.horizontal, 12)  // Reduced horizontal padding
-            .background(Color.themeCardBackground.opacity(0.2))
-            .cornerRadius(16)
-        }
-    }
-    
-    // Filter pill for filtering notes
-    private func filterPill(title: String, mode: FilterMode) -> some View {
-        Button(action: {
-            withAnimation {
-                filterMode = mode
-                selectedTag = nil
-            }
-        }) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(filterMode == mode ? .medium : .regular)
-                .foregroundColor(filterMode == mode ? Color.themeText : Color.themeSecondaryText)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    filterMode == mode ?
-                        Color.themePrimary.opacity(0.3) :
-                        Color.themeCardBackground.opacity(0.15)
-                )
-                .cornerRadius(16)
-        }
-    }
-    
-    // Tag pill for filtering by tag
-    private func tagPill(tag: String) -> some View {
-        Button(action: {
-            withAnimation {
-                filterMode = .tagged
-                selectedTag = tag
-            }
-        }) {
-            HStack(spacing: 4) {
-                Image(systemName: "tag")
-                    .font(.system(size: 10))
-                
-                Text(tag)
-                    .font(.subheadline)
-            }
-            .foregroundColor(selectedTag == tag ? Color.themeText : Color.themeSecondaryText)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                selectedTag == tag ?
-                    Color.themePrimary.opacity(0.3) :
-                    Color.themeCardBackground.opacity(0.15)
-            )
-            .cornerRadius(16)
-        }
-    }
-    
-    // Settings menu sheet
-    private var settingsMenu: some View {
-        NavigationView {
-            List {
-                Section {
-                    Button(action: {
-                        showingSettings = false
-                        showingBackupOptions = true
-                    }) {
-                        HStack {
-                            Image(systemName: "arrow.triangle.2.circlepath")
-                                .foregroundColor(Color.themePrimary)
-                            Text("Backup & Restore")
-                        }
-                    }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Create \(type.title)")
+                        .font(.headline)
+                        .foregroundColor(Color.themeText)
                     
-                    Button(action: {
-                        showingSettings = false
-                        showingTagManager = true
-                    }) {
-                        HStack {
-                            Image(systemName: "tag")
-                                .foregroundColor(Color.themePrimary)
-                            Text("Manage Tags")
-                        }
-                    }
+                    Text(type == .basic ? "Text, lists, bullet points, etc." : "Draw, sketch, doodle ideas")
+                        .font(.subheadline)
+                        .foregroundColor(Color.themeSecondaryText)
                 }
                 
-                Section(header: Text("Sort Notes")) {
-                    ForEach([SortOption.lastEdited, .title, .created], id: \.self) { option in
-                        Button(action: {
-                            sortOption = option
-                        }) {
-                            HStack {
-                                Image(systemName: option.icon)
-                                    .foregroundColor(Color.themePrimary)
-                                
-                                Text(option.description)
-                                
-                                Spacer()
-                                
-                                if sortOption == option {
-                                    Image(systemName: "checkmark")
-                                        .foregroundColor(Color.themePrimary)
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                Section {
-                    Button(action: {
-                        showingSettings = false
-                        showingDeleteConfirmation = true
-                    }) {
-                        HStack {
-                            Image(systemName: "trash")
-                                .foregroundColor(Color.themeError)
-                            Text("Delete All Notes")
-                                .foregroundColor(Color.themeError)
-                        }
-                    }
-                }
+                Spacer()
             }
-            .listStyle(InsetGroupedListStyle())
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        showingSettings = false
-                    }
-                }
-            }
+            .padding(.vertical, 10)
+            .padding(.horizontal, 16)
+            .background(Color.themeCardBackground.opacity(0.15))
+            .cornerRadius(12)
+            .frame(width: min(UIScreen.main.bounds.width - 48, 400))
         }
-        .preferredColorScheme(themeManager.currentTheme.isDark ? .dark : .light)
     }
     
     // MARK: - Helper Methods
     
-    /// Filter notes based on current filter mode, search text, and selected tag
-    private var filteredNotes: [Note] {
-        var notes: [Note]
-        
-        switch filterMode {
-        case .all:
-            notes = noteService.notes
-        case .pinned:
-            notes = noteService.getPinnedNotes()
-        case .tagged:
-            if let tag = selectedTag {
-                notes = noteService.getNotesByTag(tag)
+    // Toggle new note menu display
+    private func toggleNewNoteMenu() {
+        withAnimation {
+            if showingNewNoteMenu {
+                hideNewNoteMenu()
             } else {
-                notes = noteService.notes
+                showNewNoteMenu()
             }
         }
+    }
+    
+    // Show new note menu
+    private func showNewNoteMenu() {
+        menuOffset = 0
+        fabRotation = 45
+        showingNewNoteMenu = true
+    }
+    
+    // Hide new note menu
+    private func hideNewNoteMenu() {
+        menuOffset = 200
+        fabRotation = 0
         
-        // Apply search filter if search text isn't empty
+        // Slightly delay setting the flag to false to allow animation to complete
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            if menuOffset == 200 { // Only if still hiding
+                showingNewNoteMenu = false
+            }
+        }
+    }
+    
+    // Filter notes based on search text and tags
+    private var filteredNotes: [Note] {
+        var notes = noteService.notes
+        
+        // Apply tag filter if selected
+        if let tag = filterTag {
+            notes = noteService.getNotesByTag(tag)
+        }
+        
+        // Apply search filter if text isn't empty
         if !searchText.isEmpty {
             notes = notes.filter { note in
                 note.title.lowercased().contains(searchText.lowercased()) ||
@@ -620,7 +588,7 @@ struct MindDumpView: View {
             }
         }
         
-        // Apply sorting
+        // Sort notes
         switch sortOption {
         case .lastEdited:
             return notes.sorted { $0.lastEditedDate > $1.lastEditedDate }
@@ -634,36 +602,46 @@ struct MindDumpView: View {
 
 // MARK: - Supporting Views
 
-/// Redesigned note card with cleaner layout and theme support
+/// Redesigned note card with cleaner layout
 struct NoteCard: View {
     let note: Note
     let isSelected: Bool
     let onSelect: () -> Void
-    @ObservedObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         Button(action: onSelect) {
             VStack(alignment: .leading, spacing: 10) {
-                // Title and pin indicator
-                HStack {
-                    if !note.title.isEmpty {
-                        Text(note.title)
+                // Top row with title, type icon and pin
+                HStack(alignment: .top) {
+                    // Title
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(note.title.isEmpty ? "Untitled Note" : note.title)
                             .font(.headline)
                             .foregroundColor(Color.themeText)
                             .lineLimit(1)
-                    } else {
-                        Text("Untitled Note")
-                            .font(.headline)
+                        
+                        // Date
+                        Text(formattedDate)
+                            .font(.caption2)
                             .foregroundColor(Color.themeSecondaryText)
-                            .lineLimit(1)
                     }
                     
                     Spacer()
                     
+                    // Type indicator
+                    Image(systemName: note.type == .sketch ? "scribble" : "doc.text")
+                        .font(.caption)
+                        .foregroundColor(Color.themeSecondaryText)
+                        .padding(6)
+                        .background(Color.themeCardBackground.opacity(0.3))
+                        .cornerRadius(6)
+                    
+                    // Pin indicator if pinned
                     if note.isPinned {
                         Image(systemName: "pin.fill")
                             .font(.caption)
                             .foregroundColor(Color.themeWarning)
+                            .padding(.leading, 4)
                     }
                 }
                 
@@ -673,22 +651,7 @@ struct NoteCard: View {
                     .foregroundColor(Color.themeSecondaryText)
                     .lineLimit(2)
                 
-                // Bottom row with metadata
-                HStack {
-                    // Note type
-                    Label(note.type.rawValue, systemImage: note.type.iconName)
-                        .font(.caption2)
-                        .foregroundColor(Color.themeSecondaryText)
-                    
-                    Spacer()
-                    
-                    // Date
-                    Text(note.formattedDate)
-                        .font(.caption2)
-                        .foregroundColor(Color.themeSecondaryText)
-                }
-                
-                // Tags (if any)
+                // Tags if any
                 if !note.tags.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 6) {
@@ -721,24 +684,110 @@ struct NoteCard: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
-}
-
-// MARK: - Custom Button Style
-
-/// Scale button style for better touch feedback
-struct ScaleButtonStyle: ButtonStyle {
-    func makeBody(configuration: Self.Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.95 : 1)
-            .animation(.spring(), value: configuration.isPressed)
+    
+    // Formatted date string for display
+    private var formattedDate: String {
+        let now = Date()
+        let calendar = Calendar.current
+        
+        if calendar.isDateInToday(note.lastEditedDate) {
+            // Today - show time
+            let formatter = DateFormatter()
+            formatter.dateFormat = "h:mm a"
+            return "Today, \(formatter.string(from: note.lastEditedDate))"
+        } else if calendar.dateComponents([.day], from: note.lastEditedDate, to: now).day == 1 {
+            // Yesterday
+            return "Yesterday"
+        } else {
+            // Other dates
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMM d, yyyy"
+            return formatter.string(from: note.lastEditedDate)
+        }
     }
 }
 
-// MARK: - Array Extension
-
-/// Safe array access
-extension Array {
-    subscript(safe index: Index) -> Element? {
-        return indices.contains(index) ? self[index] : nil
+/// Settings view for Mind Dump notes
+struct NoteSettingsView: View {
+    @Environment(\.presentationMode) var presentationMode
+    @ObservedObject private var noteService = NoteService.shared
+    @State private var showingTagManager = false
+    @State private var showingBackupOptions = false
+    @State private var showingDeleteConfirmation = false
+    @State private var sortOption: MindDumpView.SortOption = .lastEdited
+    
+    var body: some View {
+        NavigationView {
+            List {
+                Section(header: Text("Organization")) {
+                    Button(action: {
+                        showingTagManager = true
+                    }) {
+                        Label("Manage Tags", systemImage: "tag")
+                    }
+                    
+                    Button(action: {
+                        showingBackupOptions = true
+                    }) {
+                        Label("Backup & Restore", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                }
+                
+                Section(header: Text("Sort Notes")) {
+                    ForEach([MindDumpView.SortOption.lastEdited, .title, .created], id: \.self) { option in
+                        Button(action: {
+                            sortOption = option
+                        }) {
+                            HStack {
+                                Text(option.description)
+                                
+                                Spacer()
+                                
+                                if sortOption == option {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(Color.themePrimary)
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                Section {
+                    Button(action: {
+                        showingDeleteConfirmation = true
+                    }) {
+                        Label("Delete All Notes", systemImage: "trash")
+                            .foregroundColor(Color.themeError)
+                    }
+                }
+            }
+            .listStyle(InsetGroupedListStyle())
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            }
+            .alert(isPresented: $showingDeleteConfirmation) {
+                Alert(
+                    title: Text("Delete All Notes"),
+                    message: Text("Are you sure you want to delete all notes? This action cannot be undone."),
+                    primaryButton: .destructive(Text("Delete All")) {
+                        noteService.deleteAllNotes()
+                    },
+                    secondaryButton: .cancel()
+                )
+            }
+            .sheet(isPresented: $showingTagManager) {
+                TagManagementView()
+            }
+            .sheet(isPresented: $showingBackupOptions) {
+                NotesBackupView()
+            }
+        }
+        .preferredColorScheme(.dark)
     }
 }

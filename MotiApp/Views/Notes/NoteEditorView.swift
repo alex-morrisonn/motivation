@@ -1,15 +1,12 @@
 import SwiftUI
 import Combine
-import PencilKit
 
-/// Redesigned Note Editor View with simplified controls and sketch support
+/// Redesigned Note Editor View with simplified controls and improved UI
 struct NoteEditorView: View {
     // MARK: - Environment & Dependencies
     
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var noteService: NoteService
-    @Environment(\.colorScheme) var colorScheme
-    @Environment(\.scenePhase) private var scenePhase
     
     // MARK: - State Properties
     
@@ -20,18 +17,20 @@ struct NoteEditorView: View {
     @State private var noteType: Note.NoteType
     @State private var isPinned: Bool
     @State private var tags: [String]
+    @State private var sketchData: Data?
     
     // UI state properties
-    @State private var showingMoreOptions = false
     @State private var showingTagEditor = false
     @State private var showingDeleteAlert = false
-    @State private var showingColorPalette = false
+    @State private var showingColorPicker = false
+    @State private var showingToolbar = true
     @State private var showingSaveIndicator = false
-    @State private var focusMode = false
-    @FocusState private var isContentFocused: Bool
+    @State private var isEditingTitle = false
+    @State private var isSettingsExpanded = false
     @FocusState private var isTitleFocused: Bool
+    @FocusState private var isContentFocused: Bool
     
-    // For easier tracking of existing note vs new note
+    // For tracking the existing note vs new note
     private let existingNoteId: UUID?
     private let isNewNote: Bool
     
@@ -49,6 +48,7 @@ struct NoteEditorView: View {
         _noteType = State(initialValue: note.type)
         _isPinned = State(initialValue: note.isPinned)
         _tags = State(initialValue: note.tags)
+        _sketchData = State(initialValue: note.sketchData)
         
         self.existingNoteId = note.id
         self.isNewNote = false
@@ -62,6 +62,7 @@ struct NoteEditorView: View {
         _noteType = State(initialValue: initialType)
         _isPinned = State(initialValue: false)
         _tags = State(initialValue: [])
+        _sketchData = State(initialValue: nil)
         
         self.existingNoteId = nil
         self.isNewNote = true
@@ -75,113 +76,198 @@ struct NoteEditorView: View {
                 .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 0) {
-                // Title and content fields
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 8) {
-                        // Title field
-                        TextField("Untitled Note", text: $noteTitle)
+                // Title area with a tap gesture to edit
+                if !isEditingTitle {
+                    HStack {
+                        Text(noteTitle.isEmpty ? "Untitled Note" : noteTitle)
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
-                            .focused($isTitleFocused)
                             .padding(.top, 12)
                             .padding(.horizontal, 16)
-                            .onChange(of: noteTitle) { oldValue, newValue in
+                            .onTapGesture {
+                                isEditingTitle = true
+                                isTitleFocused = true
+                            }
+                        
+                        Spacer()
+                        
+                        // Pin button
+                        Button(action: {
+                            withAnimation {
+                                isPinned.toggle()
                                 triggerAutosave()
+                                showSavedFeedback()
                             }
-                        
-                        // Note type indicator and date
-                        HStack {
-                            // Note type pill
-                            HStack(spacing: 4) {
-                                Image(systemName: noteType.iconName)
-                                    .foregroundColor(noteColor.color)
-                                    .font(.caption)
-                                
-                                Text(noteType.rawValue)
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(noteColor.color.opacity(0.1))
-                            .cornerRadius(8)
-                            
-                            Spacer()
-                            
-                            // Show save indicator when saved
-                            if showingSaveIndicator {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .font(.caption)
-                                        .foregroundColor(.green)
-                                    
-                                    Text("Saved")
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
-                                }
-                                .transition(.opacity)
-                            } else {
-                                // Edit status
-                                Text("Editing")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
+                        }) {
+                            Image(systemName: isPinned ? "pin.fill" : "pin")
+                                .foregroundColor(isPinned ? .yellow : .white)
+                                .padding(8)
+                                .contentShape(Rectangle())
                         }
+                        .padding(.trailing, 8)
+                    }
+                } else {
+                    // Editable title field
+                    TextField("Untitled Note", text: $noteTitle)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.top, 12)
                         .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
+                        .focused($isTitleFocused)
+                        .onSubmit {
+                            isEditingTitle = false
+                            triggerAutosave()
+                        }
+                }
+                
+                // Note type and date indicator
+                HStack {
+                    // Note type pill
+                    HStack(spacing: 4) {
+                        Image(systemName: noteType == .sketch ? "scribble" : "doc.text")
+                            .foregroundColor(noteColor.color)
+                            .font(.caption)
                         
-                        Divider()
-                            .background(Color.gray.opacity(0.3))
-                            .padding(.horizontal, 16)
-                        
-                        // Content editor with support for sketches
-                        updatedNoteContentEditor
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                        
-                        // Tags section at bottom
-                        tagsSection
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                        
-                        // Extra space at bottom for toolbar
-                        Spacer(minLength: 60)
+                        Text(noteType.rawValue)
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(noteColor.color.opacity(0.1))
+                    .cornerRadius(8)
+                    
+                    Spacer()
+                    
+                    // Save indicator / Edit status
+                    if showingSaveIndicator {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.caption)
+                                .foregroundColor(.green)
+                            
+                            Text("Saved")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                        .transition(.opacity)
+                    } else {
+                        Text("Editing")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                
+                Divider()
+                    .background(Color.gray.opacity(0.3))
+                    .padding(.horizontal, 16)
+                
+                // Main content area (text or sketch)
+                if noteType == .sketch {
+                    SketchNoteView(
+                        textContent: $noteContent,
+                        sketchData: $sketchData
+                    )
+                    .padding(.horizontal, 8)
+                } else {
+                    ScrollView {
+                        VStack {
+                            // Content editor with appropriate styling
+                            TextEditor(text: $noteContent)
+                                .scrollContentBackground(.hidden)
+                                .background(Color.clear)
+                                .font(.body)
+                                .foregroundColor(.white)
+                                .frame(minHeight: 300)
+                                .focused($isContentFocused)
+                                .padding(.horizontal, 8)
+                                .onChange(of: noteContent) { oldValue, newValue in
+                                    handleContentChange(from: oldValue, to: newValue)
+                                }
+                                .overlay(
+                                    // Placeholder text when content is empty
+                                    Group {
+                                        if noteContent.isEmpty && !isContentFocused {
+                                            HStack {
+                                                Text(getPlaceholderText())
+                                                    .foregroundColor(.gray)
+                                                    .padding(.leading, 4)
+                                                Spacer()
+                                            }
+                                            .padding(.top, 8)
+                                            .padding(.leading, 16)
+                                        }
+                                    }
+                                )
+                            
+                            // Tags section
+                            tagsSection
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 16)
+                        }
+                        .padding(.bottom, 80)  // Space for toolbar
                     }
                 }
                 
-                // Bottom toolbar overlay
-                VStack {
-                    Spacer()
-                    
+                Spacer()
+                
+                // Bottom toolbar
+                if showingToolbar {
                     bottomToolbar
                 }
             }
             
-            // Color palette overlay (appears above the toolbar)
-            if showingColorPalette {
+            // Color picker overlay - appears when color picker is active
+            if showingColorPicker {
                 VStack {
                     Spacer()
-                    
-                    colorPaletteOverlay
+                    colorPickerOverlay
                         .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                .background(Color.black.opacity(0.3))
+                .edgesIgnoringSafeArea(.all)
+                .onTapGesture {
+                    withAnimation {
+                        showingColorPicker = false
+                    }
                 }
             }
             
-            // More options overlay (appears above the toolbar)
-            if showingMoreOptions {
+            // Expanded settings overlay - appears when more button is pressed
+            if isSettingsExpanded {
                 VStack {
                     Spacer()
-                    
-                    moreOptionsOverlay
+                    settingsOverlay
                         .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                .background(Color.black.opacity(0.3))
+                .edgesIgnoringSafeArea(.all)
+                .onTapGesture {
+                    withAnimation {
+                        isSettingsExpanded = false
+                    }
                 }
             }
             
             // Save indicator popup (centered)
             if showingSaveIndicator {
-                saveIndicator
-                    .transition(.scale.combined(with: .opacity))
+                VStack {
+                    Spacer()
+                    
+                    Text("Saved")
+                        .font(.subheadline)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(Color.green.opacity(0.3)))
+                        .padding(.bottom, 16)
+                }
+                .transition(.opacity)
+                .frame(maxWidth: .infinity)
             }
         }
         .sheet(isPresented: $showingTagEditor) {
@@ -189,16 +275,6 @@ struct NoteEditorView: View {
                 .onDisappear {
                     triggerAutosave()
                 }
-        }
-        .sheet(isPresented: $focusMode) {
-            // Focus mode for distraction-free editing
-            FocusModeView(
-                noteContent: $noteContent,
-                noteTitle: $noteTitle,
-                noteType: noteType,
-                noteColor: noteColor
-            )
-            .environmentObject(noteService)
         }
         .alert(isPresented: $showingDeleteAlert) {
             Alert(
@@ -210,6 +286,21 @@ struct NoteEditorView: View {
                 secondaryButton: .cancel()
             )
         }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                HStack(spacing: 16) {
+                    // Done button - only for new notes in sheet presentation
+                    if isNewNote {
+                        Button("Done") {
+                            saveNote()
+                            presentationMode.wrappedValue.dismiss()
+                        }
+                        .fontWeight(.bold)
+                    }
+                }
+            }
+        }
         .onAppear {
             // Set up autosave
             setupAutosave()
@@ -217,6 +308,7 @@ struct NoteEditorView: View {
             // Focus the title field for new notes, content for existing
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                 if isNewNote && noteTitle.isEmpty {
+                    isEditingTitle = true
                     isTitleFocused = true
                 } else {
                     isContentFocused = true
@@ -228,86 +320,11 @@ struct NoteEditorView: View {
             autosaveCancellable?.cancel()
             saveNoteWithSketch()
         }
-        .onChange(of: scenePhase) { oldPhase, newPhase in
-            // Save when app moves to background
-            if newPhase == .background {
-                saveNoteWithSketch()
-            }
-        }
+        // Keep toolbar visible regardless of keyboard status
+        .ignoresSafeArea(.keyboard)
     }
 
     // MARK: - Components
-    
-    /// Content editor based on note type with sketch support
-    @ViewBuilder
-    var updatedNoteContentEditor: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Content placeholder
-            if noteContent.isEmpty && !isContentFocused && noteType != .sketch {
-                Text(getPlaceholderText())
-                    .font(.body)
-                    .foregroundColor(.gray)
-                    .padding(.top, 8)
-                    .padding(.leading, 4)
-                    .opacity(0.8)
-            }
-            
-            // Different editors for different note types
-            switch noteType {
-            case .markdown:
-                TextEditor(text: $noteContent)
-                    .scrollContentBackground(.hidden)
-                    .background(Color.clear)
-                    .font(.system(.body, design: .monospaced))
-                    .foregroundColor(.white)
-                    .frame(minHeight: 300)
-                    .focused($isContentFocused)
-            case .bullets:
-                TextEditor(text: $noteContent)
-                    .scrollContentBackground(.hidden)
-                    .background(Color.clear)
-                    .font(.body)
-                    .foregroundColor(.white)
-                    .frame(minHeight: 300)
-                    .focused($isContentFocused)
-            case .sketch:
-                // Use the new SketchNoteView for sketch type notes
-                // We need to bind to both text content and sketch data
-                if let note = getNoteForId(existingNoteId) {
-                    SketchNoteView(
-                        textContent: $noteContent,
-                        sketchData: Binding<Data?>(
-                            get: { note.sketchData },
-                            set: { note.sketchData = $0 }
-                        )
-                    )
-                    .frame(minHeight: 400)
-                } else {
-                    // For new notes
-                    SketchNoteView(
-                        textContent: $noteContent,
-                        sketchData: Binding<Data?>(
-                            get: { UserDefaults.standard.data(forKey: "temp_sketch_data") },
-                            set: {
-                                if let data = $0 {
-                                    UserDefaults.standard.set(data, forKey: "temp_sketch_data")
-                                }
-                            }
-                        )
-                    )
-                    .frame(minHeight: 400)
-                }
-            case .basic:
-                TextEditor(text: $noteContent)
-                    .scrollContentBackground(.hidden)
-                    .background(Color.clear)
-                    .font(.body)
-                    .foregroundColor(.white)
-                    .frame(minHeight: 300)
-                    .focused($isContentFocused)
-            }
-        }
-    }
     
     /// Tags section
     private var tagsSection: some View {
@@ -348,79 +365,69 @@ struct NoteEditorView: View {
     
     /// Bottom toolbar
     private var bottomToolbar: some View {
-        ZStack {
-            // Background blur and fill
-            Rectangle()
-                .fill(Color.black.opacity(0.8))
-                .frame(height: 56)
-                .overlay(
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(height: 1),
-                    alignment: .top
-                )
+        VStack(spacing: 0) {
+            Divider()
+                .background(Color.gray.opacity(0.3))
             
-            // Toolbar buttons
             HStack(spacing: 0) {
-                // Main action buttons (equally spaced)
-                Group {
-                    // Pin/Unpin button
-                    toolbarButton(icon: isPinned ? "pin.fill" : "pin", color: isPinned ? .yellow : .white) {
-                        withAnimation {
-                            isPinned.toggle()
-                            triggerAutosave()
-                            showSavedFeedback()
-                        }
+                // Text formatting buttons
+                if noteType != .sketch {
+                    toolbarButton(icon: "list.bullet", color: .white) {
+                        insertBulletPoint()
                     }
                     
-                    // Add tag button
-                    toolbarButton(icon: "tag", color: .white) {
-                        showingTagEditor = true
+                    toolbarButton(icon: "list.number", color: .white) {
+                        insertNumberedList()
                     }
                     
-                    // Change color button
-                    toolbarButton(icon: "circle.fill", color: noteColor.color) {
-                        withAnimation {
-                            showingColorPalette.toggle()
-                            showingMoreOptions = false
-                        }
+                    toolbarButton(icon: "text.append", color: .white) {
+                        insertHeading()
                     }
                     
-                    // Focus mode button
-                    toolbarButton(icon: "arrow.up.left.and.arrow.down.right", color: .white) {
-                        saveNoteWithSketch()
-                        focusMode = true
-                    }
-                    
-                    // More options button
-                    toolbarButton(icon: "ellipsis", color: .white) {
-                        withAnimation {
-                            showingMoreOptions.toggle()
-                            showingColorPalette = false
-                        }
+                    Spacer()
+                }
+                
+                // Tags button
+                toolbarButton(icon: "tag", color: .white) {
+                    showingTagEditor = true
+                }
+                
+                // Color button
+                toolbarButton(icon: "circle.fill", color: noteColor.color) {
+                    withAnimation {
+                        showingColorPicker.toggle()
+                        isSettingsExpanded = false
                     }
                 }
-                .frame(maxWidth: .infinity)
+                
+                // More button
+                toolbarButton(icon: "ellipsis", color: .white) {
+                    withAnimation {
+                        isSettingsExpanded.toggle()
+                        showingColorPicker = false
+                    }
+                }
             }
             .frame(height: 56)
+            .background(Color.black)
         }
     }
     
-    /// Color palette overlay
-    private var colorPaletteOverlay: some View {
+    /// Color picker overlay
+    private var colorPickerOverlay: some View {
         HStack(spacing: 16) {
             ForEach(Note.NoteColor.allCases) { color in
                 Button(action: {
                     withAnimation {
                         noteColor = color
-                        showingColorPalette = false
+                        showingColorPicker = false
                         triggerAutosave()
                         showSavedFeedback()
                     }
                 }) {
                     Circle()
                         .fill(color.color)
-                        .frame(width: 30, height: 30)
+                        .frame(width: 36, height: 36)
                         .overlay(
                             Circle()
                                 .stroke(Color.white, lineWidth: noteColor == color ? 2 : 0)
@@ -430,138 +437,152 @@ struct NoteEditorView: View {
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 20)
-        .background(Color.gray.opacity(0.2))
-        .cornerRadius(16)
+        .background(Color.black.opacity(0.8))
+        .cornerRadius(20)
         .padding(.horizontal, 16)
-        .padding(.bottom, 64) // Position above toolbar with adequate spacing
+        .padding(.bottom, 80) // Position above toolbar with adequate spacing
     }
     
-    /// More options overlay
-    private var moreOptionsOverlay: some View {
+    /// Settings overlay
+    private var settingsOverlay: some View {
         VStack(spacing: 0) {
-            // Change note type
-            Button(action: {
-                withAnimation {
-                    // Cycle through note types
-                    let types = Note.NoteType.allCases
-                    if let currentIndex = types.firstIndex(of: noteType),
-                       let nextType = types[safe: (currentIndex + 1) % types.count] {
-                        noteType = nextType
-                        triggerAutosave()
-                        showSavedFeedback()
-                    }
-                    showingMoreOptions = false
-                }
-            }) {
-                HStack {
-                    Image(systemName: "arrow.left.arrow.right")
-                        .font(.system(size: 16))
-                        .foregroundColor(.white)
-                        .frame(width: 24)
-                    
-                    Text("Change Note Type")
-                        .font(.subheadline)
-                        .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    Text(noteType.rawValue)
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-            }
-            
-            Divider()
-                .background(Color.gray.opacity(0.3))
-                .padding(.horizontal, 16)
-            
-            // Word count
+            // Section title
             HStack {
-                Image(systemName: "text.word.count")
-                    .font(.system(size: 16))
+                Text("Note Options")
+                    .font(.headline)
                     .foregroundColor(.white)
-                    .frame(width: 24)
-                
-                Text("Word Count")
-                    .font(.subheadline)
-                    .foregroundColor(.white)
+                    .padding(.vertical, 12)
                 
                 Spacer()
                 
-                Text("\(countWords(noteContent)) words")
-                    .font(.caption)
-                    .foregroundColor(.gray)
+                Button(action: {
+                    withAnimation {
+                        isSettingsExpanded = false
+                    }
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
             
             Divider()
                 .background(Color.gray.opacity(0.3))
-                .padding(.horizontal, 16)
             
-            // Share button
-            Button(action: {
-                // Share function
-                showingMoreOptions = false
-            }) {
+            // Options list
+            VStack(spacing: 0) {
+                // Word count
                 HStack {
-                    Image(systemName: "square.and.arrow.up")
+                    Image(systemName: "text.word.count")
                         .font(.system(size: 16))
                         .foregroundColor(.white)
                         .frame(width: 24)
                     
-                    Text("Share Note")
+                    Text("Word Count")
                         .font(.subheadline)
                         .foregroundColor(.white)
                     
                     Spacer()
                     
-                    Image(systemName: "chevron.right")
+                    Text("\(countWords(noteContent)) words")
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-            }
-            
-            Divider()
-                .background(Color.gray.opacity(0.3))
-                .padding(.horizontal, 16)
-            
-            // Delete button
-            Button(action: {
-                showingMoreOptions = false
-                showingDeleteAlert = true
-            }) {
-                HStack {
-                    Image(systemName: "trash")
-                        .font(.system(size: 16))
-                        .foregroundColor(.red)
-                        .frame(width: 24)
-                    
-                    Text("Delete Note")
-                        .font(.subheadline)
-                        .foregroundColor(.red)
-                    
-                    Spacer()
+                .padding(.vertical, 14)
+                
+                Divider()
+                    .background(Color.gray.opacity(0.3))
+                    .padding(.horizontal, 16)
+                
+                // Toggle full screen
+                Button(action: {
+                    // Toggle full screen would go here
+                    isSettingsExpanded = false
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                            .font(.system(size: 16))
+                            .foregroundColor(.white)
+                            .frame(width: 24)
+                        
+                        Text("Focus Mode")
+                            .font(.subheadline)
+                            .foregroundColor(.white)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                
+                Divider()
+                    .background(Color.gray.opacity(0.3))
+                    .padding(.horizontal, 16)
+                
+                // Share button
+                Button(action: {
+                    // Share function would go here
+                    isSettingsExpanded = false
+                }) {
+                    HStack {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 16))
+                            .foregroundColor(.white)
+                            .frame(width: 24)
+                        
+                        Text("Share Note")
+                            .font(.subheadline)
+                            .foregroundColor(.white)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                }
+                
+                Divider()
+                    .background(Color.gray.opacity(0.3))
+                    .padding(.horizontal, 16)
+                
+                // Delete button
+                Button(action: {
+                    isSettingsExpanded = false
+                    showingDeleteAlert = true
+                }) {
+                    HStack {
+                        Image(systemName: "trash")
+                            .font(.system(size: 16))
+                            .foregroundColor(.red)
+                            .frame(width: 24)
+                        
+                        Text("Delete Note")
+                            .font(.subheadline)
+                            .foregroundColor(.red)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                }
             }
         }
-        .background(Color.gray.opacity(0.2))
+        .background(Color.black.opacity(0.9))
         .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.2), radius: 15, x: 0, y: 5)
         .padding(.horizontal, 16)
-        .padding(.bottom, 64) // Position above toolbar
+        .padding(.bottom, 80) // Position above toolbar
     }
     
-    /// Toolbar button component
+    /// Generic toolbar button
     private func toolbarButton(icon: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
@@ -572,25 +593,20 @@ struct NoteEditorView: View {
         }
     }
     
-    /// Save indicator popup
-    private var saveIndicator: some View {
-        Text("Saved")
-            .font(.caption)
-            .foregroundColor(.white)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(
-                Capsule()
-                    .fill(Color.green.opacity(0.3))
-            )
-    }
-    
     // MARK: - Helper Methods
     
-    /// Helper method to get a note by ID
-    private func getNoteForId(_ id: UUID?) -> Note? {
-        guard let id = id else { return nil }
-        return noteService.notes.first { $0.id == id }
+    /// Get placeholder text based on note type
+    private func getPlaceholderText() -> String {
+        switch noteType {
+        case .basic:
+            return "Start typing your thoughts here..."
+        case .bullets:
+            return "• Start typing your bullet points\n• Use • to create new bullets\n• Organize your thoughts in lists"
+        case .markdown:
+            return "# Use markdown formatting\n\nStart writing here..."
+        case .sketch:
+            return "Add notes about your sketch here..."
+        }
     }
     
     /// Set up autosave functionality
@@ -598,6 +614,7 @@ struct NoteEditorView: View {
         autosaveCancellable = autosaveSubject
             .debounce(for: .seconds(2.0), scheduler: RunLoop.main)
             .sink { _ in
+                // Don't use weak self as structs don't support weak references
                 self.saveNoteWithSketch()
             }
     }
@@ -607,22 +624,15 @@ struct NoteEditorView: View {
         autosaveSubject.send(())
     }
     
-    /// Format time for display
-    private func formatTime(_ seconds: Int) -> String {
-        let minutes = seconds / 60
-        let remainingSeconds = seconds % 60
-        return String(format: "%02d:%02d", minutes, remainingSeconds)
-    }
-    
     /// Save the note with sketch support
     func saveNoteWithSketch() {
         guard !noteTitle.isEmpty || !noteContent.isEmpty else {
-            // Don't save empty notes
+            // Don't save completely empty notes
             return
         }
         
         if let id = existingNoteId {
-            // Update existing note - sketch data is already managed by the binding
+            // Update existing note
             let updatedNote = Note(
                 title: noteTitle,
                 content: noteContent,
@@ -632,6 +642,11 @@ struct NoteEditorView: View {
                 tags: tags
             )
             updatedNote.id = id
+            
+            // Set sketch data
+            if let data = sketchData {
+                updatedNote.sketchData = data
+            }
             
             // Update the note in service
             noteService.updateNote(updatedNote)
@@ -649,23 +664,14 @@ struct NoteEditorView: View {
             // Save the note first to get an ID
             noteService.addNote(newNote)
             
-            // Transfer any temporary sketch data to the permanent note storage
-            if noteType == .sketch,
-               let tempSketchData = UserDefaults.standard.data(forKey: "temp_sketch_data") {
-                newNote.sketchData = tempSketchData
-                
-                // Clear the temporary data
-                UserDefaults.standard.removeObject(forKey: "temp_sketch_data")
+            // Set sketch data if available
+            if let data = sketchData {
+                newNote.sketchData = data
             }
         }
         
         // Show save indicator
         showSavedFeedback()
-    }
-    
-    /// Save note to service (wrapper for backwards compatibility)
-    private func saveNote() {
-        saveNoteWithSketch()
     }
     
     /// Show save indicator feedback
@@ -682,6 +688,11 @@ struct NoteEditorView: View {
         }
     }
     
+    /// Save note to service (wrapper for backwards compatibility)
+    private func saveNote() {
+        saveNoteWithSketch()
+    }
+    
     /// Delete note and any associated sketch data
     private func deleteNote() {
         if let id = existingNoteId {
@@ -695,6 +706,30 @@ struct NoteEditorView: View {
         
         // Dismiss the view
         presentationMode.wrappedValue.dismiss()
+    }
+    
+    /// Insert a bullet point at cursor position
+    private func insertBulletPoint() {
+        let cursorPosition = noteContent.count
+        noteContent.append("\n• ")
+        isContentFocused = true
+        triggerAutosave()
+    }
+    
+    /// Insert a numbered list item at cursor position
+    private func insertNumberedList() {
+        let cursorPosition = noteContent.count
+        noteContent.append("\n1. ")
+        isContentFocused = true
+        triggerAutosave()
+    }
+    
+    /// Insert a heading at cursor position
+    private func insertHeading() {
+        let cursorPosition = noteContent.count
+        noteContent.append("\n## ")
+        isContentFocused = true
+        triggerAutosave()
     }
     
     /// Handle content changes with special handling for bullet points
@@ -718,22 +753,71 @@ struct NoteEditorView: View {
         }
     }
     
-    /// Get placeholder text based on note type
-    private func getPlaceholderText() -> String {
-        switch noteType {
-        case .basic:
-            return "Start typing your thoughts here..."
-        case .bullets:
-            return "• Start typing your bullet points"
-        case .markdown:
-            return "# Use markdown formatting\n\nStart writing here..."
-        case .sketch:
-            return "Add notes about your sketch here...\n\nYou can switch between text and drawing using the toggle at the top."
-        }
-    }
-    
     /// Count words in text
     private func countWords(_ text: String) -> Int {
         return text.split(whereSeparator: { $0.isWhitespace }).count
+    }
+}
+
+/// Redesigned SketchNoteView for drawing with simplified controls
+struct SketchNoteView: View {
+    // Note content bindings
+    @Binding var textContent: String
+    @Binding var sketchData: Data?
+    @State private var isDrawingMode = true
+    
+    // Focus state for text editor
+    @FocusState private var isTextFocused: Bool
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Mode selector at the top
+            HStack {
+                Picker("Mode", selection: $isDrawingMode) {
+                    Text("Draw").tag(true)
+                    Text("Text").tag(false)
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .padding(.horizontal)
+            }
+            .padding(.vertical, 8)
+            .background(Color.black.opacity(0.3))
+            
+            // Content area
+            if isDrawingMode {
+                // Drawing canvas
+                DrawingCanvas(canvasData: $sketchData)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .transition(.opacity)
+            } else {
+                // Text area for notes about the sketch
+                VStack {
+                    TextEditor(text: $textContent)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.clear)
+                        .font(.body)
+                        .foregroundColor(.white)
+                        .padding()
+                        .focused($isTextFocused)
+                        .overlay(
+                            Group {
+                                if textContent.isEmpty && !isTextFocused {
+                                    HStack {
+                                        Text("Add notes about your sketch here...")
+                                            .foregroundColor(.gray)
+                                            .padding(.leading, 24)
+                                        Spacer()
+                                    }
+                                    .padding(.top, 24)
+                                }
+                            }
+                        )
+                }
+                .transition(.opacity)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.black.opacity(0.05))
+        .cornerRadius(12)
     }
 }
