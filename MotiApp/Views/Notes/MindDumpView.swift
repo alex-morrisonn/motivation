@@ -296,6 +296,16 @@ struct MindDumpView: View {
                                 isSelected: selectedNote?.id == note.id,
                                 onSelect: {
                                     selectedNote = note
+                                },
+                                onDelete: {
+                                    // Handle delete action
+                                    withAnimation {
+                                        noteService.deleteNoteWithSketch(note)
+                                        // If the deleted note was selected, clear selection
+                                        if selectedNote?.id == note.id {
+                                            selectedNote = nil
+                                        }
+                                    }
                                 }
                             )
                             .padding(.horizontal)
@@ -602,14 +612,37 @@ struct MindDumpView: View {
 
 // MARK: - Supporting Views
 
-/// Redesigned note card with cleaner layout
+/// Redesigned note card with cleaner layout and swipe-to-delete
 struct NoteCard: View {
     let note: Note
     let isSelected: Bool
     let onSelect: () -> Void
+    let onDelete: () -> Void
+    
+    // For swipe gesture
+    @State private var offset: CGFloat = 0
+    @State private var isSwiped: Bool = false
+    
+    // Fixed width for delete button
+    private let deleteButtonWidth: CGFloat = 80
     
     var body: some View {
-        Button(action: onSelect) {
+        ZStack {
+            // Delete button background (revealed on swipe)
+            HStack {
+                Spacer()
+                
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 18))
+                        .foregroundColor(.white)
+                        .frame(width: deleteButtonWidth, height: 40)
+                }
+                .background(Color.red)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            
+            // Note content
             VStack(alignment: .leading, spacing: 10) {
                 // Top row with title, type icon and pin
                 HStack(alignment: .top) {
@@ -681,8 +714,50 @@ struct NoteCard: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(Color(note.color.rawValue).opacity(isSelected ? 0.8 : 0.4), lineWidth: isSelected ? 2 : 0)
             )
+            .contentShape(Rectangle())
+            .offset(x: offset)
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        // Only allow swiping left to reveal delete button
+                        if value.translation.width < 0 {
+                            // Limit drag to delete button width
+                            self.offset = max(value.translation.width, -deleteButtonWidth)
+                        } else if isSwiped {
+                            // If already swiped, allow swiping back right
+                            self.offset = min(0, -deleteButtonWidth + value.translation.width)
+                        }
+                    }
+                    .onEnded { value in
+                        withAnimation(.spring()) {
+                            // If swiped far enough, snap to reveal delete button
+                            if value.translation.width < -deleteButtonWidth / 2 {
+                                self.offset = -deleteButtonWidth
+                                self.isSwiped = true
+                            } else if value.translation.width > deleteButtonWidth / 2 && isSwiped {
+                                // Swiped right to close
+                                self.offset = 0
+                                self.isSwiped = false
+                            } else {
+                                // Not swiped far enough, snap back
+                                self.offset = isSwiped ? -deleteButtonWidth : 0
+                            }
+                        }
+                    }
+            )
+            .onTapGesture {
+                if isSwiped {
+                    // Close the swipe action if open
+                    withAnimation(.spring()) {
+                        self.offset = 0
+                        self.isSwiped = false
+                    }
+                } else {
+                    // Otherwise select the note
+                    onSelect()
+                }
+            }
         }
-        .buttonStyle(PlainButtonStyle())
     }
     
     // Formatted date string for display
@@ -789,5 +864,22 @@ struct NoteSettingsView: View {
             }
         }
         .preferredColorScheme(.dark)
+    }
+}
+
+// MARK: - Preview
+
+struct MindDumpView_Previews: PreviewProvider {
+    static var previews: some View {
+        MindDumpView()
+            .preferredColorScheme(.dark)
+            .onAppear {
+                // Add sample notes for preview
+                if NoteService.shared.notes.isEmpty {
+                    for note in Note.samples {
+                        NoteService.shared.addNote(note)
+                    }
+                }
+            }
     }
 }

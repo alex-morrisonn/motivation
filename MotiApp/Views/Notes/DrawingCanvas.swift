@@ -9,101 +9,38 @@ struct DrawingCanvas: View {
     @State private var toolPicker = PKToolPicker()
     @State private var isFirstAppear = true
     
-    // Drawing options
-    @State private var selectedColor: Color = .white
-    @State private var lineWidth: CGFloat = 3
-    @State private var isErasing = false
-    
-    // Available colors
-    private let colors: [Color] = [
-        .white, .blue, .green, .yellow, .orange, .red, .purple
-    ]
-    
     var body: some View {
-        // Use a ZStack instead of VStack to help maximize canvas space
         GeometryReader { geometry in
-            ZStack(alignment: .top) {
-                // Canvas - positioned to fill the entire view
+            ZStack {
+                // Canvas view that fills the available space
                 CanvasRepresentable(canvasView: canvasView, toolPicker: toolPicker, onSaved: saveCanvas)
-                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .edgesIgnoringSafeArea(.all)
-                    .zIndex(0)
                 
-                // Drawing toolbar - floating at the top
+                // "Clear" button in the top right corner
                 VStack {
                     HStack {
-                        // Color picker
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 10) {
-                                ForEach(colors, id: \.self) { color in
-                                    Circle()
-                                        .fill(color)
-                                        .frame(width: 24, height: 24)
-                                        .overlay(
-                                            Circle()
-                                                .stroke(Color.white, lineWidth: selectedColor == color ? 2 : 0)
-                                        )
-                                        .onTapGesture {
-                                            selectedColor = color
-                                            isErasing = false
-                                            updateTool()
-                                        }
-                                }
-                            }
-                            .padding(.horizontal, 10)
-                        }
+                        Spacer()
                         
-                        Spacer(minLength: 10)
-                        
-                        // Line width slider with more compact design
-                        VStack(alignment: .trailing) {
-                            Slider(value: $lineWidth, in: 1...10) { _ in
-                                updateTool()
-                            }
-                            .frame(width: 100)
-                            
-                            Text("Width: \(Int(lineWidth))")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
-                        
-                        Divider()
-                            .frame(height: 30)
-                            .padding(.horizontal, 10)
-                        
-                        // Eraser button
-                        Button(action: {
-                            isErasing.toggle()
-                            updateTool()
-                        }) {
-                            Image(systemName: isErasing ? "eraser.fill" : "eraser")
-                                .foregroundColor(isErasing ? .blue : .white)
-                                .font(.system(size: 20))
-                                .frame(width: 40, height: 40)
-                        }
-                        
-                        // Clear button
                         Button(action: {
                             clearCanvas()
                         }) {
-                            Image(systemName: "trash")
-                                .foregroundColor(.red)
-                                .font(.system(size: 20))
-                                .frame(width: 40, height: 40)
+                            Image(systemName: "trash.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                                .padding(12)
+                                .background(Color.black.opacity(0.5))
+                                .clipShape(Circle())
                         }
+                        .padding(.top, 12)
+                        .padding(.trailing, 12)
                     }
-                    .padding(.vertical, 8)
-                    .background(Color.black.opacity(0.7))
-                    .cornerRadius(8)
-                    .padding(.horizontal, 8)
-                    .padding(.top, 8)
                     
-                    Spacer() // Push toolbar to the top
+                    Spacer()
                 }
-                .zIndex(1) // Ensure toolbar stays on top
             }
         }
-        .edgesIgnoringSafeArea(.all) // Extend to all edges
+        .edgesIgnoringSafeArea(.all)
         .onAppear {
             setupCanvas()
         }
@@ -126,13 +63,19 @@ struct DrawingCanvas: View {
             canvasView.backgroundColor = .clear
             canvasView.drawingPolicy = .anyInput
             
-            // Set up tool picker
-            toolPicker.setVisible(false, forFirstResponder: canvasView)
+            // Configure the native tool picker
+            toolPicker.setVisible(true, forFirstResponder: canvasView)
             toolPicker.addObserver(canvasView)
-            canvasView.becomeFirstResponder()
             
-            // Initialize with default ink
-            updateTool()
+            // Apply dark mode styling to the tool picker
+            if #available(iOS 14.0, *) {
+                toolPicker.overrideUserInterfaceStyle = .dark
+            }
+            
+            // Make canvas the first responder to receive touch events
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                _ = canvasView.becomeFirstResponder()
+            }
             
             isFirstAppear = false
         }
@@ -149,19 +92,6 @@ struct DrawingCanvas: View {
         canvasView.drawing = PKDrawing()
         saveCanvas()
     }
-    
-    // Update the ink tool based on current settings
-    private func updateTool() {
-        if isErasing {
-            // Set up eraser
-            let eraser = PKEraserTool(.vector)
-            canvasView.tool = eraser
-        } else {
-            // Set up ink with selected color and width
-            let ink = PKInkingTool(.pen, color: UIColor(selectedColor), width: lineWidth)
-            canvasView.tool = ink
-        }
-    }
 }
 
 /// UIViewRepresentable wrapper for PKCanvasView
@@ -175,23 +105,28 @@ struct CanvasRepresentable: UIViewRepresentable {
         canvasView.drawingPolicy = .anyInput
         canvasView.backgroundColor = .clear
         
-        // Optimize for performance
+        // Optimize for performance and appearance
         canvasView.isOpaque = false
         canvasView.maximumZoomScale = 3.0
         canvasView.minimumZoomScale = 1.0
         
-        // Make canvas use entire available space
-        canvasView.contentSize = UIScreen.main.bounds.size
+        // Make canvas use entire available space and allow scrolling
+        let screenSize = UIScreen.main.bounds.size
+        canvasView.contentSize = CGSize(
+            width: screenSize.width * 1.5,
+            height: screenSize.height * 1.5
+        )
+        
+        // Center the drawing area
+        let contentOffset = CGPoint(
+            x: (canvasView.contentSize.width - screenSize.width) / 2,
+            y: (canvasView.contentSize.height - screenSize.height) / 2
+        )
+        canvasView.contentOffset = contentOffset
+        
+        // Enable bouncing for better user experience
         canvasView.alwaysBounceVertical = true
         canvasView.alwaysBounceHorizontal = true
-        
-        // Use full screen drawing canvas
-        if let window = UIApplication.shared.windows.first {
-            canvasView.contentSize = CGSize(
-                width: window.frame.width,
-                height: max(window.frame.height, 1000) // Ensure plenty of drawing space
-            )
-        }
         
         return canvasView
     }
