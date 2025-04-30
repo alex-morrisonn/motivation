@@ -47,7 +47,7 @@ struct PlanButton: View {
             .background(
                 isSelected ?
                 LinearGradient(gradient: Gradient(colors: [.yellow, .orange]), startPoint: .leading, endPoint: .trailing) :
-                Color.white.opacity(0.1)
+                LinearGradient(gradient: Gradient(colors: [Color.white.opacity(0.1), Color.white.opacity(0.1)]), startPoint: .leading, endPoint: .trailing)
             )
             .cornerRadius(12)
         }
@@ -79,7 +79,7 @@ struct FeatureRow: View {
                 Text(feature.description)
                     .font(.caption)
                     .foregroundColor(.gray)
-                    .lineLimit(1)
+                    .lineLimit(nil)
             }
             
             Spacer()
