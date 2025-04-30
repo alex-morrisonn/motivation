@@ -40,7 +40,7 @@ class TabBarManager {
         // Force update of UI
         DispatchQueue.main.async {
             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let windows = windowScene.windows as? [UIWindow], let window = windows.first {
+               let window = windowScene.windows.first {
                 // Force redraw of tab bar
                 window.rootViewController?.view.setNeedsLayout()
             }

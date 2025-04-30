@@ -710,7 +710,6 @@ struct NoteEditorView: View {
     
     /// Insert a bullet point at cursor position
     private func insertBulletPoint() {
-        let cursorPosition = noteContent.count
         noteContent.append("\n• ")
         isContentFocused = true
         triggerAutosave()
@@ -718,7 +717,6 @@ struct NoteEditorView: View {
     
     /// Insert a numbered list item at cursor position
     private func insertNumberedList() {
-        let cursorPosition = noteContent.count
         noteContent.append("\n1. ")
         isContentFocused = true
         triggerAutosave()
@@ -726,7 +724,6 @@ struct NoteEditorView: View {
     
     /// Insert a heading at cursor position
     private func insertHeading() {
-        let cursorPosition = noteContent.count
         noteContent.append("\n## ")
         isContentFocused = true
         triggerAutosave()
