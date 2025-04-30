@@ -1,4 +1,5 @@
 import SwiftUI
+import StoreKit
 
 // Premium feature model
 struct PremiumFeature: Identifiable {
@@ -92,12 +93,16 @@ struct FeatureRow: View {
 struct PremiumView: View {
     // Environment & Properties
     @ObservedObject private var adManager = AdManager.shared
+    @ObservedObject private var premiumManager = PremiumManager.shared
     @Environment(\.presentationMode) var presentationMode
     
     // Local state
     @State private var selectedPlanIndex = 1 // Default to annual
-    @State private var animateFeatures = false
-    @State private var showComingSoon = false
+    @State private var isPurchasing = false
+    @State private var showingRestoreMessage = false
+    @State private var restoreResult: Bool? = nil
+    @State private var showError = false
+    @State private var errorMessage = ""
     
     // Premium plans
     private let plans = [
@@ -108,7 +113,7 @@ struct PremiumView: View {
     // Feature sets
     private let primaryFeatures = [
         PremiumFeature(icon: "xmark.circle.fill", title: "Ad-Free Experience", description: "Enjoy a completely ad-free experience with no distractions", iconColor: .red),
-        PremiumFeature(icon: "paintpalette.fill", title: "8+ Premium Themes", description: "Personalize your app with multiple color schemes", iconColor: .purple),
+        PremiumFeature(icon: "paintpalette.fill", title: "All Premium Themes", description: "Personalize your app with multiple color schemes", iconColor: .purple),
         PremiumFeature(icon: "rectangle.stack.fill", title: "Unlimited Notes", description: "No limits on Mind Dump notes with advanced formatting", iconColor: .blue)
     ]
     
@@ -144,36 +149,79 @@ struct PremiumView: View {
                     // Header
                     headerView
                     
-                    // Plans selector
-                    planSelector
+                    // Current premium status (if any)
+                    if premiumManager.isPremiumUser {
+                        currentPremiumStatusView
+                            .transition(.opacity)
+                    } else {
+                        // Plans selector (only if not premium)
+                        planSelector
+                    }
                     
                     // Feature sections
                     Group {
-                        featureSection(title: "UNLOCK PREMIUM FEATURES", features: primaryFeatures)
+                        featureSection(title: "PREMIUM FEATURES", features: primaryFeatures)
                         featureSection(title: "ENHANCED PRODUCTIVITY", features: productivityFeatures)
                         featureSection(title: "EXCLUSIVE CONTENT", features: contentFeatures)
                     }
-                    .opacity(animateFeatures ? 1 : 0)
-                    .offset(y: animateFeatures ? 0 : 20)
                     
                     // Subscribe button
-                    subscribeButton
+                    if !premiumManager.isPremiumUser {
+                        subscribeButton
+                    } else {
+                        // Management buttons for current subscribers
+                        managementButtons
+                    }
                     
                     // Terms and restoration text
                     legalText
                 }
+                .padding(.bottom, 30)
             }
             
-            // Coming soon overlay
-            if showComingSoon {
-                comingSoonOverlay
+            // Close button top right
+            VStack {
+                HStack {
+                    Spacer()
+                    
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundColor(.white.opacity(0.6))
+                            .padding()
+                    }
+                }
+                Spacer()
+            }
+            
+            // Loading overlay
+            if isPurchasing {
+                loadingOverlay
             }
         }
-        .onAppear {
-            // Animate features with staggered timing
-            withAnimation(.easeOut(duration: 0.6).delay(0.2)) {
-                animateFeatures = true
+        .alert(isPresented: $showingRestoreMessage) {
+            if let result = restoreResult {
+                return Alert(
+                    title: Text(result ? "Purchases Restored" : "No Purchases Found"),
+                    message: Text(result ? "Your premium subscription has been restored." : "We couldn't find any previous purchases to restore."),
+                    dismissButton: .default(Text("OK"))
+                )
+            } else {
+                return Alert(
+                    title: Text("Error"),
+                    message: Text("An unexpected error occurred."),
+                    dismissButton: .default(Text("OK"))
+                )
             }
+        }
+        .alert(isPresented: $showError) {
+            Alert(
+                title: Text("Purchase Error"),
+                message: Text(errorMessage),
+                dismissButton: .default(Text("OK"))
+            )
         }
     }
     
@@ -182,20 +230,6 @@ struct PremiumView: View {
     // Header with premium logo and title
     private var headerView: some View {
         VStack(spacing: 15) {
-            // Close button on top right
-            HStack {
-                Spacer()
-                
-                Button(action: {
-                    presentationMode.wrappedValue.dismiss()
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 28))
-                        .foregroundColor(.white.opacity(0.6))
-                        .padding()
-                }
-            }
-            
             // Crown icon with glowing effect
             ZStack {
                 // Glowing background
@@ -224,6 +258,41 @@ struct PremiumView: View {
                 .foregroundColor(.gray)
         }
         .padding(.top, 20)
+    }
+    
+    // Current premium status view
+    private var currentPremiumStatusView: some View {
+        VStack(spacing: 10) {
+            Text("You are a Premium Member")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(Color.green)
+                    .frame(width: 10, height: 10)
+                
+                Text("\(premiumManager.currentPlan.displayName) Plan")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.8))
+                
+                if premiumManager.currentPlan == .temporary,
+                   let timeRemaining = premiumManager.getFormattedTimeRemaining() {
+                    Divider()
+                        .frame(height: 12)
+                        .background(Color.white.opacity(0.3))
+                    
+                    Text(timeRemaining)
+                        .font(.system(size: 14))
+                        .foregroundColor(.yellow)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Color.black.opacity(0.3))
+            .cornerRadius(20)
+        }
+        .padding(.vertical, 10)
     }
     
     // Plans selector section
@@ -291,7 +360,7 @@ struct PremiumView: View {
     // Subscribe button
     private var subscribeButton: some View {
         Button(action: {
-            showComingSoon = true
+            startPurchase()
         }) {
             Text("Subscribe Now")
                 .font(.system(size: 20, weight: .bold))
@@ -308,24 +377,69 @@ struct PremiumView: View {
                 .cornerRadius(16)
                 .shadow(color: Color.orange.opacity(0.5), radius: 10, x: 0, y: 5)
         }
+        .disabled(isPurchasing)
         .padding(.horizontal, 30)
         .padding(.vertical, 10)
+    }
+    
+    // Management buttons for current subscribers
+    private var managementButtons: some View {
+        VStack(spacing: 12) {
+            if premiumManager.currentPlan == .temporary {
+                // Upgrade from temporary to full premium
+                Button(action: {
+                    startPurchase()
+                }) {
+                    Text("Upgrade to Full Premium")
+                        .font(.headline)
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(colors: [.yellow, .orange]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .cornerRadius(16)
+                }
+                .padding(.horizontal, 30)
+            }
+            
+            // Manage subscription button
+            Button(action: {
+                openSubscriptionSettings()
+            }) {
+                Text("Manage Subscription")
+                    .font(.subheadline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(16)
+            }
+            .padding(.horizontal, 30)
+        }
     }
     
     // Legal text section
     private var legalText: some View {
         VStack(spacing: 10) {
-            Text("Auto-renewable. Cancel anytime.")
-                .font(.caption)
-                .foregroundColor(.gray)
+            if !premiumManager.isPremiumUser {
+                Text("Auto-renewable. Cancel anytime.")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
             
             Button(action: {
-                // Restore purchases action would go here
+                restorePurchases()
             }) {
                 Text("Restore Purchases")
                     .font(.caption)
                     .foregroundColor(.blue)
             }
+            .disabled(isPurchasing)
             
             Text("Payment will be charged to your Apple ID account at the confirmation of purchase. Subscription automatically renews unless it is canceled at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period. You can manage and cancel your subscriptions by going to your App Store account settings after purchase.")
                 .font(.system(size: 10))
@@ -337,65 +451,66 @@ struct PremiumView: View {
         .padding(.bottom, 30)
     }
     
-    // Coming soon overlay
-    private var comingSoonOverlay: some View {
+    // Loading overlay
+    private var loadingOverlay: some View {
         ZStack {
-            // Semi-transparent background
-            Color.black.opacity(0.8)
+            Color.black.opacity(0.7)
                 .edgesIgnoringSafeArea(.all)
-                .onTapGesture {
-                    withAnimation {
-                        showComingSoon = false
-                    }
-                }
             
-            // Content
             VStack(spacing: 20) {
-                Image(systemName: "hourglass")
-                    .font(.system(size: 50))
-                    .foregroundColor(.yellow)
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .scaleEffect(1.5)
                 
-                Text("Coming Soon!")
-                    .font(.title)
-                    .fontWeight(.bold)
+                Text("Processing...")
+                    .font(.headline)
                     .foregroundColor(.white)
-                
-                Text("Premium subscriptions are still in development. We're working hard to bring you these great features soon!")
-                    .font(.body)
-                    .foregroundColor(.white.opacity(0.8))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 30)
-                
-                Button(action: {
-                    withAnimation {
-                        showComingSoon = false
-                    }
-                }) {
-                    Text("OK")
-                        .font(.headline)
-                        .foregroundColor(.black)
-                        .frame(width: 120)
-                        .padding(.vertical, 12)
-                        .background(Color.yellow)
-                        .cornerRadius(12)
-                }
-                .padding(.top, 10)
             }
-            .padding(30)
-            .background(Color(UIColor.systemGray6).opacity(0.9))
-            .cornerRadius(20)
-            .shadow(radius: 20)
-            .padding(.horizontal, 40)
-            .transition(.scale)
         }
-        .transition(.opacity)
     }
-}
-
-// Preview provider
-struct PremiumView_Previews: PreviewProvider {
-    static var previews: some View {
-        PremiumView()
-            .preferredColorScheme(.dark)
+    
+    // MARK: - Purchase Methods
+    
+    // Start a premium purchase
+    private func startPurchase() {
+        isPurchasing = true
+        
+        // In a real app, you would integrate with StoreKit here
+        // For this demo, we'll simulate a purchase process
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            // Simulate purchase success
+            let purchaseSuccessful = true
+            
+            if purchaseSuccessful {
+                // Set premium type based on selection
+                let plan: PremiumPlan = self.selectedPlanIndex == 0 ? .monthly : .annual
+                self.premiumManager.setPremiumStatus(isActive: true, plan: plan)
+            } else {
+                // Show error
+                self.errorMessage = "Purchase could not be completed. Please try again later."
+                self.showError = true
+            }
+            
+            self.isPurchasing = false
+        }
+    }
+    
+    // Restore previous purchases
+    private func restorePurchases() {
+        isPurchasing = true
+        
+        premiumManager.restorePurchases { success in
+            self.isPurchasing = false
+            self.restoreResult = success
+            self.showingRestoreMessage = true
+        }
+    }
+    
+    // Open subscription settings in the App Store
+    private func openSubscriptionSettings() {
+        if let url = URL(string: "https://apps.apple.com/account/subscriptions") {
+            UIApplication.shared.open(url)
+        }
     }
 }

@@ -59,14 +59,17 @@ struct RewardedAdView: View {
     // MARK: - Properties
     
     @ObservedObject private var adManager = AdManager.shared
+    @ObservedObject private var premiumManager = PremiumManager.shared
     @Environment(\.presentationMode) var presentationMode
     
     // State
     @State private var isShowingAd = false
-    @State private var selectedDuration = 1 // Index of selected duration
+    @State private var selectedDuration = 0 // Index of selected duration
     @State private var isLoading = false
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var showSuccess = false
+    @State private var rewardHours = 0
     
     // Premium trial durations in hours
     private let trialDurations = [1, 3, 6, 12]
@@ -113,6 +116,56 @@ struct RewardedAdView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
+            .overlay(
+                // Success overlay
+                ZStack {
+                    if showSuccess {
+                        Color.black.opacity(0.8)
+                            .edgesIgnoringSafeArea(.all)
+                            .onTapGesture {
+                                presentationMode.wrappedValue.dismiss()
+                            }
+                        
+                        VStack(spacing: 20) {
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: 50))
+                                .foregroundColor(.yellow)
+                                .padding(.bottom, 10)
+                            
+                            Text("Premium Unlocked!")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            
+                            Text("You now have premium features for \(rewardHours) hour\(rewardHours > 1 ? "s" : "")!")
+                                .font(.headline)
+                                .foregroundColor(.white.opacity(0.9))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 20)
+                            
+                            Button(action: {
+                                presentationMode.wrappedValue.dismiss()
+                            }) {
+                                Text("Start Enjoying Premium")
+                                    .font(.headline)
+                                    .foregroundColor(.black)
+                                    .padding(.horizontal, 30)
+                                    .padding(.vertical, 12)
+                                    .background(Color.yellow)
+                                    .cornerRadius(20)
+                            }
+                            .padding(.top, 10)
+                        }
+                        .padding(30)
+                        .background(Color(UIColor.systemGray6).opacity(0.9))
+                        .cornerRadius(20)
+                        .shadow(radius: 20)
+                        .padding(.horizontal, 40)
+                        .transition(.scale.combined(with: .opacity))
+                    }
+                }
+                .animation(.easeInOut, value: showSuccess)
+            )
         }
         .navigationBarTitle("Premium Trial", displayMode: .inline)
         .navigationBarHidden(true)
@@ -173,7 +226,7 @@ struct RewardedAdView: View {
                 ForEach(0..<trialDurations.count, id: \.self) { index in
                     DurationOptionButton(
                         duration: trialDurations[index],
-                        videoCount: index == 0 ? 1 : index,
+                        videoCount: calculateVideosNeeded(for: index),
                         isSelected: selectedDuration == index,
                         action: {
                             withAnimation {
@@ -250,64 +303,80 @@ struct RewardedAdView: View {
     
     // MARK: - Helper Methods
     
+    /// Calculate how many videos needed for each duration option
+    private func calculateVideosNeeded(for index: Int) -> Int {
+        // Simple calculation, higher durations require more videos
+        return min(index + 1, 3)
+    }
+    
     private func preloadRewardedAd() {
-        // Simulate ad preloading
-        // In a real implementation, this would call the AdManager to preload
-        // a rewarded ad from AdMob, Facebook Ads, etc.
+        // Request a rewarded ad to be loaded
+        adManager.loadRewardedAd()
     }
     
     private func startRewardedAdFlow() {
         // Set loading state
         isLoading = true
         
-        // Simulate ad loading delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            // Normally would show the actual rewarded ad here
-            simulateAdWatching()
+        // If this is a longer duration that requires multiple videos,
+        // we would handle that with a counter. For simplicity,
+        // we'll just show one video.
+        
+        if adManager.isRewardedAdReady {
+            // Get root view controller
+            if let rootViewController = getRootViewController() {
+                // Tell the ad manager to show the rewarded ad
+                adManager.showRewardedAd(from: rootViewController) { success, rewardAmount in
+                    DispatchQueue.main.async {
+                        self.isLoading = false
+                        
+                        if success {
+                            // Grant premium for the selected duration
+                            self.rewardHours = self.trialDurations[self.selectedDuration]
+                            self.premiumManager.grantTemporaryPremium(hours: self.rewardHours)
+                            
+                            // Show success animation
+                            withAnimation {
+                                self.showSuccess = true
+                            }
+                        } else {
+                            // Show error
+                            self.errorMessage = "Ad didn't complete. Please try again."
+                            self.showError = true
+                        }
+                    }
+                }
+            } else {
+                // Failed to get view controller
+                isLoading = false
+                errorMessage = "Could not display ad. Please try again."
+                showError = true
+            }
+        } else {
+            // No ad available
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                self.isLoading = false
+                self.errorMessage = "No ads available right now. Please try again later."
+                self.showError = true
+                
+                // Try to load another ad for next time
+                self.adManager.loadRewardedAd()
+            }
         }
     }
     
-    private func simulateAdWatching() {
-        // In a real implementation, this would show the actual rewarded ad
-        // For now, we'll simulate the ad completion after a short delay
-        
-        // Simulate ad watching for a couple seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            // Calculate reward hours based on selection
-            let rewardHours = trialDurations[selectedDuration]
-            
-            // Grant temporary premium
-            // In a real implementation, this would call PremiumManager
-            grantTemporaryPremium(hours: rewardHours)
-            
-            // Reset loading state
-            isLoading = false
-            
-            // Dismiss the view
-            presentationMode.wrappedValue.dismiss()
+    private func getRootViewController() -> UIViewController? {
+        // Find the current UIWindow
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first(where: { $0.isKeyWindow }) else {
+            return nil
         }
-    }
-    
-    private func grantTemporaryPremium(hours: Int) {
-        // This would call PremiumManager in a real implementation
-        // For now just use UserDefaults directly
-        let endTime = Date().addingTimeInterval(TimeInterval(hours * 3600))
         
-        UserDefaults.standard.set(true, forKey: "isPremiumUser")
-        UserDefaults.standard.set(endTime.timeIntervalSince1970, forKey: "temporaryPremiumEndTime")
-        
-        // Post notification
-        NotificationCenter.default.post(name: Notification.Name("PremiumStatusChanged"), object: nil)
-    }
-    
-    private func handleAdError(_ error: Error) {
-        isLoading = false
-        errorMessage = "Unable to load video. Please try again later."
-        showError = true
+        // Return the root view controller
+        return window.rootViewController
     }
 }
 
-// Preview
 struct RewardedAdView_Previews: PreviewProvider {
     static var previews: some View {
         RewardedAdView()

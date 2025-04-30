@@ -7,17 +7,19 @@ enum PremiumPlan: String, Codable {
     case none
     case monthly
     case annual
+    case temporary
     
     var displayName: String {
         switch self {
         case .none: return "Free"
         case .monthly: return "Monthly"
         case .annual: return "Annual"
+        case .temporary: return "Trial"
         }
     }
 }
 
-/// Manages premium features and subscription state
+/// Central manager for premium features and subscription state
 class PremiumManager: ObservableObject {
     // Shared instance for app-wide access
     static let shared = PremiumManager()
@@ -28,16 +30,19 @@ class PremiumManager: ObservableObject {
     @Published var temporaryPremiumEndTime: Date?
     @Published var availableThemes: [AppTheme] = []
     
-    // Feature limits for free tier
-    private let freeThemeLimit = 2
-    private let freeNoteLimit = 10
-    private let freeWidgetLimit = 2
+    // Premium features configuration
+    let FREE_NOTES_LIMIT = 5
+    let FREE_THEMES_COUNT = 2
+    let FREE_WIDGET_STYLES = 2
+    
+    // Timer for checking premium status
+    private var premiumCheckTimer: Timer?
     
     // Private initializer for singleton
     private init() {
         loadPremiumState()
         updateAvailableThemes()
-        startSubscriptionTimer()
+        startPremiumCheckTimer()
     }
     
     // MARK: - Private Methods
@@ -60,9 +65,9 @@ class PremiumManager: ObservableObject {
         }
     }
     
-    /// Start timer to check temporary premium status
-    private func startSubscriptionTimer() {
-        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+    /// Start timer to check premium status periodically
+    private func startPremiumCheckTimer() {
+        premiumCheckTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             self?.checkTemporaryPremium()
         }
     }
@@ -76,8 +81,7 @@ class PremiumManager: ObservableObject {
             self.availableThemes = allThemes
         } else {
             // Free users get limited themes
-            self.availableThemes = allThemes.count <= freeThemeLimit ?
-                allThemes : Array(allThemes.prefix(freeThemeLimit))
+            self.availableThemes = Array(allThemes.prefix(FREE_THEMES_COUNT))
         }
     }
     
@@ -112,12 +116,12 @@ class PremiumManager: ObservableObject {
         let endTime = Date().addingTimeInterval(TimeInterval(hours * 3600))
         temporaryPremiumEndTime = endTime
         isPremiumUser = true
-        currentPlan = .monthly // Temporary users get monthly benefits
+        currentPlan = .temporary
         
         // Save to user defaults
         UserDefaults.standard.set(true, forKey: "isPremiumUser")
         UserDefaults.standard.set(endTime.timeIntervalSince1970, forKey: "temporaryPremiumEndTime")
-        UserDefaults.standard.set(PremiumPlan.monthly.rawValue, forKey: "premiumPlan")
+        UserDefaults.standard.set(PremiumPlan.temporary.rawValue, forKey: "premiumPlan")
         
         // Update available themes
         updateAvailableThemes()
@@ -126,7 +130,7 @@ class PremiumManager: ObservableObject {
         NotificationCenter.default.post(name: Notification.Name("PremiumStatusChanged"), object: nil)
     }
     
-    /// Set premium status (normally called after purchase verification)
+    /// Set premium status (after successful purchase verification)
     func setPremiumStatus(isActive: Bool, plan: PremiumPlan = .none) {
         isPremiumUser = isActive
         currentPlan = plan
@@ -136,7 +140,7 @@ class PremiumManager: ObservableObject {
         UserDefaults.standard.set(plan.rawValue, forKey: "premiumPlan")
         
         // Clear temporary premium if upgrading to full premium
-        if isActive && plan != .none {
+        if isActive && (plan == .monthly || plan == .annual) {
             temporaryPremiumEndTime = nil
             UserDefaults.standard.removeObject(forKey: "temporaryPremiumEndTime")
         }
@@ -144,35 +148,38 @@ class PremiumManager: ObservableObject {
         // Update available themes
         updateAvailableThemes()
         
+        // Notify AdManager about premium change
+        AdManager.shared.isPremiumUser = isActive
+        
         // Post notification
         NotificationCenter.default.post(name: Notification.Name("PremiumStatusChanged"), object: nil)
     }
     
     // MARK: - Feature Access Methods
     
-    /// Check if a specific theme is available
+    /// Check if a specific theme is available on free plan
     func isThemeAvailable(_ theme: AppTheme) -> Bool {
         return isPremiumUser || availableThemes.contains { $0.id == theme.id }
     }
     
     /// Get the number of notes allowed
     func getNotesLimit() -> Int {
-        return isPremiumUser ? .max : freeNoteLimit
+        return isPremiumUser ? Int.max : FREE_NOTES_LIMIT
     }
     
     /// Check if user has reached note limit
     func hasReachedNoteLimit(currentCount: Int) -> Bool {
-        return !isPremiumUser && currentCount >= freeNoteLimit
+        return !isPremiumUser && currentCount >= FREE_NOTES_LIMIT
     }
     
-    /// Check if todo custom fields are available
+    /// Check if advanced todo features are available
     func areTodoCustomFieldsAvailable() -> Bool {
         return isPremiumUser
     }
     
     /// Get the widget style limit
     func getWidgetStyleLimit() -> Int {
-        return isPremiumUser ? .max : freeWidgetLimit
+        return isPremiumUser ? Int.max : FREE_WIDGET_STYLES
     }
     
     /// Check if advanced pomodoro features are available
@@ -202,6 +209,27 @@ class PremiumManager: ObservableObject {
             return "\(hours)h \(minutes)m remaining"
         } else {
             return "\(minutes) minutes remaining"
+        }
+    }
+    
+    // MARK: - Restore Purchase
+    
+    /// Restore premium purchases
+    func restorePurchases(completion: @escaping (Bool) -> Void) {
+        // In a real app, you would call your purchase API here
+        // to verify receipts and restore premium status
+        
+        // For demo purposes, we'll just simulate a success
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            // Simulate successful purchase restoration
+            // In a real app, set this based on actual receipt validation
+            let wasRestored = false
+            
+            if wasRestored {
+                self.setPremiumStatus(isActive: true, plan: .monthly)
+            }
+            
+            completion(wasRestored)
         }
     }
 }
