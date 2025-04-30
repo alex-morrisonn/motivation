@@ -232,7 +232,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         AdManager.shared.isPremiumUser = false
         
         // Clear any premium duration
-        AdManager.shared.checkTemporaryPremium()
+        PremiumManager.shared.checkTemporaryPremium()
         
         print("Premium features disabled - feature is not available yet")
     }
