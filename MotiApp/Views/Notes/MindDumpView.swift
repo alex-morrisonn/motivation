@@ -641,6 +641,7 @@ struct NoteCard: View {
                 .background(Color.red)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
+            .opacity(offset < 0 ? 1 : 0) // Only show when offset is negative (swiped left)
             
             // Note content
             VStack(alignment: .leading, spacing: 10) {
