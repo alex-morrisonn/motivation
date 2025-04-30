@@ -21,19 +21,8 @@ class AdManager: NSObject, ObservableObject {
     /// Indicates whether rewarded ads are ready to be displayed
     @Published var isRewardedAdReady = false
     
-    /// Premium status property (always false in current version)
-    /// Used for UI conditionals, but premium features are disabled
-    @Published var isPremiumUser = false {
-        didSet {
-            // Always reset to false since premium is unavailable
-            if isPremiumUser == true {
-                DispatchQueue.main.async {
-                    self.isPremiumUser = false
-                }
-                print("Premium cannot be enabled in this version")
-            }
-        }
-    }
+    /// Premium status property
+    @Published var isPremiumUser = false
     
     // MARK: - Private Properties
     
@@ -80,15 +69,55 @@ class AdManager: NSObject, ObservableObject {
         // Explicitly initialize banner ad state
         isBannerAdReady = true
         
-        // Clear any premium settings from previous versions
-        UserDefaults.standard.removeObject(forKey: "isPremiumUser")
-        UserDefaults.standard.removeObject(forKey: "temporaryPremiumEndTime")
+        // Load initial premium status from UserDefaults
+        isPremiumUser = UserDefaults.standard.bool(forKey: "isPremiumUser")
         
-        // Load ads on initialization
-        loadInterstitialAd()
-        loadRewardedAd()
+        // Only load ads if user is not premium
+        if !isPremiumUser {
+            // Load ads on initialization
+            loadInterstitialAd()
+            loadRewardedAd()
+        }
         
-        print("AdManager initialized - Premium features disabled in this version")
+        // Add observer for premium status changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(premiumStatusChanged),
+            name: Notification.Name("PremiumStatusChanged"),
+            object: nil
+        )
+        
+        print("AdManager initialized - Premium status: \(isPremiumUser)")
+    }
+    
+    // MARK: - Observer Methods
+    
+    @objc private func premiumStatusChanged() {
+        // Update premium status from PremiumManager
+        let wasPremium = isPremiumUser
+        isPremiumUser = UserDefaults.standard.bool(forKey: "isPremiumUser")
+        
+        if wasPremium != isPremiumUser {
+            if isPremiumUser {
+                // User became premium - clean up ads
+                cleanupAds()
+            } else {
+                // User is no longer premium - reload ads
+                loadInterstitialAd()
+                loadRewardedAd()
+            }
+            
+            // Notify subscribers that premium status changed
+            objectWillChange.send()
+        }
+    }
+    
+    // Clean up ads when user becomes premium
+    private func cleanupAds() {
+        interstitialAd = nil
+        rewardedAd = nil
+        isInterstitialReady = false
+        isRewardedAdReady = false
     }
     
     // MARK: - Banner Ads
@@ -97,6 +126,11 @@ class AdManager: NSObject, ObservableObject {
     /// - Parameter screenName: The name of the screen to check
     /// - Returns: Boolean indicating if a banner should be shown
     func shouldShowBannerAd(on screenName: String) -> Bool {
+        // Don't show ads to premium users
+        if isPremiumUser {
+            return false
+        }
+        
         // Don't show banner on these specific screens for better UX
         let bannerExcludedScreens = [
             "AboutView",
@@ -115,6 +149,11 @@ class AdManager: NSObject, ObservableObject {
     
     /// Loads an interstitial ad
     func loadInterstitialAd() {
+        // Don't load ads for premium users
+        if isPremiumUser {
+            return
+        }
+        
         let request = Request()
         InterstitialAd.load(with: interstitialAdUnitID, request: request) { [weak self] ad, error in
             guard let self = self else { return }
@@ -179,6 +218,9 @@ class AdManager: NSObject, ObservableObject {
     
     /// Loads a rewarded ad
     func loadRewardedAd() {
+        // Still load rewarded ads for premium users (they might want to extend)
+        // but we could also add a check here if needed
+        
         let request = Request()
         RewardedAd.load(with: rewardedAdUnitID, request: request) { [weak self] ad, error in
             guard let self = self else { return }
@@ -196,7 +238,6 @@ class AdManager: NSObject, ObservableObject {
     }
     
     /// Shows a rewarded ad with completion handler for the reward
-    /// Note: Premium features are not available in the current version
     /// - Parameters:
     ///   - viewController: The view controller to present from
     ///   - completion: Callback with success flag and reward amount if successful
@@ -220,7 +261,6 @@ class AdManager: NSObject, ObservableObject {
             self.loadRewardedAd()
             
             // Call completion with success and reward amount
-            // Note: In current version, this doesn't activate premium features
             completion(true, reward.amount.intValue)
         }
     }
@@ -231,35 +271,6 @@ class AdManager: NSObject, ObservableObject {
     func resetDailyImpressions() {
         sessionImpressions = 0
         print("Daily impression counter reset")
-    }
-    
-    // MARK: - Premium Features Management (Inactive in current version)
-    
-    /// Placeholder for premium activation (non-functional in current version)
-    /// Premium features are coming in a future update
-    func activatePremium() {
-        print("Premium activation requested but feature is not available yet")
-        // Premium remains disabled
-    }
-    
-    /// Placeholder for premium restoration (non-functional in current version)
-    /// Premium features are coming in a future update
-    func restorePremium(isSuccess: Bool) {
-        print("Premium restore requested but feature is not available yet")
-        // Premium remains disabled
-    }
-    
-    /// Ensures no temporary premium is active
-    func checkTemporaryPremium() {
-        // Clear any stored temporary premium end time
-        UserDefaults.standard.removeObject(forKey: "temporaryPremiumEndTime")
-        
-        // Ensure premium is disabled
-        if isPremiumUser {
-            DispatchQueue.main.async {
-                self.isPremiumUser = false
-            }
-        }
     }
 }
 

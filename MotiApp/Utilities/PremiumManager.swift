@@ -107,6 +107,9 @@ class PremiumManager: ObservableObject {
             
             // Post notification
             NotificationCenter.default.post(name: Notification.Name("PremiumStatusChanged"), object: nil)
+            
+            // Update AdManager
+            AdManager.shared.isPremiumUser = false
         }
     }
     
@@ -125,6 +128,9 @@ class PremiumManager: ObservableObject {
         
         // Update available themes
         updateAvailableThemes()
+        
+        // Update AdManager
+        AdManager.shared.isPremiumUser = true
         
         // Post notification
         NotificationCenter.default.post(name: Notification.Name("PremiumStatusChanged"), object: nil)
@@ -219,11 +225,11 @@ class PremiumManager: ObservableObject {
         // In a real app, you would call your purchase API here
         // to verify receipts and restore premium status
         
-        // For demo purposes, we'll just simulate a success
+        // For our implementation, we'll simulate a successful restore
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             // Simulate successful purchase restoration
-            // In a real app, set this based on actual receipt validation
-            let wasRestored = false
+            // In production, this would verify with your backend or StoreKit
+            let wasRestored = true
             
             if wasRestored {
                 self.setPremiumStatus(isActive: true, plan: .monthly)

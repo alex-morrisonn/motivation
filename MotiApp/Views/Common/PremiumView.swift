@@ -475,8 +475,8 @@ struct PremiumView: View {
     private func startPurchase() {
         isPurchasing = true
         
+        // For this implementation, we'll simulate a purchase process
         // In a real app, you would integrate with StoreKit here
-        // For this demo, we'll simulate a purchase process
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             // Simulate purchase success

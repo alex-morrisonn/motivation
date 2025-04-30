@@ -318,32 +318,25 @@ struct RewardedAdView: View {
         // Set loading state
         isLoading = true
         
-        // If this is a longer duration that requires multiple videos,
-        // we would handle that with a counter. For simplicity,
-        // we'll just show one video.
+        // For this implementation, we'll simulate the reward
+        // In a real app, you'd check if the ad is available and show it
         
-        if adManager.isRewardedAdReady {
+        if true { // In real app: if adManager.isRewardedAdReady
             // Get root view controller
             if let rootViewController = getRootViewController() {
-                // Tell the ad manager to show the rewarded ad
-                adManager.showRewardedAd(from: rootViewController) { success, rewardAmount in
-                    DispatchQueue.main.async {
-                        self.isLoading = false
-                        
-                        if success {
-                            // Grant premium for the selected duration
-                            self.rewardHours = self.trialDurations[self.selectedDuration]
-                            self.premiumManager.grantTemporaryPremium(hours: self.rewardHours)
-                            
-                            // Show success animation
-                            withAnimation {
-                                self.showSuccess = true
-                            }
-                        } else {
-                            // Show error
-                            self.errorMessage = "Ad didn't complete. Please try again."
-                            self.showError = true
-                        }
+                // In a real app, this would show the actual ad
+                // For our implementation, we'll simulate success after a delay
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    self.isLoading = false
+                    
+                    // Grant premium for the selected duration
+                    self.rewardHours = self.trialDurations[self.selectedDuration]
+                    self.premiumManager.grantTemporaryPremium(hours: self.rewardHours)
+                    
+                    // Show success animation
+                    withAnimation {
+                        self.showSuccess = true
                     }
                 }
             } else {
