@@ -16,7 +16,7 @@ struct MotiApp: App {
         // Configure initial appearance settings
         configureAppearance()
         
-        // Setup Google Mobile Ads
+        // Setup Google mobile ads
         configureAds()
         
         // Log app launch for analytics
