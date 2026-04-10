@@ -4,10 +4,14 @@ import SwiftUI
 struct DisciplineHomeView: View {
     @StateObject private var disciplineSystem = DisciplineSystemState()
     @ObservedObject private var streakManager = StreakManager.shared
+    @ObservedObject private var gamification = GamificationManager.shared
 
     @State private var showingTaskEditor = false
     @State private var showingHistory = false
+    @State private var showingJourney = false
     @State private var celebratingCompletion = false
+    @State private var xpPopup: Int? = nil
+    @State private var lastXPResult: XPAwardResult? = nil
 
     var body: some View {
         ZStack {
@@ -17,12 +21,21 @@ struct DisciplineHomeView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
                     headerView
+                    levelProgressCard
                     dailyTasksCard
                     progressSummaryCard
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 .padding(.bottom, 100)
+            }
+            .overlay(alignment: .top) {
+                if let xp = xpPopup {
+                    XPPopupView(xp: xp)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .zIndex(100)
+                        .padding(.top, 60)
+                }
             }
         }
         .sheet(isPresented: $showingTaskEditor) {
@@ -34,10 +47,18 @@ struct DisciplineHomeView: View {
         .sheet(isPresented: $showingHistory) {
             DisciplineHistoryView(disciplineSystem: disciplineSystem)
         }
+        .sheet(isPresented: $showingJourney) {
+            ProgressJourneyView()
+        }
         .fullScreenCover(isPresented: $celebratingCompletion) {
             DailyCompletionCelebrationView(
                 streakCount: streakManager.currentStreak,
-                onDismiss: { celebratingCompletion = false }
+                xpEarned: lastXPResult?.xpGained ?? 50,
+                level: gamification.currentLevel,
+                onDismiss: {
+                    Haptics.soft()
+                    celebratingCompletion = false
+                }
             )
         }
     }
@@ -59,7 +80,10 @@ struct DisciplineHomeView: View {
 
             Spacer()
 
-            Button(action: { showingHistory = true }) {
+            Button(action: {
+                Haptics.light()
+                showingHistory = true
+            }) {
                 HStack(spacing: 8) {
                     Image(systemName: "flame.fill")
                         .font(.system(size: 14, weight: .semibold))
@@ -81,7 +105,10 @@ struct DisciplineHomeView: View {
             }
             .buttonStyle(.plain)
 
-            Button(action: { showingTaskEditor = true }) {
+            Button(action: {
+                Haptics.light()
+                showingTaskEditor = true
+            }) {
                 Image(systemName: "slider.horizontal.3")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(Color.themeText)
@@ -155,7 +182,12 @@ struct DisciplineHomeView: View {
                     DisciplineTaskRow(
                         task: task,
                         onToggle: {
-                            if disciplineSystem.toggleTodayTask(at: index) {
+                            let result = disciplineSystem.toggleTodayTask(at: index)
+                            if let xp = result.xpResult {
+                                showXPPopup(xp.xpGained)
+                                lastXPResult = xp
+                            }
+                            if result.justCompletedAllTasks {
                                 showCompletionCelebration()
                             }
                         }
@@ -163,7 +195,10 @@ struct DisciplineHomeView: View {
                 }
             }
 
-            Button(action: { showingTaskEditor = true }) {
+            Button(action: {
+                Haptics.light()
+                showingTaskEditor = true
+            }) {
                 HStack {
                     Image(systemName: "line.3.horizontal.decrease.circle.fill")
                         .font(.system(size: 18))
@@ -222,7 +257,10 @@ struct DisciplineHomeView: View {
 
                 Spacer()
 
-                Button(action: { showingHistory = true }) {
+                Button(action: {
+                    Haptics.light()
+                    showingHistory = true
+                }) {
                     Text("See All")
                         .font(.subheadline)
                         .fontWeight(.semibold)
@@ -254,6 +292,105 @@ struct DisciplineHomeView: View {
         .cornerRadius(22)
     }
 
+    private var levelProgressCard: some View {
+        let rank = gamification.currentRank
+        let rankColor = rankColorFromName(rank.color)
+
+        return Button(action: {
+            Haptics.light()
+            showingJourney = true
+        }) {
+            HStack(spacing: 14) {
+                // Rank icon badge
+                ZStack {
+                    Circle()
+                        .fill(rankColor.opacity(0.15))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: rank.icon)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(rankColor)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text(rank.name)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(Color.themeText)
+
+                        Text("Lv.\(gamification.currentLevel)")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(rankColor)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(rankColor.opacity(0.12))
+                            .cornerRadius(6)
+
+                        Spacer()
+
+                        Text("\(gamification.xpInCurrentLevel)/\(gamification.xpToNextLevel) XP")
+                            .font(.caption)
+                            .foregroundColor(Color.themeSecondaryText)
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(Color.themeSecondaryText.opacity(0.5))
+                    }
+
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(Color.themeDivider.opacity(0.3))
+                                .frame(height: 8)
+
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [rankColor, rankColor.opacity(0.6)],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .frame(width: max(8, geometry.size.width * gamification.levelProgress), height: 8)
+                                .animation(.easeInOut(duration: 0.4), value: gamification.levelProgress)
+                        }
+                    }
+                    .frame(height: 8)
+                }
+            }
+            .padding(16)
+            .background(Color.themeCardBackground)
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 3)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func rankColorFromName(_ name: String) -> Color {
+        switch name {
+        case "green": return .green
+        case "blue": return Color.themePrimary
+        case "purple": return .purple
+        case "orange": return .orange
+        case "yellow": return .yellow
+        case "red": return .red
+        default: return Color.themePrimary
+        }
+    }
+
+    private func showXPPopup(_ xp: Int) {
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+            xpPopup = xp
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation(.easeOut(duration: 0.3)) {
+                xpPopup = nil
+            }
+        }
+    }
+
     private var formattedDate: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE, MMMM d"
@@ -279,58 +416,156 @@ struct DisciplineTaskRow: View {
     let task: DisciplineTask
     let onToggle: () -> Void
 
+    private let holdDuration: Double = 0.8
+
+    @State private var holdProgress: CGFloat = 0
+    @State private var isHolding = false
+    @State private var holdTimer: Timer?
+    @State private var hapticFired = false
+
     var body: some View {
-        Button(action: onToggle) {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .stroke(task.isCompleted ? Color.themeSuccess : Color.themeDivider, lineWidth: 2)
-                        .frame(width: 28, height: 28)
+        HStack(spacing: 16) {
+            // Checkbox circle
+            ZStack {
+                Circle()
+                    .stroke(task.isCompleted ? Color.themeSuccess : Color.themeDivider, lineWidth: 2)
+                    .frame(width: 28, height: 28)
 
-                    if task.isCompleted {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(Color.themeSuccess)
-                    }
+                if task.isCompleted {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(Color.themeSuccess)
                 }
-
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 8) {
-                        Text(task.category.rawValue.uppercased())
-                            .font(.caption2)
-                            .fontWeight(.semibold)
-                            .foregroundColor(Color.themePrimary)
-
-                        if let completedAt = task.completedAt {
-                            Text("Completed at \(formatTime(completedAt))")
-                                .font(.caption2)
-                                .foregroundColor(Color.themeSecondaryText)
-                        }
-                    }
-
-                    Text(task.title)
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .foregroundColor(Color.themeText)
-                        .strikethrough(task.isCompleted)
-
-                    Text(task.detail)
-                        .font(.caption)
-                        .foregroundColor(Color.themeSecondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                Spacer()
-
-                Image(systemName: task.category.iconName)
-                    .font(.system(size: 18))
-                    .foregroundColor(task.isCompleted ? Color.themeSuccess : Color.themeSecondaryText)
             }
-            .padding(16)
-            .background(task.isCompleted ? Color.themeSuccess.opacity(0.1) : Color.themeBackground.opacity(0.5))
-            .cornerRadius(14)
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 8) {
+                    Text(task.category.rawValue.uppercased())
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .foregroundColor(Color.themePrimary)
+
+                    if let completedAt = task.completedAt {
+                        Text("Completed at \(formatTime(completedAt))")
+                            .font(.caption2)
+                            .foregroundColor(Color.themeSecondaryText)
+                    }
+                }
+
+                Text(task.title)
+                    .font(.body)
+                    .fontWeight(.medium)
+                    .foregroundColor(Color.themeText)
+                    .strikethrough(task.isCompleted)
+
+                Text(task.detail)
+                    .font(.caption)
+                    .foregroundColor(Color.themeSecondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if !task.isCompleted {
+                    Text("Hold to complete")
+                        .font(.caption2)
+                        .foregroundColor(Color.themeSecondaryText.opacity(isHolding ? 0 : 0.6))
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: task.category.iconName)
+                .font(.system(size: 18))
+                .foregroundColor(task.isCompleted ? Color.themeSuccess : Color.themeSecondaryText)
         }
-        .buttonStyle(.plain)
+        .padding(16)
+        .background(
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    // Base background
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(task.isCompleted ? Color.themeSuccess.opacity(0.1) : Color.themeBackground.opacity(0.5))
+
+                    // Hold progress fill — sweeps left to right
+                    if !task.isCompleted && holdProgress > 0 {
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color.themeSuccess.opacity(0.12))
+                            .frame(width: geometry.size.width * holdProgress)
+
+                        // Leading edge glow
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color.themeSuccess.opacity(0.06))
+                            .frame(width: geometry.size.width * holdProgress)
+                            .blur(radius: 6)
+                    }
+                }
+            }
+        )
+        .overlay(
+            // Border that fills as you hold
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(
+                    isHolding ? Color.themeSuccess.opacity(0.4) : Color.clear,
+                    lineWidth: 1.5
+                )
+        )
+        .cornerRadius(14)
+        .scaleEffect(isHolding ? 0.97 : 1.0)
+        .animation(.easeInOut(duration: 0.15), value: isHolding)
+        .onTapGesture {
+            if task.isCompleted {
+                Haptics.soft()
+                onToggle()
+            }
+        }
+        .onLongPressGesture(minimumDuration: holdDuration, pressing: { pressing in
+            if task.isCompleted { return }
+
+            if pressing {
+                startHold()
+            } else {
+                cancelHold()
+            }
+        }, perform: {
+            if !task.isCompleted {
+                completeTask()
+            }
+        })
+    }
+
+    private func startHold() {
+        isHolding = true
+        hapticFired = false
+        holdProgress = 0
+
+        let interval: Double = 0.02
+        let increment = CGFloat(interval / holdDuration)
+
+        holdTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { _ in
+            holdProgress = min(1.0, holdProgress + increment)
+
+            if holdProgress >= 0.5 && !hapticFired {
+                hapticFired = true
+                Haptics.light()
+            }
+        }
+    }
+
+    private func cancelHold() {
+        isHolding = false
+        holdTimer?.invalidate()
+        holdTimer = nil
+        withAnimation(.easeOut(duration: 0.2)) {
+            holdProgress = 0
+        }
+    }
+
+    private func completeTask() {
+        holdTimer?.invalidate()
+        holdTimer = nil
+        isHolding = false
+        holdProgress = 0
+
+        Haptics.success()
+        onToggle()
     }
 
     private func formatTime(_ date: Date) -> String {
@@ -499,6 +734,7 @@ struct DailyTaskSelectionView: View {
 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
+                        Haptics.medium()
                         disciplineSystem.updateTodaySelections(selections)
                         presentationMode.wrappedValue.dismiss()
                     }
@@ -534,6 +770,7 @@ private struct TaskCategorySelectionCard: View {
             VStack(spacing: 10) {
                 ForEach(options) { option in
                     Button(action: {
+                        Haptics.selection()
                         selectedOptionID = option.id
                     }) {
                         HStack(spacing: 12) {
@@ -573,9 +810,12 @@ private struct TaskCategorySelectionCard: View {
 
 struct DailyCompletionCelebrationView: View {
     let streakCount: Int
+    let xpEarned: Int
+    let level: Int
     let onDismiss: () -> Void
 
     @State private var animateCheckmark = false
+    @State private var showXPBadge = false
 
     var body: some View {
         ZStack {
@@ -604,13 +844,31 @@ struct DailyCompletionCelebrationView: View {
                 }
 
                 VStack(spacing: 12) {
-                    Text("All Done! 🎉")
+                    Text("All Done!")
                         .font(.system(size: 36, weight: .bold))
                         .foregroundColor(.white)
 
                     Text("You completed all 3 tasks today")
                         .font(.title3)
                         .foregroundColor(.white.opacity(0.82))
+
+                    // XP earned badge
+                    HStack(spacing: 8) {
+                        Image(systemName: "bolt.fill")
+                            .foregroundColor(.yellow)
+                        Text("+\(xpEarned) XP")
+                            .fontWeight(.bold)
+                            .foregroundColor(.yellow)
+                        Text("  Level \(level)")
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    .font(.headline)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(20)
+                    .scaleEffect(showXPBadge ? 1 : 0.5)
+                    .opacity(showXPBadge ? 1 : 0)
 
                     Text(streakCount > 0 ? "Your streak is now \(streakCount) day\(streakCount == 1 ? "" : "s")." : "Come back tomorrow and do it again.")
                         .font(.body)
@@ -635,6 +893,9 @@ struct DailyCompletionCelebrationView: View {
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
                 animateCheckmark = true
+            }
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.4)) {
+                showXPBadge = true
             }
         }
     }
@@ -724,6 +985,30 @@ struct HistoryDayCard: View {
         .padding(16)
         .background(Color.themeCardBackground)
         .cornerRadius(12)
+    }
+}
+
+struct XPPopupView: View {
+    let xp: Int
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "bolt.fill")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.yellow)
+
+            Text("+\(xp) XP")
+                .font(.subheadline)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(
+            Capsule()
+                .fill(Color.black.opacity(0.8))
+        )
+        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
     }
 }
 

@@ -285,13 +285,36 @@ final class DisciplineSystemState: ObservableObject {
         getOrCreateDay(for: Date())
     }
 
+    struct ToggleResult {
+        let justCompletedAllTasks: Bool
+        let xpResult: XPAwardResult?
+    }
+
     @discardableResult
-    func toggleTodayTask(at index: Int) -> Bool {
+    func toggleTodayTask(at index: Int) -> ToggleResult {
         var today = getTodayDay()
         let wasFullyCompleted = today.isFullyCompleted
+        let taskWasCompleted = today.tasks.indices.contains(index) ? !today.tasks[index].isCompleted : false
         today.toggleTask(at: index)
         updateDay(today, wasFullyCompleted: wasFullyCompleted)
-        return !wasFullyCompleted && today.isFullyCompleted
+
+        // Award or reverse XP
+        let xpResult: XPAwardResult?
+        if taskWasCompleted {
+            xpResult = GamificationManager.shared.awardTaskXP(
+                completedCount: today.completedTaskCount,
+                totalCount: today.tasks.count,
+                wasCompleted: true
+            )
+        } else {
+            GamificationManager.shared.reverseTaskXP(wasFullyCompletedBefore: wasFullyCompleted)
+            xpResult = nil
+        }
+
+        return ToggleResult(
+            justCompletedAllTasks: !wasFullyCompleted && today.isFullyCompleted,
+            xpResult: xpResult
+        )
     }
 
     func updateTodaySelections(_ selections: [DisciplineCategory: String]) {
@@ -322,6 +345,7 @@ final class DisciplineSystemState: ObservableObject {
         days.removeAll()
         defaults.removeObject(forKey: daysKey)
         StreakManager.shared.resetStreakData()
+        GamificationManager.shared.resetAllData()
     }
 
     private func loadData() {

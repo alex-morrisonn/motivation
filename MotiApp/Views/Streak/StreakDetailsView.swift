@@ -4,6 +4,7 @@ import SwiftUI
 struct StreakDetailsView: View {
     @Environment(\.presentationMode) var presentationMode
     @ObservedObject private var streakManager = StreakManager.shared
+    @ObservedObject private var gamification = GamificationManager.shared
     
     // MARK: - Date Formatters
     
@@ -220,12 +221,12 @@ struct StreakDetailsView: View {
     /// Streak statistics section
     private var streakStatsView: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("STREAK STATS")
+            Text("STATS")
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundColor(.white.opacity(0.6))
                 .tracking(2)
-            
+
             VStack(spacing: 16) {
                 HStack {
                     StatItem(
@@ -234,7 +235,7 @@ struct StreakDetailsView: View {
                         icon: "flame",
                         iconColor: .orange
                     )
-                    
+
                     StatItem(
                         value: "\(streakManager.longestStreak)",
                         label: "Longest Streak",
@@ -242,9 +243,57 @@ struct StreakDetailsView: View {
                         iconColor: .yellow
                     )
                 }
-                
+
                 Divider()
                     .background(Color.white.opacity(0.2))
+
+                HStack {
+                    StatItem(
+                        value: "\(gamification.totalXP)",
+                        label: "Total XP",
+                        icon: "bolt.fill",
+                        iconColor: .yellow
+                    )
+
+                    StatItem(
+                        value: "Lv. \(gamification.currentLevel)",
+                        label: "Current Level",
+                        icon: "arrow.up.circle.fill",
+                        iconColor: .green
+                    )
+                }
+
+                // Level progress bar
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Level \(gamification.currentLevel)")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                        Spacer()
+                        Text("\(gamification.xpInCurrentLevel)/\(gamification.xpToNextLevel) XP to Level \(gamification.currentLevel + 1)")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(Color.white.opacity(0.1))
+                                .frame(height: 8)
+
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.green, .green.opacity(0.6)],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .frame(width: max(8, geometry.size.width * gamification.levelProgress), height: 8)
+                        }
+                    }
+                    .frame(height: 8)
+                }
             }
             .padding(16)
             .background(Color.black.opacity(0.3))
@@ -252,55 +301,42 @@ struct StreakDetailsView: View {
         }
     }
     
-    /// Streak achievements section (placeholders for future feature)
+    /// Achievements section powered by GamificationManager
     private var streakAchievementsView: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("ACHIEVEMENTS")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(.white.opacity(0.6))
-                .tracking(2)
-            
-            VStack(spacing: 16) {
-                HStack(spacing: 14) {
-                    // Achievement examples - these would be dynamic in a full implementation
-                    achievementItem(
-                        icon: "1.circle.fill",
-                        title: "First Day",
-                        description: "Finish one full day",
-                        isUnlocked: streakManager.currentStreak >= 1,
-                        color: .green
-                    )
-                    .id("achievement-1")
-                    
-                    achievementItem(
-                        icon: "7.circle.fill",
-                        title: "Week Strong",
-                        description: "7 day streak",
-                        isUnlocked: streakManager.currentStreak >= 7 || streakManager.longestStreak >= 7,
-                        color: .blue
-                    )
-                    .id("achievement-2")
-                }
-                
-                HStack(spacing: 14) {
-                    achievementItem(
-                        icon: "30.circle.fill",
-                        title: "Monthly Master",
-                        description: "30 day streak",
-                        isUnlocked: streakManager.currentStreak >= 30 || streakManager.longestStreak >= 30,
-                        color: .purple
-                    )
-                    .id("achievement-3")
-                    
-                    achievementItem(
-                        icon: "number.circle.fill",
-                        title: "Century Club",
-                        description: "100 day streak",
-                        isUnlocked: streakManager.currentStreak >= 100 || streakManager.longestStreak >= 100,
-                        color: .orange
-                    )
-                    .id("achievement-4")
+        let unlocked = gamification.achievements.filter(\.isUnlocked)
+        let locked = gamification.achievements.filter { !$0.isUnlocked }
+
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("ACHIEVEMENTS")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white.opacity(0.6))
+                    .tracking(2)
+
+                Spacer()
+
+                Text("\(unlocked.count)/\(gamification.achievements.count)")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.5))
+            }
+
+            // Unlocked achievements
+            let allAchievements = unlocked + locked
+            let rows = stride(from: 0, to: allAchievements.count, by: 2).map {
+                Array(allAchievements[$0..<min($0 + 2, allAchievements.count)])
+            }
+
+            VStack(spacing: 12) {
+                ForEach(rows, id: \.first?.id) { row in
+                    HStack(spacing: 14) {
+                        ForEach(row) { achievement in
+                            achievementItem(achievement: achievement)
+                        }
+                        if row.count == 1 {
+                            Spacer().frame(maxWidth: .infinity)
+                        }
+                    }
                 }
             }
             .padding(16)
@@ -308,33 +344,47 @@ struct StreakDetailsView: View {
             .cornerRadius(16)
         }
     }
-    
-    /// Single achievement item
-    private func achievementItem(icon: String, title: String, description: String, isUnlocked: Bool, color: Color) -> some View {
-        VStack(alignment: .center, spacing: 8) {
+
+    /// Single achievement item from GamificationManager data
+    private func achievementItem(achievement: Achievement) -> some View {
+        let color = achievementColor(achievement.color)
+
+        return VStack(alignment: .center, spacing: 8) {
             ZStack {
                 Circle()
-                    .fill(isUnlocked ? color.opacity(0.3) : Color.gray.opacity(0.2))
+                    .fill(achievement.isUnlocked ? color.opacity(0.3) : Color.gray.opacity(0.2))
                     .frame(width: 60, height: 60)
-                
-                Image(systemName: icon)
+
+                Image(systemName: achievement.icon)
                     .font(.system(size: 30))
-                    .foregroundColor(isUnlocked ? color : Color.gray.opacity(0.5))
+                    .foregroundColor(achievement.isUnlocked ? color : Color.gray.opacity(0.5))
             }
-            
-            Text(title)
+
+            Text(achievement.title)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(isUnlocked ? .white : .gray)
-            
-            Text(description)
+                .foregroundColor(achievement.isUnlocked ? .white : .gray)
+
+            Text(achievement.description)
                 .font(.system(size: 12))
-                .foregroundColor(isUnlocked ? .white.opacity(0.7) : .gray.opacity(0.7))
+                .foregroundColor(achievement.isUnlocked ? .white.opacity(0.7) : .gray.opacity(0.7))
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding(8)
-        .background(isUnlocked ? color.opacity(0.1) : Color.clear)
+        .background(achievement.isUnlocked ? color.opacity(0.1) : Color.clear)
         .cornerRadius(10)
+    }
+
+    private func achievementColor(_ name: String) -> Color {
+        switch name {
+        case "green": return .green
+        case "blue": return .blue
+        case "purple": return .purple
+        case "orange": return .orange
+        case "yellow": return .yellow
+        case "red": return .red
+        default: return .gray
+        }
     }
 }
 
