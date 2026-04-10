@@ -79,23 +79,6 @@ struct CategoriesView: View {
                         .padding(.bottom, 30)
                     }
                 }
-                .overlay(
-                    VStack {
-                        HStack {
-                            Button(action: {
-                                selectedCategory = nil
-                                
-                            }) {
-                                Image(systemName: "chevron.left")
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 16, weight: .bold))
-                                    .padding()
-                            }
-                            Spacer()
-                        }
-                        Spacer()
-                    }
-                )
             } else {
                 // Show categories list with improved UI
                 VStack {
@@ -157,6 +140,22 @@ struct CategoriesView: View {
         .sheet(isPresented: $showingShareSheet) {
             if let quote = quoteToShare {
                 ShareSheet(activityItems: ["\(quote.text) — \(quote.author)"])
+            }
+        }
+        .navigationTitle(selectedCategory ?? "Categories")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(selectedCategory != nil)
+        .toolbar {
+            if selectedCategory != nil {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        selectedCategory = nil
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.white)
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                }
             }
         }
     }

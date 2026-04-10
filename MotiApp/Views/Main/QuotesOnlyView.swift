@@ -34,16 +34,11 @@ struct QuotesOnlyView: View {
     }
 
     private var quoteHeader: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        HStack {
             Text("QUOTE OF THE DAY")
                 .font(.caption)
                 .foregroundColor(Color.themeSecondaryText)
                 .tracking(2)
-
-            Text("Read it, save it, or explore more when you want a different angle.")
-                .font(.subheadline)
-                .foregroundColor(Color.themeSecondaryText.opacity(0.9))
-                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

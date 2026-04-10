@@ -1,39 +1,24 @@
 import SwiftUI
 
-/// Main home view focused on Daily Discipline System
+/// Main home view focused on the daily discipline system.
 struct DisciplineHomeView: View {
-    // MARK: - Properties
-    
     @StateObject private var disciplineSystem = DisciplineSystemState()
-    
+    @ObservedObject private var streakManager = StreakManager.shared
+
     @State private var showingTaskEditor = false
     @State private var showingHistory = false
     @State private var celebratingCompletion = false
-    
-    // MARK: - Body
-    
+
     var body: some View {
         ZStack {
-            // Background
             Color.themeBackground
                 .edgesIgnoringSafeArea(.all)
-            
+
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
-                    // Header with date and streak
                     headerView
-                    
-                    // Main discipline tasks card
                     dailyTasksCard
-                    
-                    // Progress summary
                     progressSummaryCard
-                    
-                    // Quick stats
-                    quickStatsGrid
-                    
-                    // Motivational quote (smaller, secondary focus)
-                    motivationalQuoteCard
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
@@ -41,11 +26,9 @@ struct DisciplineHomeView: View {
             }
         }
         .sheet(isPresented: $showingTaskEditor) {
-            TaskTemplateEditorView(
-                templates: disciplineSystem.taskTemplates,
-                onSave: { newTemplates in
-                    disciplineSystem.updateTemplates(newTemplates)
-                }
+            DailyTaskSelectionView(
+                day: disciplineSystem.getTodayDay(),
+                disciplineSystem: disciplineSystem
             )
         }
         .sheet(isPresented: $showingHistory) {
@@ -53,130 +36,139 @@ struct DisciplineHomeView: View {
         }
         .fullScreenCover(isPresented: $celebratingCompletion) {
             DailyCompletionCelebrationView(
+                streakCount: streakManager.currentStreak,
                 onDismiss: { celebratingCompletion = false }
             )
         }
     }
-    
-    // MARK: - Header View
-    
+
     private var headerView: some View {
-        VStack(spacing: 12) {
-            // Date
-            Text(formattedDate)
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundColor(Color.themeText)
-            
-            // Streak badge
-            HStack(spacing: 8) {
-                Image(systemName: "flame.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(.orange)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(disciplineSystem.streak.currentStreak) Day Streak")
-                        .font(.headline)
-                        .foregroundColor(Color.themeText)
-                    
-                    if disciplineSystem.streak.longestStreak > 0 {
-                        Text("Best: \(disciplineSystem.streak.longestStreak) days")
-                            .font(.caption)
-                            .foregroundColor(Color.themeSecondaryText)
-                    }
-                }
-                
-                Spacer()
-                
-                // Settings button
-                Button(action: { showingTaskEditor = true }) {
-                    Image(systemName: "slider.horizontal.3")
-                        .font(.system(size: 20))
-                        .foregroundColor(Color.themeText)
-                        .padding(8)
-                        .background(Color.themeCardBackground)
-                        .clipShape(Circle())
-                }
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("TODAY")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(Color.themeSecondaryText)
+                    .tracking(1.8)
+
+                Text(formattedDate)
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(Color.themeText)
             }
-            .padding(16)
-            .background(
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color.orange.opacity(0.1),
-                        Color.red.opacity(0.05)
-                    ]),
-                    startPoint: .leading,
-                    endPoint: .trailing
+
+            Spacer()
+
+            Button(action: { showingHistory = true }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.orange)
+
+                    Text("\(streakManager.currentStreak)")
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .foregroundColor(Color.themeText)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color.themeCardBackground)
+                .overlay(
+                    Capsule()
+                        .stroke(Color.orange.opacity(0.2), lineWidth: 1)
                 )
-            )
-            .cornerRadius(16)
+                .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+
+            Button(action: { showingTaskEditor = true }) {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(Color.themeText)
+                    .frame(width: 40, height: 40)
+                    .background(Color.themeCardBackground)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.themeDivider.opacity(0.25), lineWidth: 1)
+                    )
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
         }
     }
-    
-    // MARK: - Daily Tasks Card
-    
+
     private var dailyTasksCard: some View {
-        VStack(spacing: 20) {
-            // Card header
-            HStack {
+        let today = disciplineSystem.getTodayDay()
+
+        return VStack(spacing: 20) {
+            HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Today's Discipline")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(Color.themeText)
-                    
+
                     Text("\(completedTasksCount)/3 completed")
                         .font(.subheadline)
                         .foregroundColor(Color.themeSecondaryText)
                 }
-                
+
                 Spacer()
-                
-                // Completion ring
+
                 ZStack {
                     Circle()
                         .stroke(Color.themeDivider, lineWidth: 4)
-                        .frame(width: 50, height: 50)
-                    
+                        .frame(width: 52, height: 52)
+
                     Circle()
                         .trim(from: 0, to: completionPercentage)
                         .stroke(
-                            completionPercentage == 1.0 ? Color.themeSuccess : Color.themePrimary,
+                            completionPercentage == 1 ? Color.themeSuccess : Color.themePrimary,
                             style: StrokeStyle(lineWidth: 4, lineCap: .round)
                         )
-                        .frame(width: 50, height: 50)
+                        .frame(width: 52, height: 52)
                         .rotationEffect(.degrees(-90))
                         .animation(.easeInOut, value: completionPercentage)
-                    
+
                     Text("\(Int(completionPercentage * 100))%")
                         .font(.caption)
                         .fontWeight(.bold)
                         .foregroundColor(Color.themeText)
                 }
             }
-            
-            // Task list
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Choose one task from each category. Finishing all three earns one streak day.")
+                    .font(.subheadline)
+                    .foregroundColor(Color.themeSecondaryText)
+
+                HStack(spacing: 10) {
+                    ForEach(DisciplineCategory.allCases.sorted { $0.displayOrder < $1.displayOrder }) { category in
+                        categoryChip(for: category, in: today)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
             VStack(spacing: 12) {
-                let today = disciplineSystem.getTodayDay()
-                
                 ForEach(Array(today.tasks.enumerated()), id: \.element.id) { index, task in
                     DisciplineTaskRow(
                         task: task,
                         onToggle: {
-                            disciplineSystem.toggleTodayTask(at: index)
-                            checkForDailyCompletion()
+                            if disciplineSystem.toggleTodayTask(at: index) {
+                                showCompletionCelebration()
+                            }
                         }
                     )
                 }
             }
-            
-            // Customize tasks button
+
             Button(action: { showingTaskEditor = true }) {
                 HStack {
-                    Image(systemName: "pencil.circle.fill")
+                    Image(systemName: "line.3.horizontal.decrease.circle.fill")
                         .font(.system(size: 18))
-                    
-                    Text("Customize Daily Tasks")
+
+                    Text("Choose Today's 3 Tasks")
                         .font(.subheadline)
                         .fontWeight(.medium)
                 }
@@ -192,182 +184,155 @@ struct DisciplineHomeView: View {
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
     }
-    
-    // MARK: - Progress Summary Card
-    
+
+    private func categoryChip(for category: DisciplineCategory, in day: DisciplineDay) -> some View {
+        let selectedTask = day.tasks.first(where: { $0.category == category })
+
+        return VStack(alignment: .leading, spacing: 4) {
+            Text(category.rawValue.uppercased())
+                .font(.caption2)
+                .fontWeight(.semibold)
+                .foregroundColor(Color.themePrimary)
+
+            Text(selectedTask?.title ?? "")
+                .font(.caption)
+                .foregroundColor(Color.themeText)
+                .lineLimit(2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(Color.themeBackground.opacity(0.45))
+        .cornerRadius(12)
+    }
+
     private var progressSummaryCard: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Text("This Week")
-                    .font(.headline)
-                    .foregroundColor(Color.themeText)
-                
+        let history = disciplineSystem.getCompletionHistory(days: 7).reversed()
+
+        return VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Weekly Snapshot")
+                        .font(.headline)
+                        .foregroundColor(Color.themeText)
+
+                    Text("Track how consistently you’re closing all three categories.")
+                        .font(.caption)
+                        .foregroundColor(Color.themeSecondaryText)
+                }
+
                 Spacer()
-                
+
                 Button(action: { showingHistory = true }) {
                     Text("See All")
                         .font(.subheadline)
+                        .fontWeight(.semibold)
                         .foregroundColor(Color.themePrimary)
                 }
             }
-            
-            // Week progress bars
-            VStack(spacing: 10) {
-                let history = disciplineSystem.getCompletionHistory(days: 7)
-                
-                ForEach(history.reversed(), id: \.id) { day in
+
+            VStack(spacing: 12) {
+                ForEach(Array(history), id: \.id) { day in
                     WeekDayProgressRow(day: day)
                 }
             }
         }
         .padding(20)
-        .background(Color.themeCardBackground)
-        .cornerRadius(20)
-    }
-    
-    // MARK: - Quick Stats Grid
-    
-    private var quickStatsGrid: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-            // Total completed days
-            StatCard(
-                icon: "checkmark.circle.fill",
-                iconColor: Color.themeSuccess,
-                value: "\(disciplineSystem.streak.totalCompletedDays)",
-                label: "Total Days"
+        .background(
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color.themeCardBackground,
+                    Color.themeCardBackground.opacity(0.92)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
             )
-            
-            // 30-day completion rate
-            StatCard(
-                icon: "chart.line.uptrend.xyaxis",
-                iconColor: Color.themePrimary,
-                value: "\(Int(disciplineSystem.completionRate(in: 30) * 100))%",
-                label: "30-Day Rate"
-            )
-        }
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(Color.themeDivider.opacity(0.35), lineWidth: 1)
+        )
+        .cornerRadius(22)
     }
-    
-    // MARK: - Motivational Quote Card
-    
-    private var motivationalQuoteCard: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Image(systemName: "quote.opening")
-                    .font(.caption)
-                    .foregroundColor(Color.themeSecondaryText)
-                
-                Text("Daily Motivation")
-                    .font(.caption)
-                    .foregroundColor(Color.themeSecondaryText)
-                    .tracking(1)
-                
-                Spacer()
-            }
-            
-            let quote = QuoteService.shared.getTodaysQuote()
-            
-            Text(quote.text)
-                .font(.body)
-                .foregroundColor(Color.themeText)
-                .multilineTextAlignment(.center)
-                .lineLimit(3)
-            
-            Text("— \(quote.author)")
-                .font(.caption)
-                .foregroundColor(Color.themeSecondaryText)
-        }
-        .padding(16)
-        .background(Color.themeCardBackground.opacity(0.5))
-        .cornerRadius(16)
-    }
-    
-    // MARK: - Computed Properties
-    
+
     private var formattedDate: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE, MMMM d"
         return formatter.string(from: Date())
     }
-    
+
     private var completedTasksCount: Int {
         disciplineSystem.getTodayDay().completedTaskCount
     }
-    
+
     private var completionPercentage: Double {
         disciplineSystem.getTodayDay().completionPercentage
     }
-    
-    // MARK: - Helper Methods
-    
-    private func checkForDailyCompletion() {
-        let today = disciplineSystem.getTodayDay()
-        if today.isFullyCompleted {
-            // Show celebration
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                celebratingCompletion = true
-            }
+
+    private func showCompletionCelebration() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            celebratingCompletion = true
         }
     }
 }
 
-// MARK: - Supporting Views
-
-/// Individual task row
 struct DisciplineTaskRow: View {
     let task: DisciplineTask
     let onToggle: () -> Void
-    
+
     var body: some View {
         Button(action: onToggle) {
             HStack(spacing: 16) {
-                // Checkbox
                 ZStack {
                     Circle()
                         .stroke(task.isCompleted ? Color.themeSuccess : Color.themeDivider, lineWidth: 2)
                         .frame(width: 28, height: 28)
-                    
+
                     if task.isCompleted {
                         Image(systemName: "checkmark")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(Color.themeSuccess)
                     }
                 }
-                
-                // Task title
-                VStack(alignment: .leading, spacing: 4) {
+
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 8) {
+                        Text(task.category.rawValue.uppercased())
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(Color.themePrimary)
+
+                        if let completedAt = task.completedAt {
+                            Text("Completed at \(formatTime(completedAt))")
+                                .font(.caption2)
+                                .foregroundColor(Color.themeSecondaryText)
+                        }
+                    }
+
                     Text(task.title)
                         .font(.body)
                         .fontWeight(.medium)
                         .foregroundColor(Color.themeText)
                         .strikethrough(task.isCompleted)
-                    
-                    if let completedAt = task.completedAt {
-                        Text("Completed at \(formatTime(completedAt))")
-                            .font(.caption)
-                            .foregroundColor(Color.themeSecondaryText)
-                    }
+
+                    Text(task.detail)
+                        .font(.caption)
+                        .foregroundColor(Color.themeSecondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                
+
                 Spacer()
-                
-                // Status indicator
-                if task.isCompleted {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 24))
-                        .foregroundColor(Color.themeSuccess)
-                }
+
+                Image(systemName: task.category.iconName)
+                    .font(.system(size: 18))
+                    .foregroundColor(task.isCompleted ? Color.themeSuccess : Color.themeSecondaryText)
             }
             .padding(16)
-            .background(
-                task.isCompleted ?
-                Color.themeSuccess.opacity(0.1) :
-                Color.themeBackground.opacity(0.5)
-            )
-            .cornerRadius(12)
+            .background(task.isCompleted ? Color.themeSuccess.opacity(0.1) : Color.themeBackground.opacity(0.5))
+            .cornerRadius(14)
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
     }
-    
+
     private func formatTime(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
@@ -375,62 +340,92 @@ struct DisciplineTaskRow: View {
     }
 }
 
-/// Week day progress row
 struct WeekDayProgressRow: View {
     let day: DisciplineDay
-    
+
     var body: some View {
-        HStack(spacing: 12) {
-            // Day label
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: 14) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(dayLabel)
                     .font(.subheadline)
-                    .fontWeight(.medium)
+                    .fontWeight(day.isToday ? .semibold : .medium)
                     .foregroundColor(Color.themeText)
-                
+                    .lineLimit(1)
+
                 Text(dateLabel)
                     .font(.caption)
                     .foregroundColor(Color.themeSecondaryText)
             }
-            .frame(width: 80, alignment: .leading)
-            
-            // Progress bar
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    // Background
-                    Rectangle()
-                        .fill(Color.themeDivider.opacity(0.3))
-                        .frame(height: 8)
-                        .cornerRadius(4)
-                    
-                    // Progress
-                    Rectangle()
-                        .fill(day.isFullyCompleted ? Color.themeSuccess : Color.themePrimary)
-                        .frame(width: geometry.size.width * day.completionPercentage, height: 8)
-                        .cornerRadius(4)
+            .frame(width: 76, alignment: .leading)
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    Capsule()
+                        .fill(day.isFullyCompleted ? Color.themeSuccess : Color.themePrimary.opacity(0.3))
+                        .frame(width: 10, height: 10)
+
+                    Text(statusText)
+                        .font(.caption)
+                        .foregroundColor(day.isFullyCompleted ? Color.themeSuccess : Color.themeSecondaryText)
+
+                    Spacer()
+
+                    Text("\(day.completedTaskCount)/3")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(Color.themeText)
                 }
+
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Color.themeBackground.opacity(0.65))
+                            .frame(height: 10)
+
+                        Capsule()
+                            .fill(progressGradient)
+                            .frame(width: max(10, geometry.size.width * day.completionPercentage), height: 10)
+                    }
+                }
+                .frame(height: 10)
             }
-            .frame(height: 8)
-            
-            // Count label
-            Text("\(day.completedTaskCount)/3")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(day.isFullyCompleted ? Color.themeSuccess : Color.themeSecondaryText)
-                .frame(width: 35, alignment: .trailing)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(Color.themeBackground.opacity(0.42))
+            .cornerRadius(16)
         }
     }
-    
-    private var dayLabel: String {
-        if day.isToday {
-            return "Today"
+
+    private var statusText: String {
+        if day.isFullyCompleted {
+            return "Complete"
         }
-        
+
+        if day.completedTaskCount == 0 {
+            return day.isToday ? "Not started" : "Missed"
+        }
+
+        return "In progress"
+    }
+
+    private var progressGradient: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(colors: day.isFullyCompleted
+                ? [Color.themeSuccess, Color.themeSuccess.opacity(0.75)]
+                : [Color.themePrimary, Color.themePrimary.opacity(0.55)]
+            ),
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    }
+
+    private var dayLabel: String {
+        if day.isToday { return "Today" }
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE"
         return formatter.string(from: day.date)
     }
-    
+
     private var dateLabel: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d"
@@ -438,118 +433,60 @@ struct WeekDayProgressRow: View {
     }
 }
 
-/// Stat card component
-struct StatCard: View {
-    let icon: String
-    let iconColor: Color
-    let value: String
-    let label: String
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            // Icon
-            Image(systemName: icon)
-                .font(.system(size: 32))
-                .foregroundColor(iconColor)
-            
-            // Value
-            Text(value)
-                .font(.title)
-                .fontWeight(.bold)
-                .foregroundColor(Color.themeText)
-            
-            // Label
-            Text(label)
-                .font(.caption)
-                .foregroundColor(Color.themeSecondaryText)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
-        .background(Color.themeCardBackground)
-        .cornerRadius(16)
-    }
-}
+struct DailyTaskSelectionView: View {
+    @Environment(\.presentationMode) private var presentationMode
 
-// MARK: - Task Template Editor
+    let day: DisciplineDay
+    let disciplineSystem: DisciplineSystemState
 
-struct TaskTemplateEditorView: View {
-    @Environment(\.presentationMode) var presentationMode
-    
-    let templates: [String]
-    let onSave: ([String]) -> Void
-    
-    @State private var task1: String
-    @State private var task2: String
-    @State private var task3: String
-    
-    init(templates: [String], onSave: @escaping ([String]) -> Void) {
-        self.templates = templates
-        self.onSave = onSave
-        
-        _task1 = State(initialValue: templates.count > 0 ? templates[0] : "Task 1")
-        _task2 = State(initialValue: templates.count > 1 ? templates[1] : "Task 2")
-        _task3 = State(initialValue: templates.count > 2 ? templates[2] : "Task 3")
+    @State private var selections: [DisciplineCategory: String]
+
+    init(day: DisciplineDay, disciplineSystem: DisciplineSystemState) {
+        self.day = day
+        self.disciplineSystem = disciplineSystem
+        _selections = State(initialValue: Dictionary(uniqueKeysWithValues: day.tasks.map { ($0.category, $0.optionID) }))
     }
-    
+
     var body: some View {
         NavigationView {
             ZStack {
                 Color.themeBackground.edgesIgnoringSafeArea(.all)
-                
-                VStack(spacing: 24) {
-                    // Header
-                    VStack(spacing: 8) {
-                        Text("Daily Discipline Tasks")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(Color.themeText)
-                        
-                        Text("Customize your 3 daily tasks")
-                            .font(.subheadline)
-                            .foregroundColor(Color.themeSecondaryText)
+
+                GeometryReader { geometry in
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(spacing: 20) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Choose today's plan")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(Color.themeText)
+
+                                Text("Pick one simple task from each category. Finish all three to earn a streak day.")
+                                    .font(.subheadline)
+                                    .foregroundColor(Color.themeSecondaryText)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                            ForEach(DisciplineCategory.allCases.sorted { $0.displayOrder < $1.displayOrder }) { category in
+                                TaskCategorySelectionCard(
+                                    category: category,
+                                    options: disciplineSystem.getTaskOptions(for: category),
+                                    selectedOptionID: Binding(
+                                        get: {
+                                            selections[category] ?? DisciplineTaskLibrary.defaultOption(for: category).id
+                                        },
+                                        set: { selections[category] = $0 }
+                                    )
+                                )
+                                .frame(maxWidth: .infinity)
+                            }
+                        }
+                        .frame(width: max(0, geometry.size.width - 40), alignment: .topLeading)
+                        .padding(.vertical, 20)
+                        .padding(.horizontal, 20)
                     }
-                    .padding(.top, 20)
-                    
-                    // Task fields
-                    VStack(spacing: 16) {
-                        TaskTextField(number: 1, text: $task1)
-                        TaskTextField(number: 2, text: $task2)
-                        TaskTextField(number: 3, text: $task3)
-                    }
-                    .padding(.horizontal, 20)
-                    
-                    // Examples
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Examples:")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(Color.themeSecondaryText)
-                        
-                        ExampleTaskRow(icon: "book.fill", text: "Read 20 pages")
-                        ExampleTaskRow(icon: "dumbbell.fill", text: "30 min workout")
-                        ExampleTaskRow(icon: "pencil", text: "Journal 10 minutes")
-                        ExampleTaskRow(icon: "brain.head.profile", text: "Meditate 15 minutes")
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 16)
-                    .background(Color.themeCardBackground.opacity(0.5))
-                    .cornerRadius(12)
-                    .padding(.horizontal, 20)
-                    
-                    Spacer()
-                    
-                    // Save button
-                    Button(action: saveTemplates) {
-                        Text("Save Tasks")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Color.themePrimary)
-                            .cornerRadius(12)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
+                    .scrollBounceBehavior(.basedOnSize, axes: .vertical)
+                    .clipped()
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -559,78 +496,95 @@ struct TaskTemplateEditorView: View {
                         presentationMode.wrappedValue.dismiss()
                     }
                 }
+
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        disciplineSystem.updateTodaySelections(selections)
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
             }
         }
     }
-    
-    private func saveTemplates() {
-        onSave([task1, task2, task3])
-        presentationMode.wrappedValue.dismiss()
-    }
 }
 
-struct TaskTextField: View {
-    let number: Int
-    @Binding var text: String
-    
+private struct TaskCategorySelectionCard: View {
+    let category: DisciplineCategory
+    let options: [DisciplineTaskOption]
+    @Binding var selectedOptionID: String
+
     var body: some View {
-        HStack(spacing: 12) {
-            // Number badge
-            ZStack {
-                Circle()
-                    .fill(Color.themePrimary.opacity(0.2))
-                    .frame(width: 36, height: 36)
-                
-                Text("\(number)")
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: category.iconName)
                     .font(.headline)
                     .foregroundColor(Color.themePrimary)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(category.rawValue)
+                        .font(.headline)
+                        .foregroundColor(Color.themeText)
+
+                    Text(category.subtitle)
+                        .font(.caption)
+                        .foregroundColor(Color.themeSecondaryText)
+                }
             }
-            
-            // Text field
-            TextField("Task \(number)", text: $text)
-                .font(.body)
-                .padding(.vertical, 12)
-                .padding(.horizontal, 16)
-                .background(Color.themeCardBackground)
-                .cornerRadius(10)
+
+            VStack(spacing: 10) {
+                ForEach(options) { option in
+                    Button(action: {
+                        selectedOptionID = option.id
+                    }) {
+                        HStack(spacing: 12) {
+                            Image(systemName: selectedOptionID == option.id ? "largecircle.fill.circle" : "circle")
+                                .foregroundColor(selectedOptionID == option.id ? Color.themePrimary : Color.themeDivider)
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(option.title)
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(Color.themeText)
+
+                                Text(option.detail)
+                                    .font(.caption)
+                                    .foregroundColor(Color.themeSecondaryText)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(14)
+                        .background(Color.themeBackground.opacity(0.45))
+                        .cornerRadius(14)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .background(Color.themeCardBackground)
+        .cornerRadius(18)
     }
 }
-
-struct ExampleTaskRow: View {
-    let icon: String
-    let text: String
-    
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.caption)
-                .foregroundColor(Color.themePrimary)
-            
-            Text(text)
-                .font(.caption)
-                .foregroundColor(Color.themeSecondaryText)
-        }
-    }
-}
-
-// MARK: - Daily Completion Celebration
 
 struct DailyCompletionCelebrationView: View {
+    let streakCount: Int
     let onDismiss: () -> Void
-    
+
     @State private var animateCheckmark = false
-    @State private var animateConfetti = false
-    
+
     var body: some View {
         ZStack {
-            Color.black.opacity(0.9)
+            Color.black.opacity(0.92)
                 .edgesIgnoringSafeArea(.all)
-            
+
             VStack(spacing: 32) {
                 Spacer()
-                
-                // Animated checkmark
+
                 ZStack {
                     Circle()
                         .fill(
@@ -641,32 +595,30 @@ struct DailyCompletionCelebrationView: View {
                             )
                         )
                         .frame(width: 120, height: 120)
-                        .scaleEffect(animateCheckmark ? 1.0 : 0.3)
-                    
+                        .scaleEffect(animateCheckmark ? 1 : 0.3)
+
                     Image(systemName: "checkmark")
                         .font(.system(size: 60, weight: .bold))
                         .foregroundColor(.white)
-                        .scaleEffect(animateCheckmark ? 1.0 : 0.3)
+                        .scaleEffect(animateCheckmark ? 1 : 0.3)
                 }
-                
-                // Text
+
                 VStack(spacing: 12) {
                     Text("All Done! 🎉")
                         .font(.system(size: 36, weight: .bold))
                         .foregroundColor(.white)
-                    
+
                     Text("You completed all 3 tasks today")
                         .font(.title3)
-                        .foregroundColor(.white.opacity(0.8))
-                    
-                    Text("Keep building that discipline!")
+                        .foregroundColor(.white.opacity(0.82))
+
+                    Text(streakCount > 0 ? "Your streak is now \(streakCount) day\(streakCount == 1 ? "" : "s")." : "Come back tomorrow and do it again.")
                         .font(.body)
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(.white.opacity(0.65))
                 }
-                
+
                 Spacer()
-                
-                // Dismiss button
+
                 Button(action: onDismiss) {
                     Text("Continue")
                         .font(.headline)
@@ -688,21 +640,19 @@ struct DailyCompletionCelebrationView: View {
     }
 }
 
-// MARK: - Discipline History View
-
 struct DisciplineHistoryView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.presentationMode) private var presentationMode
     @ObservedObject var disciplineSystem: DisciplineSystemState
-    
+
     var body: some View {
         NavigationView {
             ZStack {
                 Color.themeBackground.edgesIgnoringSafeArea(.all)
-                
+
                 ScrollView {
                     VStack(spacing: 16) {
                         let history = disciplineSystem.getCompletionHistory(days: 30)
-                        
+
                         ForEach(history, id: \.id) { day in
                             HistoryDayCard(day: day)
                         }
@@ -725,43 +675,47 @@ struct DisciplineHistoryView: View {
 
 struct HistoryDayCard: View {
     let day: DisciplineDay
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Date and status
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(day.formattedDate)
                         .font(.headline)
                         .foregroundColor(Color.themeText)
-                    
+
                     Text("\(day.completedTaskCount)/3 tasks completed")
                         .font(.caption)
                         .foregroundColor(Color.themeSecondaryText)
                 }
-                
+
                 Spacer()
-                
+
                 if day.isFullyCompleted {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 24))
                         .foregroundColor(Color.themeSuccess)
                 }
             }
-            
-            // Tasks
+
             VStack(spacing: 8) {
                 ForEach(day.tasks, id: \.id) { task in
                     HStack(spacing: 8) {
                         Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
                             .font(.system(size: 16))
                             .foregroundColor(task.isCompleted ? Color.themeSuccess : Color.themeDivider)
-                        
-                        Text(task.title)
-                            .font(.subheadline)
-                            .foregroundColor(Color.themeText)
-                            .strikethrough(task.isCompleted)
-                        
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(task.title)
+                                .font(.subheadline)
+                                .foregroundColor(Color.themeText)
+                                .strikethrough(task.isCompleted)
+
+                            Text(task.category.rawValue)
+                                .font(.caption2)
+                                .foregroundColor(Color.themeSecondaryText)
+                        }
+
                         Spacer()
                     }
                 }
@@ -772,8 +726,6 @@ struct HistoryDayCard: View {
         .cornerRadius(12)
     }
 }
-
-// MARK: - Preview
 
 struct DisciplineHomeView_Previews: PreviewProvider {
     static var previews: some View {

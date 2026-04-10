@@ -83,18 +83,18 @@ struct StreakDetailsView: View {
             
             // Streak description
             if let startDate = streakManager.getStreakStartDate(), streakManager.currentStreak > 1 {
-                Text("You've used Motii every day since \(dateFormatter.string(from: startDate))")
+                Text("You've completed your discipline plan every day since \(dateFormatter.string(from: startDate))")
                     .font(.headline)
                     .foregroundColor(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
                     .padding(.top, 4)
             } else if streakManager.currentStreak == 1 {
-                Text("You've started your Motii journey today!")
+                Text("You completed your first full discipline day.")
                     .font(.headline)
                     .foregroundColor(.white.opacity(0.7))
                     .padding(.top, 4)
             } else {
-                Text("Open the app daily to build your streak")
+                Text("Complete all 3 daily tasks to build your streak")
                     .font(.headline)
                     .foregroundColor(.white.opacity(0.7))
                     .padding(.top, 4)
@@ -267,7 +267,7 @@ struct StreakDetailsView: View {
                     achievementItem(
                         icon: "1.circle.fill",
                         title: "First Day",
-                        description: "Used Motii for the first time",
+                        description: "Finish one full day",
                         isUnlocked: streakManager.currentStreak >= 1,
                         color: .green
                     )
