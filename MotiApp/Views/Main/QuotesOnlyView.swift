@@ -5,211 +5,253 @@ struct QuotesOnlyView: View {
     @ObservedObject private var quoteService = QuoteService.shared
     @State private var quote: Quote
     @State private var showingShareSheet = false
-    
+
     init() {
-        // Initialize with today's quote
         _quote = State(initialValue: QuoteService.shared.getTodaysQuote())
     }
-    
+
     var body: some View {
-        ZStack {
-            // Background
-            Color.themeBackground.edgesIgnoringSafeArea(.all)
-            
-            ScrollView {
-                VStack(spacing: 30) {
-                    // Quote of the day section
-                    VStack(spacing: 20) {
-                        Text("QUOTE OF THE DAY")
-                            .font(.caption)
-                            .foregroundColor(Color.themeSecondaryText)
-                            .tracking(2)
-                            .padding(.top, 20)
-                        
-                        // Main quote card
-                        VStack(spacing: 20) {
-                            Text(quote.text)
-                                .font(.system(size: 24, weight: .medium))
-                                .foregroundColor(Color.themeText)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 20)
-                            
-                            Text("— \(quote.author)")
-                                .font(.system(size: 16, weight: .regular))
-                                .foregroundColor(Color.themeSecondaryText)
-                                .padding(.bottom, 20)
-                            
-                            // Action Buttons
-                            HStack(spacing: 40) {
-                                // Favorite Button
-                                Button(action: {
-                                    if quoteService.isFavorite(quote) {
-                                        quoteService.removeFromFavorites(quote)
-                                    } else {
-                                        quoteService.addToFavorites(quote)
-                                    }
-                                }) {
-                                    VStack(spacing: 8) {
-                                        Image(systemName: quoteService.isFavorite(quote) ? "heart.fill" : "heart")
-                                            .font(.system(size: 24))
-                                            .foregroundColor(quoteService.isFavorite(quote) ? Color.themeError : Color.themeText)
-                                        
-                                        Text(quoteService.isFavorite(quote) ? "Saved" : "Save")
-                                            .font(.caption)
-                                            .foregroundColor(Color.themeSecondaryText)
-                                    }
-                                }
-                                
-                                // Refresh Button
-                                Button(action: {
-                                    withAnimation {
-                                        quote = quoteService.getRandomQuote()
-                                    }
-                                }) {
-                                    VStack(spacing: 8) {
-                                        Image(systemName: "arrow.clockwise")
-                                            .font(.system(size: 24))
-                                            .foregroundColor(Color.themeText)
-                                        
-                                        Text("New")
-                                            .font(.caption)
-                                            .foregroundColor(Color.themeSecondaryText)
-                                    }
-                                }
-                                
-                                // Share Button
-                                Button(action: {
-                                    showingShareSheet = true
-                                }) {
-                                    VStack(spacing: 8) {
-                                        Image(systemName: "square.and.arrow.up")
-                                            .font(.system(size: 24))
-                                            .foregroundColor(Color.themeText)
-                                        
-                                        Text("Share")
-                                            .font(.caption)
-                                            .foregroundColor(Color.themeSecondaryText)
-                                    }
-                                }
-                            }
-                            .padding(.bottom, 10)
-                        }
-                        .padding(.vertical, 30)
-                        .padding(.horizontal, 20)
-                        .background(Color.themeCardBackground)
-                        .cornerRadius(20)
-                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-                        .padding(.horizontal, 20)
+        NavigationStack {
+            ZStack {
+                Color.themeBackground.edgesIgnoringSafeArea(.all)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 28) {
+                        quoteHeader
+                        quoteCard
+                        librarySection
                     }
-                    
-                    // Divider
-                    Divider()
-                        .background(Color.themeDivider)
-                        .padding(.horizontal, 40)
-                    
-                    // Quick access section
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("EXPLORE")
-                            .font(.caption)
-                            .foregroundColor(Color.themeSecondaryText)
-                            .tracking(2)
-                            .padding(.horizontal, 20)
-                        
-                        HStack(spacing: 16) {
-                            // Favorites
-                            NavigationLink(destination: FavoritesView()) {
-                                QuickAccessCard(
-                                    icon: "heart.fill",
-                                    title: "Favorites",
-                                    count: quoteService.favorites.count,
-                                    color: Color.themeError
-                                )
-                            }
-                            
-                            // Categories
-                            NavigationLink(destination: CategoriesView()) {
-                                QuickAccessCard(
-                                    icon: "square.grid.2x2",
-                                    title: "Categories",
-                                    count: quoteService.getAllCategories().count,
-                                    color: Color.themeSecondary
-                                )
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                    }
-                    
-                    // Quote stats
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("YOUR COLLECTION")
-                            .font(.caption)
-                            .foregroundColor(Color.themeSecondaryText)
-                            .tracking(2)
-                            .padding(.horizontal, 20)
-                        
-                        HStack(spacing: 16) {
-                            StatCard(
-                                icon: "heart.fill",
-                                iconColor: Color.themeError,
-                                value: "\(quoteService.favorites.count)",
-                                label: "Favorites"
-                            )
-                            
-                            StatCard(
-                                icon: "folder.fill",
-                                iconColor: Color.themePrimary,
-                                value: "\(quoteService.getAllCategories().count)",
-                                label: "Categories"
-                            )
-                        }
-                        .padding(.horizontal, 20)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+                    .padding(.bottom, 32)
+                }
+            }
+            .navigationBarHidden(true)
+            .sheet(isPresented: $showingShareSheet) {
+                ShareSheet(activityItems: ["\(quote.text) — \(quote.author)"])
+            }
+        }
+    }
+
+    private var quoteHeader: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("QUOTE OF THE DAY")
+                .font(.caption)
+                .foregroundColor(Color.themeSecondaryText)
+                .tracking(2)
+
+            Text("Read it, save it, or explore more when you want a different angle.")
+                .font(.subheadline)
+                .foregroundColor(Color.themeSecondaryText.opacity(0.9))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var quoteCard: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            HStack(alignment: .top) {
+                Image(systemName: "quote.opening")
+                    .font(.title3)
+                    .foregroundColor(Color.themePrimary)
+
+                Spacer()
+
+                Text(quote.category.uppercased())
+                    .font(.caption2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(Color.themePrimary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.themePrimary.opacity(0.14))
+                    .clipShape(Capsule())
+            }
+
+            VStack(spacing: 16) {
+                Text(quote.text)
+                    .font(.system(size: 28, weight: .medium, design: .rounded))
+                    .foregroundColor(Color.themeText)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text("— \(quote.author)")
+                    .font(.headline)
+                    .foregroundColor(Color.themeSecondaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            HStack(spacing: 12) {
+                quoteActionButton(
+                    title: quoteService.isFavorite(quote) ? "Saved" : "Save",
+                    systemImage: quoteService.isFavorite(quote) ? "heart.fill" : "heart",
+                    tint: quoteService.isFavorite(quote) ? Color.themeError : Color.themeText,
+                    background: quoteService.isFavorite(quote) ? Color.themeError.opacity(0.14) : Color.themeBackground.opacity(0.5)
+                ) {
+                    toggleFavorite()
+                }
+
+                quoteActionButton(
+                    title: "New Quote",
+                    systemImage: "arrow.clockwise",
+                    tint: Color.themePrimary,
+                    background: Color.themePrimary.opacity(0.14)
+                ) {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        quote = quoteService.getRandomQuote()
                     }
                 }
-                .padding(.bottom, 30)
+
+                quoteActionButton(
+                    title: "Share",
+                    systemImage: "square.and.arrow.up",
+                    tint: Color.themeText,
+                    background: Color.themeBackground.opacity(0.5)
+                ) {
+                    showingShareSheet = true
+                }
             }
         }
-        .sheet(isPresented: $showingShareSheet) {
-            ShareSheet(activityItems: ["\(quote.text) — \(quote.author)"])
+        .padding(24)
+        .background(
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color.themeCardBackground,
+                    Color.themeCardBackground.opacity(0.88)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.themeDivider.opacity(0.6), lineWidth: 1)
+        )
+        .cornerRadius(24)
+        .shadow(color: Color.black.opacity(0.12), radius: 16, x: 0, y: 8)
+    }
+
+    private var librarySection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("YOUR LIBRARY")
+                    .font(.caption)
+                    .foregroundColor(Color.themeSecondaryText)
+                    .tracking(2)
+
+                Spacer()
+
+                Text("\(quoteService.favorites.count) saved")
+                    .font(.caption)
+                    .foregroundColor(Color.themeSecondaryText)
+            }
+
+            HStack(spacing: 16) {
+                NavigationLink(destination: FavoritesView()) {
+                    QuoteLibraryCard(
+                        title: "Favorites",
+                        subtitle: quoteService.favorites.isEmpty ? "Save quotes to build your list" : "\(quoteService.favorites.count) saved quotes",
+                        value: "\(quoteService.favorites.count)",
+                        systemImage: "heart.fill",
+                        tint: Color.themeError
+                    )
+                }
+                .buttonStyle(.plain)
+
+                NavigationLink(destination: CategoriesView()) {
+                    QuoteLibraryCard(
+                        title: "Categories",
+                        subtitle: "Browse by theme",
+                        value: "\(quoteService.getAllCategories().count)",
+                        systemImage: "square.grid.2x2.fill",
+                        tint: Color.themeSecondary
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func quoteActionButton(
+        title: String,
+        systemImage: String,
+        tint: Color,
+        background: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            VStack(spacing: 10) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 20, weight: .semibold))
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .foregroundColor(tint)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(background)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func toggleFavorite() {
+        if quoteService.isFavorite(quote) {
+            quoteService.removeFromFavorites(quote)
+        } else {
+            quoteService.addToFavorites(quote)
         }
     }
 }
 
-// MARK: - Supporting Views
-
-struct QuickAccessCard: View {
-    let icon: String
+private struct QuoteLibraryCard: View {
     let title: String
-    let count: Int
-    let color: Color
-    
+    let subtitle: String
+    let value: String
+    let systemImage: String
+    let tint: Color
+
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 18) {
             ZStack {
                 Circle()
-                    .fill(color.opacity(0.2))
-                    .frame(width: 50, height: 50)
-                
-                Image(systemName: icon)
-                    .font(.system(size: 22))
-                    .foregroundColor(color)
+                    .fill(tint.opacity(0.18))
+                    .frame(width: 54, height: 54)
+
+                Image(systemName: systemImage)
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundColor(tint)
             }
-            
-            Text(title)
-                .font(.headline)
+
+            Spacer(minLength: 0)
+
+            Text(value)
+                .font(.system(size: 30, weight: .bold, design: .rounded))
                 .foregroundColor(Color.themeText)
-            
-            Text("\(count)")
-                .font(.system(size: 14))
-                .foregroundColor(Color.themeSecondaryText)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundColor(Color.themeText)
+
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(Color.themeSecondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
+        .frame(maxWidth: .infinity, minHeight: 200, alignment: .topLeading)
+        .padding(20)
         .background(Color.themeCardBackground)
-        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(Color.themeDivider.opacity(0.5), lineWidth: 1)
+        )
+        .cornerRadius(22)
     }
 }
-
-// MARK: - Preview
 
 struct QuotesOnlyView_Previews: PreviewProvider {
     static var previews: some View {
