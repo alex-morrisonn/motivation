@@ -7,7 +7,6 @@ struct MoreView: View {
     @ObservedObject var quoteService = QuoteService.shared
     @ObservedObject var notificationManager = NotificationManager.shared
     @ObservedObject var streakManager = StreakManager.shared
-    @ObservedObject var adManager = AdManager.shared
     @ObservedObject var themeManager = ThemeManager.shared
     
     // Sheet presentation states
@@ -258,10 +257,10 @@ struct MoreView: View {
                 
                 // Features list in two columns
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    premiumFeatureItem(icon: "xmark.circle.fill", text: "Ad-Free Experience")
                     premiumFeatureItem(icon: "paintpalette.fill", text: "Custom Themes")
                     premiumFeatureItem(icon: "square.grid.2x2.fill", text: "Premium Widgets")
                     premiumFeatureItem(icon: "star.fill", text: "Exclusive Content")
+                    premiumFeatureItem(icon: "sparkles", text: "Early Access")
                 }
                 
                 // Call to action
@@ -325,10 +324,10 @@ struct MoreView: View {
         }
     }
     
-    // New features section highlighting todo, mind dump and pomodoro
+    // New features section highlighting todo and pomodoro
     private var newFeaturesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionHeader("NEW FEATURES")
+            sectionHeader("FEATURES")
             
             VStack(spacing: 16) {
                 // Todo List Feature
@@ -338,15 +337,6 @@ struct MoreView: View {
                     description: "Organize tasks and build momentum with our streak system",
                     color: Color.themeSuccess,
                     destination: .todo
-                )
-                
-                // Mind Dump Feature
-                newFeatureCard(
-                    icon: "note.text",
-                    title: "Mind Dump",
-                    description: "Capture thoughts, ideas and reflections in one place",
-                    color: Color.themePrimary,
-                    destination: .mindDump
                 )
                 
                 // Pomodoro Timer Feature
@@ -765,7 +755,7 @@ struct MoreView: View {
     
     // Enum for feature destinations
     enum FeatureDestination {
-        case todo, mindDump, pomodoro
+        case todo, pomodoro
     }
     
     // Navigate to different features
@@ -773,8 +763,6 @@ struct MoreView: View {
         switch destination {
         case .todo:
             TabNavigationHelper.shared.switchToTab(2) // Todo tab
-        case .mindDump:
-            TabNavigationHelper.shared.switchToTab(1) // Mind Dump tab
         case .pomodoro:
             TabNavigationHelper.shared.switchToTab(3) // Pomodoro tab
         }

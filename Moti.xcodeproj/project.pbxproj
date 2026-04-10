@@ -11,7 +11,6 @@
 		1E0498D62D9BC87400EE04EC /* index.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E0498D42D9BC86B00EE04EC /* index.md */; };
 		1E0498D72D9BC87400EE04EC /* index.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E0498D42D9BC86B00EE04EC /* index.md */; };
 		1E0498D82D9BC87400EE04EC /* index.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E0498D42D9BC86B00EE04EC /* index.md */; };
-		1E0921CA2D97ADC800852F14 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0921C92D97ADC800852F14 /* GoogleMobileAds */; };
 		1E0DA7442D9E1CB000AE0D31 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA7432D9E1CB000AE0D31 /* AsyncAlgorithms */; };
 		1E0DA7462D9E1D2200AE0D31 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 1E0DA7452D9E1D2200AE0D31 /* FirebaseCore */; };
 		1E216E7C2DA4B1050003816F /* privacy-policy.md in Resources */ = {isa = PBXBuildFile; fileRef = 1E216E7B2DA4B0FB0003816F /* privacy-policy.md */; };
@@ -221,7 +220,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1E0921CA2D97ADC800852F14 /* GoogleMobileAds in Frameworks */,
 				1E6A60322D9511A600AD9399 /* AppTrackingTransparency.framework in Frameworks */,
 				1E6A60262D94CE8900AD9399 /* FirebaseAnalytics in Frameworks */,
 				1E6A602F2D94DA6200AD9399 /* FirebaseCrashlytics in Frameworks */,
@@ -347,7 +345,6 @@
 				1E6A60272D94CE8900AD9399 /* FirebaseFirestore */,
 				1E6A602C2D94DA3B00AD9399 /* FirebaseAppCheck */,
 				1E6A602E2D94DA6200AD9399 /* FirebaseCrashlytics */,
-				1E0921C92D97ADC800852F14 /* GoogleMobileAds */,
 				1E0DA7452D9E1D2200AE0D31 /* FirebaseCore */,
 				1EED66DF2D9E256100E04C7B /* AsyncAlgorithms */,
 			);
@@ -440,7 +437,6 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				1E6A60242D94CE8900AD9399 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
-				1E0921C82D97ADC800852F14 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
 				1E0DA7422D9E1CB000AE0D31 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -949,14 +945,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		1E0921C82D97ADC800852F14 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 12.2.0;
-			};
-		};
 		1E0DA7422D9E1CB000AE0D31 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-async-algorithms.git";
@@ -976,11 +964,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		1E0921C92D97ADC800852F14 /* GoogleMobileAds */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 1E0921C82D97ADC800852F14 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
-			productName = GoogleMobileAds;
-		};
 		1E0DA7432D9E1CB000AE0D31 /* AsyncAlgorithms */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 1E0DA7422D9E1CB000AE0D31 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;

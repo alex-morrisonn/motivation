@@ -31,7 +31,6 @@ class PremiumManager: ObservableObject {
     @Published var availableThemes: [AppTheme] = []
     
     // Premium features configuration
-    let FREE_NOTES_LIMIT = 5
     let FREE_THEMES_COUNT = 2
     let FREE_WIDGET_STYLES = 2
     
@@ -107,9 +106,6 @@ class PremiumManager: ObservableObject {
             
             // Post notification
             NotificationCenter.default.post(name: Notification.Name("PremiumStatusChanged"), object: nil)
-            
-            // Update AdManager
-            AdManager.shared.isPremiumUser = false
         }
     }
     
@@ -128,9 +124,6 @@ class PremiumManager: ObservableObject {
         
         // Update available themes
         updateAvailableThemes()
-        
-        // Update AdManager
-        AdManager.shared.isPremiumUser = true
         
         // Post notification
         NotificationCenter.default.post(name: Notification.Name("PremiumStatusChanged"), object: nil)
@@ -154,9 +147,6 @@ class PremiumManager: ObservableObject {
         // Update available themes
         updateAvailableThemes()
         
-        // Notify AdManager about premium change
-        AdManager.shared.isPremiumUser = isActive
-        
         // Post notification
         NotificationCenter.default.post(name: Notification.Name("PremiumStatusChanged"), object: nil)
     }
@@ -166,16 +156,6 @@ class PremiumManager: ObservableObject {
     /// Check if a specific theme is available on free plan
     func isThemeAvailable(_ theme: AppTheme) -> Bool {
         return isPremiumUser || availableThemes.contains { $0.id == theme.id }
-    }
-    
-    /// Get the number of notes allowed
-    func getNotesLimit() -> Int {
-        return isPremiumUser ? Int.max : FREE_NOTES_LIMIT
-    }
-    
-    /// Check if user has reached note limit
-    func hasReachedNoteLimit(currentCount: Int) -> Bool {
-        return !isPremiumUser && currentCount >= FREE_NOTES_LIMIT
     }
     
     /// Check if advanced todo features are available

@@ -92,7 +92,6 @@ struct FeatureRow: View {
 // Main Premium View
 struct PremiumView: View {
     // Environment & Properties
-    @ObservedObject private var adManager = AdManager.shared
     @ObservedObject private var premiumManager = PremiumManager.shared
     @Environment(\.presentationMode) var presentationMode
     
@@ -112,9 +111,9 @@ struct PremiumView: View {
     
     // Feature sets
     private let primaryFeatures = [
-        PremiumFeature(icon: "xmark.circle.fill", title: "Ad-Free Experience", description: "Enjoy a completely ad-free experience with no distractions", iconColor: .red),
         PremiumFeature(icon: "paintpalette.fill", title: "All Premium Themes", description: "Personalize your app with multiple color schemes", iconColor: .purple),
-        PremiumFeature(icon: "rectangle.stack.fill", title: "Unlimited Notes", description: "No limits on Mind Dump notes with advanced formatting", iconColor: .blue)
+        PremiumFeature(icon: "calendar.badge.clock", title: "Advanced Planning", description: "Extended history and analytics for all your goals", iconColor: .blue),
+        PremiumFeature(icon: "star.fill", title: "Early Access Features", description: "Get access to new features before everyone else", iconColor: .yellow)
     ]
     
     private let productivityFeatures = [

@@ -12,7 +12,6 @@ struct ContentView: View {
     // Environment objects and observable objects
     @EnvironmentObject var notificationManager: NotificationManager
     @ObservedObject var streakManager = StreakManager.shared
-    @ObservedObject var adManager = AdManager.shared
     
     // Theme manager
     @ObservedObject var themeManager = ThemeManager.shared
@@ -33,78 +32,50 @@ struct ContentView: View {
     // MARK: - Body
     
     var body: some View {
-        ZStack {
-            TabView(selection: $selectedTab) {
-                // Home Tab (Quotes)
-                HomeQuoteView()
-                    .tabItem {
-                        Image(systemName: "house.fill")
-                        Text("Home")
-                    }
-                    .tag(0)
-                    .trackNavigationForAds()
-                
-                // Mind Dump Tab
-                MindDumpView()
-                    .tabItem {
-                        Image(systemName: "note.text")
-                        Text("Mind Dump")
-                    }
-                    .tag(1)
-                    .trackNavigationForAds()
-                
-                // To-Do Tab
-                TodoListView()
-                    .tabItem {
-                        Image(systemName: "checkmark.circle")
-                        Text("To-Do")
-                    }
-                    .tag(2)
-                    .trackNavigationForAds()
-                
-                // Pomodoro Timer Tab
-                PomodoroTimerView()
-                    .tabItem {
-                        Image(systemName: "timer")
-                        Text("Pomodoro")
-                    }
-                    .tag(3)
-                    .trackNavigationForAds()
-                
-                // More Tab - Direct access with no NavigationView wrapping
-                MoreView()
-                    .tabItem {
-                        Image(systemName: "ellipsis")
-                        Text("More")
-                    }
-                    .tag(4)
-                    .trackNavigationForAds()
-            }
-            .accentColor(Color.themePrimary) // Use theme primary color for accent
-            
-            // Banner ad at the top - non-intrusive
-            if !adManager.isPremiumUser {
-                VStack {
-                    // Banner ad on top
-                    EnhancedBannerAdView(screenName: currentScreenName)
-                        .padding(.top, getSafeAreaTopInset())
-                    
-                    Spacer()
+        TabView(selection: $selectedTab) {
+            // Home Tab (Daily Discipline)
+            DisciplineHomeView()
+                .tabItem {
+                    Image(systemName: "flame.fill")
+                    Text("Discipline")
                 }
-            }
+                .tag(0)
             
-            // Add a subtle thin line at the top of the tab bar for better visual separation
-            VStack {
-                Spacer()
-                Rectangle()
-                    .frame(height: 0.5)
-                    .foregroundColor(Color.themeDivider) // Use theme divider color
-                    .padding(.bottom, 49) // Tab bar height
-            }
+            // Quotes Tab
+            HomeQuoteView()
+                .tabItem {
+                    Image(systemName: "quote.bubble.fill")
+                    Text("Quotes")
+                }
+                .tag(1)
+            
+            // To-Do Tab
+            TodoListView()
+                .tabItem {
+                    Image(systemName: "checkmark.circle")
+                    Text("To-Do")
+                }
+                .tag(2)
+            
+            // Pomodoro Timer Tab
+            PomodoroTimerView()
+                .tabItem {
+                    Image(systemName: "timer")
+                    Text("Pomodoro")
+                }
+                .tag(3)
+            
+            // More Tab - Direct access with no NavigationView wrapping
+            MoreView()
+                .tabItem {
+                    Image(systemName: "ellipsis")
+                    Text("More")
+                }
+                .tag(4)
         }
+        .accentColor(Color.themePrimary) // Use theme primary color for accent
         .environment(\.appTheme, themeManager.currentTheme) // Pass theme through environment
         .preferredColorScheme(themeManager.currentTheme.isDark ? .dark : .light) // Set color scheme based on theme
-        .edgesIgnoringSafeArea(.top) // Allow the banner ad to extend to the top edge
         .sheet(isPresented: $showingPremiumOffer) {
             PremiumView()
         }
@@ -139,8 +110,8 @@ struct ContentView: View {
         }
         .onOpenURL { url in
             if url.scheme == "moti" {
-                if url.host == "calendar" {
-                    // Navigate to calendar or home tab
+                if url.host == "calendar" || url.host == "discipline" {
+                    // Navigate to discipline/home tab
                     self.selectedTab = 0
                 } else if url.host == "quotes" {
                     // Navigate to quotes tab
@@ -156,7 +127,7 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenQuotesTab"))) { _ in
             // When a notification is tapped, navigate to the quotes tab
-            self.selectedTab = 1 // Mind Dump tab
+            self.selectedTab = 1 // Quotes tab
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenStreakDetails"))) { _ in
             // Open streak details when a streak notification is tapped
@@ -189,27 +160,6 @@ struct ContentView: View {
     /// Helper to show premium coming soon alert
     private func showPremiumComingSoonAlert() {
         showingPremiumAlert = true
-    }
-    
-    /// Helper to get current screen name for context-aware ads
-    private var currentScreenName: String {
-        switch selectedTab {
-        case 0: return "HomeView"
-        case 1: return "MindDumpView"
-        case 2: return "TodoListView"
-        case 3: return "PomodoroTimerView"
-        case 4: return "MoreView"
-        default: return "Default"
-        }
-    }
-    
-    /// Helper to get the safe area top inset
-    private func getSafeAreaTopInset() -> CGFloat {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = windowScene.windows.first else {
-            return 0
-        }
-        return window.safeAreaInsets.top
     }
     
     /// Check tracking status and show consent if needed

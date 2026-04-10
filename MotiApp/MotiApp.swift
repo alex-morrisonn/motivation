@@ -1,5 +1,4 @@
 import SwiftUI
-import GoogleMobileAds
 import Firebase
 import FirebaseAnalytics  // Explicit import added
 
@@ -15,9 +14,6 @@ struct MotiApp: App {
     init() {
         // Configure initial appearance settings
         configureAppearance()
-        
-        // Setup Google mobile ads
-        configureAds()
         
         // Log app launch for analytics
         #if !DEBUG
@@ -42,25 +38,6 @@ struct MotiApp: App {
         UINavigationBar.appearance().tintColor = .white
         UITabBar.appearance().backgroundColor = .black
         UITableView.appearance().backgroundColor = .clear
-    }
-    
-    private func configureAds() {
-        // Add test device IDs for simulator during development
-        #if DEBUG
-        let deviceIDs = ["GAD_SIMULATOR_ID"] // Add your real test device IDs here if testing on physical devices
-        MobileAds.shared.requestConfiguration.testDeviceIdentifiers = deviceIDs
-        print("AdMob configured for DEBUG with test devices")
-        #else
-        // Production configuration
-        print("AdMob configured for PRODUCTION")
-        #endif
-        
-        // Set ad content rating
-        MobileAds.shared.requestConfiguration.maxAdContentRating = GADMaxAdContentRating.general
-        
-        // Initialize the Mobile Ads SDK - the newest version doesn't take arguments
-        MobileAds.initialize()
-        print("Mobile Ads SDK initialization complete")
     }
     
     // Handle deep links

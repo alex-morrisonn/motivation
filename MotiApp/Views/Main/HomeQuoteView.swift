@@ -280,9 +280,8 @@ struct HomeQuoteView: View {
                         }
                     }
                 }
-                // Add extra padding at the bottom to account for tab bar + banner ad
-                // Standard tab bar is 49pt + banner ad is 50pt + some extra space
-                .padding(.bottom, 110)
+                // Add extra padding at the bottom to account for tab bar
+                .padding(.bottom, 30)
             }
         }
         .sheet(isPresented: $showingShareSheet) {

@@ -73,16 +73,10 @@ struct CategoriesView: View {
                                 .background(Color.black.opacity(0.3))
                                 .cornerRadius(15)
                                 .padding(.horizontal)
-                                
-                                // Insert native ad after every 5 quotes if not premium
-                                if (index + 1) % 5 == 0 && index < categoryQuotes.count - 1 && !AdManager.shared.isPremiumUser {
-                                    NativeAdView()
-                                }
                             }
                         }
                         .padding(.vertical)
-                        // Add extra padding at the bottom for the banner ad
-                        .padding(.bottom, AdManager.shared.isPremiumUser ? 30 : 110)
+                        .padding(.bottom, 30)
                     }
                 }
                 .overlay(
@@ -91,8 +85,6 @@ struct CategoriesView: View {
                             Button(action: {
                                 selectedCategory = nil
                                 
-                                // Check if we should show an interstitial ad when exiting category
-                                InterstitialAdCoordinator.shared.checkForExitInterstitial(from: "CategoriesView")
                             }) {
                                 Image(systemName: "chevron.left")
                                     .foregroundColor(.white)
@@ -154,16 +146,10 @@ struct CategoriesView: View {
                                     .cornerRadius(15)
                                     .padding(.horizontal)
                                 }
-                                
-                                // Insert native ad after every 4 categories if not premium
-                                if (index + 1) % 4 == 0 && index < quoteService.getAllCategories().count - 1 && !AdManager.shared.isPremiumUser {
-                                    NativeAdView()
-                                }
                             }
                         }
                         .padding(.vertical)
-                        // Add extra padding at the bottom for the banner ad
-                        .padding(.bottom, AdManager.shared.isPremiumUser ? 30 : 110)
+                        .padding(.bottom, 30)
                     }
                 }
             }
@@ -172,10 +158,6 @@ struct CategoriesView: View {
             if let quote = quoteToShare {
                 ShareSheet(activityItems: ["\(quote.text) — \(quote.author)"])
             }
-        }
-        .onAppear {
-            // Track screen view for ad rotation
-            _ = InterstitialAdCoordinator.shared.trackNavigation()
         }
     }
     

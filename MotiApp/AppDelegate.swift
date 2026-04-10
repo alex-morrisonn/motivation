@@ -6,7 +6,6 @@ import FirebaseAppCheck
 import FirebaseCrashlytics
 import FirebaseAnalytics // Explicit import added
 import AppTrackingTransparency
-import GoogleMobileAds
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     
@@ -19,7 +18,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         case trackingPermissionDenied
         case firebaseConfigError
         case notificationConfigError
-        case adMobInitFailed
         
         var description: String {
             switch self {
@@ -35,8 +33,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
                 return "Error configuring Firebase services"
             case .notificationConfigError:
                 return "Error configuring notifications"
-            case .adMobInitFailed:
-                return "Failed to initialize AdMob"
             }
         }
     }
@@ -47,16 +43,12 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     private var isFirebaseInitialized = false
     private var isNotificationConfigured = false
     private var isAppGroupConfigured = false
-    private var isAdMobInitialized = false
     
     // MARK: - Application Lifecycle
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         // Initialize core services with proper error handling
         initializeServices(application)
-        
-        // Ensure premium features are disabled (since they're not implemented yet)
-        ensurePremiumDisabled()
         
         // Initialize streak manager
         initializeStreakManager()
@@ -70,9 +62,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         
         // Reset badge count using the new UNUserNotificationCenter API in iOS 17+
         resetBadgeCount()
-        
-        // Make sure premium is always disabled since the feature is not available yet
-        ensurePremiumDisabled()
         
         // Check tracking status without automatically requesting permission
         // The actual permission request will happen through the TrackingConsentView
@@ -94,9 +83,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     private func initializeServices(_ application: UIApplication) {
         // Set up Firebase and security with error handling
         initializeFirebase()
-        
-        // Initialize AdMob with error handling
-        initializeAdMob()
         
         // Configure push notifications
         configureNotifications(application)
@@ -156,22 +142,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         print("Analytics initially configured (disabled until permission)")
     }
     
-    private func initializeAdMob() {
-        // Initialize Google Mobile Ads SDK
-        MobileAds.initialize()
-        print("AdMob successfully initialized")
-        
-        // For test devices (remove in production or use your test device IDs)
-        #if DEBUG
-        MobileAds.shared.requestConfiguration.testDeviceIdentifiers = ["GAD_SIMULATOR_ID"]
-        #endif
-        
-        // Set content rating
-        MobileAds.shared.requestConfiguration.maxAdContentRating = GADMaxAdContentRating.general
-        
-        isAdMobInitialized = true
-    }
-    
     private func configureNotifications(_ application: UIApplication) {
         // Set this class as the UNUserNotificationCenter delegate
         UNUserNotificationCenter.current().delegate = self
@@ -219,22 +189,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
                 print("Error resetting badge count: \(error.localizedDescription)")
             }
         }
-    }
-    
-    // MARK: - Premium Features Management
-    
-    private func ensurePremiumDisabled() {
-        // Remove any stored premium status
-        UserDefaults.standard.removeObject(forKey: "isPremiumUser")
-        UserDefaults.standard.removeObject(forKey: "temporaryPremiumEndTime")
-        
-        // Set premium to false in AdManager
-        AdManager.shared.isPremiumUser = false
-        
-        // Clear any premium duration
-        PremiumManager.shared.checkTemporaryPremium()
-        
-        print("Premium features disabled - feature is not available yet")
     }
     
     // MARK: - Streak Management
