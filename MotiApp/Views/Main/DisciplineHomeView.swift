@@ -5,13 +5,9 @@ struct DisciplineHomeView: View {
     // MARK: - Properties
     
     @StateObject private var disciplineSystem = DisciplineSystemState()
-    @ObservedObject private var themeManager = ThemeManager.shared
-    @ObservedObject private var streakManager = StreakManager.shared
     
     @State private var showingTaskEditor = false
-    @State private var editingTaskIndex: Int?
     @State private var showingHistory = false
-    @State private var showingSettings = false
     @State private var celebratingCompletion = false
     
     // MARK: - Body

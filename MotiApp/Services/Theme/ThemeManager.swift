@@ -1,5 +1,4 @@
 import SwiftUI
-import Combine
 
 /// Theme definition struct containing all the colors for a specific theme
 struct AppTheme: Identifiable, Equatable {

@@ -6,7 +6,6 @@ struct MoreView: View {
     
     @ObservedObject var quoteService = QuoteService.shared
     @ObservedObject var notificationManager = NotificationManager.shared
-    @ObservedObject var streakManager = StreakManager.shared
     @ObservedObject var themeManager = ThemeManager.shared
     
     // Sheet presentation states
@@ -35,10 +34,7 @@ struct MoreView: View {
                 VStack(spacing: 24) {
                     // Premium card - prominent placement
                     premiumCardView
-                    
-                    // New features section
-                    newFeaturesSection
-                    
+
                     // Theme settings section - new section
                     themeSection
                     
@@ -321,14 +317,6 @@ struct MoreView: View {
                 .lineLimit(1)
             
             Spacer()
-        }
-    }
-    
-    // Features section - now empty since we removed all features
-    private var newFeaturesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Features section removed - app is now focused on Discipline, Quotes, and Calendar
-            EmptyView()
         }
     }
     

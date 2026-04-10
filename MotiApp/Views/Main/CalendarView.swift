@@ -3,7 +3,6 @@ import SwiftUI
 /// Calendar view - focused on events and important dates
 struct CalendarView: View {
     @ObservedObject private var eventService = EventService.shared
-    @ObservedObject private var themeManager = ThemeManager.shared
     @State private var showingEventEditor = false
     @State private var editingEvent: Event?
     @State private var selectedDate = Date()

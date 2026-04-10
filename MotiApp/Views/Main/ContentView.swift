@@ -1,7 +1,5 @@
 import SwiftUI
-import Combine
 import AppTrackingTransparency
-import FirebaseAnalytics
 
 struct ContentView: View {
     // MARK: - Properties
@@ -19,7 +17,6 @@ struct ContentView: View {
     // UI state properties
     @State private var showingStreakCelebration = false
     @State private var previousStreak = 0
-    @State private var showingPremiumOffer = false
     @State private var showingPremiumAlert = false
     @State private var showingTrackingConsent = false
     
@@ -68,9 +65,6 @@ struct ContentView: View {
         .accentColor(Color.themePrimary) // Use theme primary color for accent
         .environment(\.appTheme, themeManager.currentTheme) // Pass theme through environment
         .preferredColorScheme(themeManager.currentTheme.isDark ? .dark : .light) // Set color scheme based on theme
-        .sheet(isPresented: $showingPremiumOffer) {
-            PremiumView()
-        }
         .onAppear {
             // Add observer to listen for tab selection changes
             tabNavigationCancellable = NotificationCenter.default.addObserver(

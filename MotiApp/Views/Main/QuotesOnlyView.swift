@@ -3,7 +3,6 @@ import SwiftUI
 /// Quotes-only view - focused on motivational quotes
 struct QuotesOnlyView: View {
     @ObservedObject private var quoteService = QuoteService.shared
-    @ObservedObject private var themeManager = ThemeManager.shared
     @State private var quote: Quote
     @State private var showingShareSheet = false
     
