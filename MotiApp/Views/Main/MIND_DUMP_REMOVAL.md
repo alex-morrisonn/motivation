@@ -1,8 +1,8 @@
-# 🗑️ Mind Dump Feature Removal - Complete
+# 🗑️ Feature Removal - Mind Dump & Pomodoro Timer
 
 ## Overview
 
-The Mind Dump feature has been completely removed from the Motii app to streamline the focus on the Daily Discipline System.
+The Mind Dump and Pomodoro Timer features have been completely removed from the Motii app to streamline the focus on the Daily Discipline System.
 
 ---
 
@@ -19,34 +19,37 @@ The Mind Dump feature has been completely removed from the Motii app to streamli
 1. Tab 0: 🔥 Discipline (Daily 3 tasks)
 2. Tab 1: 💬 Quotes (Motivational content)
 3. Tab 2: ✅ To-Do (Task management)
-4. Tab 3: ⏱️ Pomodoro (Focus timer)
-5. Tab 4: ••• More (Settings)
+4. Tab 3: ••• More (Settings)
 
 ### **2. MoreView.swift** ✅
 **Removed:**
-- Mind Dump feature card from "New Features" section
-- `mindDump` case from `FeatureDestination` enum
-- Mind Dump navigation from `navigateToFeature()` method
+- Mind Dump feature card from "Features" section
+- Pomodoro Timer feature card from "Features" section
+- `mindDump` and `pomodoro` cases from `FeatureDestination` enum
+- Navigation methods for both features
 - Updated tab indices in navigation helper
 
 **Updated:**
 - Section title from "NEW FEATURES" to "FEATURES"
-- Now only shows To-Do and Pomodoro features
+- Now only shows To-Do feature
 
 ### **3. PremiumManager.swift** ✅
 **Removed:**
 - `FREE_NOTES_LIMIT` constant
 - `getNotesLimit()` method
 - `hasReachedNoteLimit()` method
+- `areAdvancedPomodoroFeaturesAvailable()` method
 
-**Result:** Premium manager no longer references note limits
+**Result:** Premium manager no longer references note limits or Pomodoro features
 
 ### **4. PremiumView.swift** ✅
 **Removed:**
 - "Unlimited Notes" from premium features
+- "Advanced Pomodoro Timer" from productivity features
 
 **Replaced with:**
 - "Advanced Planning" feature (Extended history and analytics)
+- "Advanced Analytics" feature (Detailed insights and progress tracking)
 
 **Updated Premium Features:**
 ```swift
@@ -54,6 +57,12 @@ primaryFeatures = [
     "All Premium Themes"
     "Advanced Planning" (NEW - replaced notes)
     "Early Access Features"
+]
+
+productivityFeatures = [
+    "Todo Power Features"
+    "Streak Forgiveness"
+    "Advanced Analytics" (NEW - replaced Pomodoro)
 ]
 ```
 
@@ -69,13 +78,19 @@ primaryFeatures = [
 
 **Delete these files from your Xcode project:**
 
+### Mind Dump Feature:
 1. ❌ **MindDumpView.swift** (886 lines)
 2. ❌ **NotesView.swift** (816 lines)
 3. ❌ **NoteEditorView.swift** (820 lines)
 4. ❌ **NoteService.swift** (504 lines)
-5. ❌ **FoucsModeView.swift** (588 lines) - Note: This appears to be related to Mind Dump focus mode
+5. ❌ **FoucsModeView.swift** (588 lines)
 
-**Total:** ~3,614 lines of code removed
+### Pomodoro Timer Feature:
+6. ❌ **PomodoroTimerView.swift** (347 lines)
+7. ❌ **PomodoroManager.swift** (361 lines)
+8. ❌ **PomodoroSettingsView.swift** (323 lines)
+
+**Total:** ~4,645 lines of code removed
 
 ---
 
@@ -86,17 +101,18 @@ After deleting files, verify:
 - [ ] App builds without errors
 - [ ] No "MindDumpView not found" errors
 - [ ] No "NoteService not found" errors
-- [ ] All 5 tabs load correctly:
+- [ ] No "PomodoroTimerView not found" errors
+- [ ] No "PomodoroManager not found" errors
+- [ ] All 4 tabs load correctly:
   - [ ] Discipline tab works
   - [ ] Quotes tab works
   - [ ] To-Do tab works
-  - [ ] Pomodoro tab works
   - [ ] More tab works
 - [ ] Tab navigation is correct (no wrong tabs opening)
-- [ ] URL deep links work (discipline, quotes, pomodoro)
+- [ ] URL deep links work (discipline, quotes)
 - [ ] Notifications navigate to correct tabs
-- [ ] Premium features don't mention notes
-- [ ] More view shows only To-Do and Pomodoro features
+- [ ] Premium features don't mention notes or Pomodoro
+- [ ] More view shows only To-Do feature
 
 ---
 
@@ -116,8 +132,12 @@ Run these searches in Xcode (⌘⇧F) to ensure all references are gone:
 - "FREE_NOTES_LIMIT"
 - "getNotesLimit"
 - "hasReachedNoteLimit"
+- "PomodoroTimerView"
+- "PomodoroManager"
+- "PomodoroSettings"
+- "areAdvancedPomodoroFeaturesAvailable"
 
-# Should NOT find Mind Dump in these files:
+# Should NOT find Mind Dump or Pomodoro in these files:
 - ContentView.swift
 - MoreView.swift
 - PremiumView.swift
@@ -131,21 +151,21 @@ Run these searches in Xcode (⌘⇧F) to ensure all references are gone:
 ### **Before Removal:**
 - **Tab Count:** 6 tabs
 - **Features:** Discipline, Quotes, Mind Dump, To-Do, Pomodoro, More
-- **Code Base:** ~3,600+ lines for Mind Dump feature
-- **Premium Features:** Included "Unlimited Notes"
+- **Code Base:** ~4,600+ lines for Mind Dump and Pomodoro features
+- **Premium Features:** Included "Unlimited Notes" and "Advanced Pomodoro"
 
 ### **After Removal:**
-- **Tab Count:** 5 tabs
-- **Features:** Discipline, Quotes, To-Do, Pomodoro, More
-- **Code Base:** ~3,600 lines removed
-- **Premium Features:** "Advanced Planning" instead of notes
+- **Tab Count:** 4 tabs
+- **Features:** Discipline, Quotes, To-Do, More
+- **Code Base:** ~4,600 lines removed
+- **Premium Features:** "Advanced Planning" and "Advanced Analytics"
 
 ### **Benefits:**
-1. **Simplified UI** - One less tab to navigate
-2. **Focused App** - Clear purpose: Daily Discipline + Productivity
+1. **Simplified UI** - Two fewer tabs to navigate
+2. **Focused App** - Clear purpose: Daily Discipline + Motivation
 3. **Smaller Codebase** - Less to maintain
 4. **Clearer Value Prop** - Not trying to be everything
-5. **Better UX** - Users aren't confused about Mind Dump vs To-Do
+5. **Better UX** - Users focus on core discipline building
 
 ---
 
@@ -170,12 +190,7 @@ Run these searches in Xcode (⌘⇧F) to ensure all references are gone:
    - Priorities
    - Categories
 
-4. **Pomodoro Timer**
-   - Focus sessions
-   - Break tracking
-   - Session history
-
-5. **Settings & More**
+4. **Settings & More**
    - Themes
    - Notifications
    - About/Support
@@ -213,18 +228,19 @@ If users request a notes feature:
 3. Builds streak momentum
 4. Reviews progress and stats
 5. Uses To-Do for additional tasks
-6. Uses Pomodoro for focused work
-7. Gets inspired by daily quotes
+6. Gets inspired by daily quotes
 
 ### **NOT:**
 - ❌ Note-taking app
 - ❌ Journal app
 - ❌ Mind mapping app
+- ❌ Pomodoro timer app
+- ❌ Complex productivity suite
 
 ### **YES:**
 - ✅ Habit tracker
 - ✅ Discipline builder
-- ✅ Productivity tool
+- ✅ Task manager
 - ✅ Motivation app
 
 ---
@@ -252,12 +268,7 @@ App Structure:
 │   ├── Categories
 │   └── Due Dates
 │
-├── Tab 3: ⏱️ Pomodoro
-│   ├── Timer
-│   ├── Sessions
-│   └── History
-│
-└── Tab 4: ••• More
+└── Tab 3: ••• More
     ├── Themes
     ├── Notifications
     ├── Widget Guide
@@ -271,10 +282,13 @@ App Structure:
 
 ### **Code Changes:** ✅
 - [x] Removed Mind Dump tab from ContentView
+- [x] Removed Pomodoro tab from ContentView
 - [x] Updated all tab indices
-- [x] Removed Mind Dump from MoreView features
+- [x] Removed Mind Dump and Pomodoro from MoreView features
 - [x] Removed note limits from PremiumManager
+- [x] Removed Pomodoro features from PremiumManager
 - [x] Removed "Unlimited Notes" from PremiumView
+- [x] Removed "Advanced Pomodoro" from PremiumView
 - [x] Updated documentation
 
 ### **Manual Steps Required:**
@@ -283,6 +297,9 @@ App Structure:
 - [ ] Delete NoteEditorView.swift
 - [ ] Delete NoteService.swift
 - [ ] Delete FoucsModeView.swift
+- [ ] Delete PomodoroTimerView.swift
+- [ ] Delete PomodoroManager.swift
+- [ ] Delete PomodoroSettingsView.swift
 - [ ] Clean build folder (⌘⇧K)
 - [ ] Build and test app (⌘R)
 
@@ -291,7 +308,7 @@ App Structure:
 - [ ] Tab navigation works correctly
 - [ ] Deep links work (URL schemes)
 - [ ] Notifications navigate correctly
-- [ ] No references to Mind Dump in UI
+- [ ] No references to Mind Dump or Pomodoro in UI
 - [ ] Premium view displays correctly
 
 ---
@@ -322,5 +339,5 @@ After removal, monitor:
 
 **Last Updated:** April 10, 2026
 **Files Modified:** 5
-**Files to Delete:** 5 (~3,614 lines)
-**Net Change:** Streamlined, focused app
+**Files to Delete:** 8 (~4,645 lines)
+**Net Change:** Ultra-streamlined, laser-focused app on discipline building

@@ -150,17 +150,17 @@ struct QuotesOnlyView: View {
                         
                         HStack(spacing: 16) {
                             StatCard(
-                                value: "\(quoteService.favorites.count)",
-                                label: "Favorites",
                                 icon: "heart.fill",
-                                color: Color.themeError
+                                iconColor: Color.themeError,
+                                value: "\(quoteService.favorites.count)",
+                                label: "Favorites"
                             )
                             
                             StatCard(
-                                value: "\(quoteService.getAllCategories().count)",
-                                label: "Categories",
                                 icon: "folder.fill",
-                                color: Color.themePrimary
+                                iconColor: Color.themePrimary,
+                                value: "\(quoteService.getAllCategories().count)",
+                                label: "Categories"
                             )
                         }
                         .padding(.horizontal, 20)
@@ -207,37 +207,6 @@ struct QuickAccessCard: View {
         .padding(.vertical, 20)
         .background(Color.themeCardBackground)
         .cornerRadius(16)
-    }
-}
-
-struct StatCard: View {
-    let value: String
-    let label: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(color)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(value)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(Color.themeText)
-                
-                Text(label)
-                    .font(.caption)
-                    .foregroundColor(Color.themeSecondaryText)
-            }
-            
-            Spacer()
-        }
-        .padding()
-        .background(Color.themeCardBackground)
-        .cornerRadius(12)
     }
 }
 

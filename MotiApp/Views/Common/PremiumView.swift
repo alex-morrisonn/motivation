@@ -117,9 +117,9 @@ struct PremiumView: View {
     ]
     
     private let productivityFeatures = [
-        PremiumFeature(icon: "timer", title: "Advanced Pomodoro Timer", description: "Custom presets, analytics, and auto-scheduling", iconColor: .orange),
-        PremiumFeature(icon: "checklist", title: "Todo Power Features", description: "Recurring tasks, categories, and detailed analytics", iconColor: .green),
-        PremiumFeature(icon: "flame.fill", title: "Streak Forgiveness", description: "One free pass per month to maintain your streak", iconColor: .yellow)
+        PremiumFeature(icon: "flame.fill", title: "Streak Forgiveness", description: "One free pass per month to maintain your streak", iconColor: .yellow),
+        PremiumFeature(icon: "chart.bar.fill", title: "Advanced Analytics", description: "Detailed insights and progress tracking across all features", iconColor: .orange),
+        PremiumFeature(icon: "calendar.badge.plus", title: "Extended Event History", description: "Access unlimited calendar events and historical data", iconColor: .green)
     ]
     
     private let contentFeatures = [

@@ -42,28 +42,20 @@ struct ContentView: View {
                 .tag(0)
             
             // Quotes Tab
-            HomeQuoteView()
+            QuotesOnlyView()
                 .tabItem {
                     Image(systemName: "quote.bubble.fill")
                     Text("Quotes")
                 }
                 .tag(1)
             
-            // To-Do Tab
-            TodoListView()
+            // Calendar Tab
+            CalendarView()
                 .tabItem {
-                    Image(systemName: "checkmark.circle")
-                    Text("To-Do")
+                    Image(systemName: "calendar")
+                    Text("Calendar")
                 }
                 .tag(2)
-            
-            // Pomodoro Timer Tab
-            PomodoroTimerView()
-                .tabItem {
-                    Image(systemName: "timer")
-                    Text("Pomodoro")
-                }
-                .tag(3)
             
             // More Tab - Direct access with no NavigationView wrapping
             MoreView()
@@ -71,7 +63,7 @@ struct ContentView: View {
                     Image(systemName: "ellipsis")
                     Text("More")
                 }
-                .tag(4)
+                .tag(3)
         }
         .accentColor(Color.themePrimary) // Use theme primary color for accent
         .environment(\.appTheme, themeManager.currentTheme) // Pass theme through environment
@@ -116,9 +108,6 @@ struct ContentView: View {
                 } else if url.host == "quotes" {
                     // Navigate to quotes tab
                     self.selectedTab = 1
-                } else if url.host == "timer" || url.host == "pomodoro" {
-                    // Navigate to pomodoro tab
-                    self.selectedTab = 3
                 } else if url.host == "premium" {
                     // Show premium alert instead of view
                     showPremiumComingSoonAlert()
@@ -131,7 +120,7 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenStreakDetails"))) { _ in
             // Open streak details when a streak notification is tapped
-            self.selectedTab = 4 // Index of the More tab
+            self.selectedTab = 3 // Index of the More tab
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("StreakUpdated"))) { _ in
             // Check if streak increased (but not first day)

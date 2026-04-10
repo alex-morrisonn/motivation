@@ -1,10 +1,9 @@
 import SwiftUI
 
-// Home Quote View with Calendar and Todo List
+// Home Quote View with Calendar
 struct HomeQuoteView: View {
     @ObservedObject private var quoteService = QuoteService.shared
     @ObservedObject private var eventService = EventService.shared
-    @ObservedObject private var todoService = TodoService.shared
     @ObservedObject private var themeManager = ThemeManager.shared
     @State private var quote: Quote
     @State private var showingShareSheet = false
@@ -51,80 +50,6 @@ struct HomeQuoteView: View {
                                 quote = quoteService.getRandomQuote()
                             }
                         )
-                    }
-                    .padding(.bottom, 10)
-                    
-                    // Divider with theme color
-                    Divider()
-                        .background(Color.themeDivider)
-                        .padding(.horizontal, 40)
-                    
-                    // Todo section
-                    VStack(spacing: 15) {
-                        // Todo header with add button
-                        HStack {
-                            Text("TODAY'S TASKS")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(Color.themeText.opacity(0.6))
-                                .tracking(2)
-                            
-                            Spacer()
-                            
-                            Button(action: {
-                                // Navigate to the Todo tab
-                                TabNavigationHelper.shared.switchToTab(2)
-                            }) {
-                                Text("See All")
-                                    .font(.caption)
-                                    .foregroundColor(Color.themePrimary)
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        
-                        // Todo list preview
-                        VStack(spacing: 10) {
-                            let highPriorityTodos = todoService.getIncompleteTodos().filter { $0.priority == .high }
-                            let otherTodos = todoService.getIncompleteTodos().filter { $0.priority != .high }
-                            
-                            // Show high priority todos first
-                            ForEach(highPriorityTodos.prefix(2)) { todo in
-                                ThemeHomeTodoRow(todo: todo)
-                            }
-                            
-                            // Then show other todos
-                            ForEach(otherTodos.prefix(3 - min(2, highPriorityTodos.count))) { todo in
-                                ThemeHomeTodoRow(todo: todo)
-                            }
-                            
-                            // No tasks message or add button
-                            if todoService.getIncompleteTodos().isEmpty {
-                                VStack(spacing: 10) {
-                                    Text("No active tasks")
-                                        .font(.subheadline)
-                                        .foregroundColor(Color.themeSecondaryText)
-                                        .padding(.top, 10)
-                                    
-                                    Button(action: {
-                                        // Navigate to the Todo tab
-                                        TabNavigationHelper.shared.switchToTab(2)
-                                    }) {
-                                        Text("Add Task")
-                                            .font(.caption)
-                                            .foregroundColor(Color.themeText)
-                                            .padding(.horizontal, 16)
-                                            .padding(.vertical, 8)
-                                            .background(Color.themePrimary.opacity(0.3))
-                                            .cornerRadius(20)
-                                    }
-                                    .padding(.bottom, 10)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .background(Color.themeBackground.opacity(0.3))
-                                .cornerRadius(10)
-                                .padding(.horizontal)
-                            }
-                        }
                     }
                     .padding(.bottom, 10)
                     
@@ -365,122 +290,6 @@ struct ThemeQuoteCardView: View {
     }
 }
 
-// Updated HomeTodoRow with theme colors
-struct ThemeHomeTodoRow: View {
-    @ObservedObject private var todoService = TodoService.shared
-    let todo: TodoItem
-    
-    var body: some View {
-        Button(action: {
-            // Navigate to Todo tab instead of completing the task
-            TabNavigationHelper.shared.switchToTab(2)
-        }) {
-            HStack {
-                // Completion checkbox - green when completed
-                Image(systemName: todo.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(todo.isCompleted ? Color.themeSuccess : getPriorityColor())
-                    .font(.system(size: 18))
-                
-                // Todo title and due time
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(todo.title)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(Color.themeText)
-                        .strikethrough(todo.isCompleted)
-                        .lineLimit(1)
-                    
-                    // Due date or priority
-                    if let formattedDueDate = todo.formattedDueDate {
-                        HStack(spacing: 4) {
-                            Image(systemName: "clock")
-                                .font(.system(size: 10))
-                            
-                            Text(formattedDueDate)
-                                .font(.caption)
-                            
-                            // Overdue indicator
-                            if todo.isOverdue {
-                                Text("OVERDUE")
-                                    .font(.system(size: 8, weight: .bold))
-                                    .foregroundColor(Color.themeText)
-                                    .padding(.horizontal, 4)
-                                    .padding(.vertical, 1)
-                                    .background(Color.themeError)
-                                    .cornerRadius(3)
-                            }
-                        }
-                        .foregroundColor(todo.isOverdue ? Color.themeError : Color.themeSecondaryText)
-                    } else {
-                        // If no due date, show priority
-                        Text("Priority: \(todo.priority.name)")
-                            .font(.caption)
-                            .foregroundColor(getPriorityColor())
-                    }
-                }
-                
-                Spacer()
-                
-                // Navigate to edit
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12))
-                    .foregroundColor(Color.themeSecondaryText)
-            }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 12)
-            .background(Color.themeCardBackground.opacity(0.2))
-            .cornerRadius(8)
-            .padding(.horizontal)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .contentShape(Rectangle())
-        .contextMenu {
-            // Mark as complete/incomplete - keep this functionality in the context menu
-            Button(action: {
-                withAnimation {
-                    todoService.toggleCompletionStatus(todo)
-                }
-            }) {
-                Label(
-                    todo.isCompleted ? "Mark as Incomplete" : "Mark as Complete",
-                    systemImage: todo.isCompleted ? "circle" : "checkmark.circle"
-                )
-            }
-            
-            // Navigate to edit view
-            Button(action: {
-                // Navigate to the Todo tab
-                TabNavigationHelper.shared.switchToTab(2)
-            }) {
-                Label("View All Tasks", systemImage: "list.bullet")
-            }
-            
-            Divider()
-            
-            // Delete option
-            Button(role: .destructive, action: {
-                todoService.deleteTodo(todo)
-            }) {
-                Label("Delete", systemImage: "trash")
-            }
-        }
-        // Use the refreshTrigger to force updates when completion status changes
-        .id("home-todo-\(todo.id)-\(todo.isCompleted)-\(todoService.refreshTrigger)")
-    }
-    
-    // Get color based on priority
-    private func getPriorityColor() -> Color {
-        switch todo.priority {
-        case .low:
-            return Color.themeSuccess
-        case .normal:
-            return Color.themePrimary
-        case .high:
-            return Color.themeError
-        }
-    }
-}
-
 // Updated CalendarWeekView with theme colors
 struct ThemeCalendarWeekView: View {
     @ObservedObject var eventService: EventService
@@ -658,14 +467,5 @@ struct HomeQuoteView_Previews: PreviewProvider {
     static var previews: some View {
         HomeQuoteView()
             .preferredColorScheme(.dark)
-            .onAppear {
-                // Add some sample todos for preview
-                let todoService = TodoService.shared
-                if todoService.todos.isEmpty {
-                    for todo in TodoItem.samples {
-                        todoService.addTodo(todo)
-                    }
-                }
-            }
     }
 }

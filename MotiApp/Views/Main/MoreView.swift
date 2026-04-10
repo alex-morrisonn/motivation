@@ -324,30 +324,11 @@ struct MoreView: View {
         }
     }
     
-    // New features section highlighting todo and pomodoro
+    // Features section - now empty since we removed all features
     private var newFeaturesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionHeader("FEATURES")
-            
-            VStack(spacing: 16) {
-                // Todo List Feature
-                newFeatureCard(
-                    icon: "checkmark.circle.fill",
-                    title: "To-Do List",
-                    description: "Organize tasks and build momentum with our streak system",
-                    color: Color.themeSuccess,
-                    destination: .todo
-                )
-                
-                // Pomodoro Timer Feature
-                newFeatureCard(
-                    icon: "timer",
-                    title: "Pomodoro Timer",
-                    description: "Boost productivity with focused work sessions",
-                    color: Color.themeWarning,
-                    destination: .pomodoro
-                )
-            }
+            // Features section removed - app is now focused on Discipline, Quotes, and Calendar
+            EmptyView()
         }
     }
     
@@ -626,57 +607,7 @@ struct MoreView: View {
         }
     }
     
-    // New feature card component
-    private func newFeatureCard(icon: String, title: String, description: String, color: Color, destination: FeatureDestination) -> some View {
-        Button(action: {
-            navigateToFeature(destination)
-        }) {
-            HStack(spacing: 16) {
-                // Feature icon
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.2))
-                        .frame(width: 50, height: 50)
-                    
-                    Image(systemName: icon)
-                        .font(.system(size: 22))
-                        .foregroundColor(color)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(title)
-                            .font(.headline)
-                            .foregroundColor(Color.themeText)
-                        
-                        Text("NEW")
-                            .font(.caption2)
-                            .fontWeight(.bold)
-                            .foregroundColor(themeManager.currentTheme.isDark ? .black : .white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(color)
-                            .cornerRadius(4)
-                    }
-                    
-                    Text(description)
-                        .font(.caption)
-                        .foregroundColor(Color.themeSecondaryText)
-                        .lineLimit(2)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14))
-                    .foregroundColor(Color.themeSecondaryText)
-            }
-            .padding(16)
-            .background(Color.themeCardBackground)
-            .cornerRadius(12)
-        }
-    }
-    
+
     // Quick access button component
     private func quickAccessButton(icon: String, title: String, count: Int, color: Color) -> some View {
         VStack(spacing: 12) {
@@ -753,20 +684,7 @@ struct MoreView: View {
     
     // MARK: - Navigation and Helper Methods
     
-    // Enum for feature destinations
-    enum FeatureDestination {
-        case todo, pomodoro
-    }
-    
-    // Navigate to different features
-    private func navigateToFeature(_ destination: FeatureDestination) {
-        switch destination {
-        case .todo:
-            TabNavigationHelper.shared.switchToTab(2) // Todo tab
-        case .pomodoro:
-            TabNavigationHelper.shared.switchToTab(3) // Pomodoro tab
-        }
-    }
+    // No feature navigation needed anymore - features removed
     
     // Check and request notification permissions if needed
     func checkAndRequestNotificationPermission() {

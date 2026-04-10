@@ -19,8 +19,7 @@ The app home screen has been completely redesigned to focus on the **Daily Disci
 1. **Discipline** (🔥) - Daily 3 tasks with streak tracking
 2. **Quotes** (💬) - Motivational quotes (moved from home)
 3. **To-Do** (✅) - Task management
-4. **Pomodoro** (⏱️) - Focus timer
-5. **More** (•••) - Settings and more
+4. **More** (•••) - Settings and more
 
 ---
 
@@ -196,15 +195,13 @@ Users can customize all 3 daily tasks:
 **Old Structure:**
 1. Home (Quotes + Calendar + Todo)
 2. To-Do
-3. Pomodoro
-4. More
+3. More
 
 **New Structure:**
 1. **Discipline** 🔥 - Focus on 3 daily tasks
 2. **Quotes** 💬 - Inspirational content
 3. **To-Do** ✅ - Task management
-4. **Pomodoro** ⏱️ - Focus sessions
-5. **More** ••• - Settings
+4. **More** ••• - Settings
 
 ---
 

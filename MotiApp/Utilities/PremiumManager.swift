@@ -158,19 +158,9 @@ class PremiumManager: ObservableObject {
         return isPremiumUser || availableThemes.contains { $0.id == theme.id }
     }
     
-    /// Check if advanced todo features are available
-    func areTodoCustomFieldsAvailable() -> Bool {
-        return isPremiumUser
-    }
-    
     /// Get the widget style limit
     func getWidgetStyleLimit() -> Int {
         return isPremiumUser ? Int.max : FREE_WIDGET_STYLES
-    }
-    
-    /// Check if advanced pomodoro features are available
-    func areAdvancedPomodoroFeaturesAvailable() -> Bool {
-        return isPremiumUser
     }
     
     /// Check if streak forgiveness is available
