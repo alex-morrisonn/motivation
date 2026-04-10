@@ -23,12 +23,13 @@ struct MotiApp: App {
     
     var body: some Scene {
         WindowGroup {
-            SplashScreenView()
-                .environmentObject(notificationManager)
-                .withTabBarTheming() // Add this modifier to handle tab bar theme updates
-                .onOpenURL { url in
-                    handleDeepLink(url)
-                }
+            Group {
+                SplashScreenView()
+                    .environmentObject(notificationManager)
+            }
+            .onOpenURL { url in
+                handleDeepLink(url)
+            }
         }
     }
     

@@ -478,8 +478,8 @@ struct PremiumView: View {
         // In a real app, you would integrate with StoreKit here
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            // Simulate purchase success
-            let purchaseSuccessful = true
+            // Simulate purchase success (randomized for testing)
+            let purchaseSuccessful = Bool.random()
             
             if purchaseSuccessful {
                 // Set premium type based on selection
