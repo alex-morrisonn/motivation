@@ -1,40 +1,27 @@
 import WidgetKit
 import SwiftUI
-import Intents
 
-// Need to redeclare Event model for the widget extension
 struct Event: Identifiable, Codable, Equatable {
     var id = UUID()
     var title: String
     var date: Date
     var notes: String
     var isCompleted: Bool = false
-    
-    static func == (lhs: Event, rhs: Event) -> Bool {
-        return lhs.id == rhs.id
-    }
 }
 
-// Need to redeclare Quote model for the widget extension
 struct Quote: Identifiable, Codable, Equatable {
     var id = UUID()
     let text: String
     let author: String
     let category: String
-    
-    static func == (lhs: Quote, rhs: Quote) -> Bool {
-        return lhs.id == rhs.id
-    }
-    
-    // Constructor to create from SharedQuote
+
     init(from sharedQuote: SharedQuote) {
         self.id = sharedQuote.id
         self.text = sharedQuote.text
         self.author = sharedQuote.author
         self.category = sharedQuote.category
     }
-    
-    // For creating quotes directly
+
     init(text: String, author: String, category: String) {
         self.text = text
         self.author = author
@@ -42,704 +29,492 @@ struct Quote: Identifiable, Codable, Equatable {
     }
 }
 
-// Widget Event Service to access events
 struct WidgetEventService {
-    // Defined error types for better error handling
-    enum WidgetServiceError: Error {
-        case appGroupAccessFailed
-        case dataCorrupted
-        case decodingFailed
-        case noEventsFound
-        
-        var description: String {
-            switch self {
-            case .appGroupAccessFailed: return "Failed to access app group"
-            case .dataCorrupted: return "Event data is corrupted"
-            case .decodingFailed: return "Failed to decode events"
-            case .noEventsFound: return "No events found in storage"
-            }
-        }
-    }
-    
-    // Get all events saved by the main app with robust error handling
     static func getEvents() -> [Event] {
-        // Check for app group access
-        guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
-            print("Widget Error: Could not access shared UserDefaults")
+        guard
+            let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier),
+            let savedEvents = sharedDefaults.data(forKey: "savedEvents"),
+            let decodedEvents = try? JSONDecoder().decode([Event].self, from: savedEvents)
+        else {
             return []
         }
-        
-        // Check for saved events
-        guard let savedEvents = sharedDefaults.data(forKey: "savedEvents") else {
-            print("Widget Info: No saved events found in shared storage")
-            return []
-        }
-        
-        // Try to decode events
-        do {
-            let decodedEvents = try JSONDecoder().decode([Event].self, from: savedEvents)
-            print("Widget Info: Successfully loaded \(decodedEvents.count) events")
-            return decodedEvents
-        } catch let decodingError as DecodingError {
-            // Handle specific JSON decoding errors
-            switch decodingError {
-            case .dataCorrupted(let context):
-                print("Widget Error: Data corrupted: \(context.debugDescription)")
-            case .keyNotFound(let key, let context):
-                print("Widget Error: Key '\(key.stringValue)' not found: \(context.debugDescription)")
-            case .typeMismatch(let type, let context):
-                print("Widget Error: Type mismatch for type \(type): \(context.debugDescription)")
-            case .valueNotFound(let type, let context):
-                print("Widget Error: Value of type \(type) not found: \(context.debugDescription)")
-            @unknown default:
-                print("Widget Error: Unknown decoding error: \(decodingError)")
-            }
-            return []
-        } catch {
-            print("Widget Error: Failed to decode events: \(error.localizedDescription)")
-            return []
-        }
+
+        return decodedEvents
     }
-    
-    // Get days in current month that have events with error handling
-    static func getEventDaysForCurrentMonth() -> [Int: Bool] {
-        let events = getEvents()
-        
-        // Early return if no events available
-        if events.isEmpty {
-            print("Widget Info: No events available to calculate event days")
-            return [:]
-        }
-        
+
+    static func eventDaysForMonth(containing date: Date) -> [Int: Bool] {
         let calendar = Calendar.current
-        let currentDate = Date()
-        
-        // Safely extract month and year components
-        guard let currentMonth = calendar.dateComponents([.month], from: currentDate).month,
-              let currentYear = calendar.dateComponents([.year], from: currentDate).year else {
-            print("Widget Error: Failed to determine current month/year")
-            return [:]
-        }
-        
-        var eventDays = [Int: Bool]()
-        var processedEventsCount = 0
-        
-        for event in events {
+        let components = calendar.dateComponents([.year, .month], from: date)
+
+        return getEvents().reduce(into: [:]) { result, event in
             let eventComponents = calendar.dateComponents([.year, .month, .day], from: event.date)
-            
-            guard let eventMonth = eventComponents.month,
-                  let eventYear = eventComponents.year,
-                  let day = eventComponents.day else {
-                print("Widget Warning: Invalid date components in event '\(event.title)'")
-                continue
+            guard
+                eventComponents.year == components.year,
+                eventComponents.month == components.month,
+                let day = eventComponents.day
+            else {
+                return
             }
-            
-            // Only include events from current month and year
-            if eventMonth == currentMonth && eventYear == currentYear {
-                eventDays[day] = true
-                processedEventsCount += 1
-            }
+
+            result[day] = true
         }
-        
-        print("Widget Info: Found \(processedEventsCount) events for current month")
-        return eventDays
     }
-    
-    // Helper method to check if app group is accessible
-    static func isAppGroupAccessible() -> Bool {
-        return UserDefaults(suiteName: appGroupIdentifier) != nil
+
+    static func currentMonthEventCount(on date: Date) -> Int {
+        eventDaysForMonth(containing: date).count
+    }
+
+    static func upcomingEvents(limit: Int, from date: Date) -> [Event] {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: date)
+
+        return getEvents()
+            .filter { !$0.isCompleted && $0.date >= start }
+            .sorted { $0.date < $1.date }
+            .prefix(limit)
+            .map { $0 }
     }
 }
 
-// Improved QuoteService with error handling for widgets
-class QuoteService {
+final class QuoteService {
     static let shared = QuoteService()
-    
-    // Defined error types for better error handling
-    enum QuoteServiceError: Error {
-        case noQuotesAvailable
-        case dayCalculationFailed
-        case randomGenerationFailed
-        
-        var description: String {
-            switch self {
-            case .noQuotesAvailable: return "No quotes are available"
-            case .dayCalculationFailed: return "Failed to calculate day of year"
-            case .randomGenerationFailed: return "Failed to generate random quote"
-            }
-        }
-    }
-    
-    // Local quotes data source using the shared quotes
+
     private let quotes: [Quote]
-    
-    init() {
-        // Initialize quotes with fallback for empty array
+
+    private init() {
         let sharedQuotes = SharedQuotes.all
-        
         if sharedQuotes.isEmpty {
-            print("Widget Warning: SharedQuotes.all returned empty array, using fallback quotes")
-            // Fallback quotes in case SharedQuotes fails
             self.quotes = [
-                Quote(text: "The best way to predict the future is to create it.", author: "Peter Drucker", category: "Inspiration"),
-                Quote(text: "Life is what happens when you're busy making other plans.", author: "John Lennon", category: "Life"),
+                Quote(text: "The best way to predict the future is to create it.", author: "Peter Drucker", category: "Success"),
                 Quote(text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt", category: "Motivation")
             ]
         } else {
-            self.quotes = sharedQuotes.map { Quote(from: $0) }
-            print("Widget Info: Loaded \(quotes.count) quotes successfully")
+            self.quotes = sharedQuotes.map(Quote.init(from:))
         }
     }
-    
-    // Function to get today's quote with error handling
-    func getTodaysQuote() throws -> Quote {
-        // Check if quotes array is populated
+
+    func quoteForToday(on date: Date = .now) -> Quote {
         guard !quotes.isEmpty else {
-            print("Widget Error: No quotes available to get today's quote")
-            throw QuoteServiceError.noQuotesAvailable
+            return Quote(
+                text: "The greatest glory in living lies not in never falling, but in rising every time we fall.",
+                author: "Nelson Mandela",
+                category: "Inspiration"
+            )
         }
-        
+
         let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        
-        // Use the day of the year to pick a quote with error handling
-        guard let dayOfYear = calendar.ordinality(of: .day, in: .year, for: today) else {
-            print("Widget Warning: Could not determine day of year, using first quote")
-            throw QuoteServiceError.dayCalculationFailed
-        }
-        
-        // Safely calculate index with bounds checking
-        let index = (dayOfYear - 1) % quotes.count
-        return quotes[index]
-    }
-    
-    // Function to get a random quote with error handling
-    func getRandomQuote() throws -> Quote {
-        // Check if quotes array is populated
-        guard !quotes.isEmpty else {
-            print("Widget Error: No quotes available to get random quote")
-            throw QuoteServiceError.noQuotesAvailable
-        }
-        
-        guard let randomIndex = (0..<quotes.count).randomElement() else {
-            print("Widget Error: Failed to generate random index")
-            throw QuoteServiceError.randomGenerationFailed
-        }
-        
-        return quotes[randomIndex]
-    }
-    
-    // Get a quote regardless of whether getTodaysQuote or getRandomQuote succeeds
-    func getQuote() -> Quote {
-        do {
-            return try getTodaysQuote()
-        } catch {
-            print("Widget Error retrieving today's quote: \(error.localizedDescription)")
-            
-            // Try random quote as fallback
-            do {
-                return try getRandomQuote()
-            } catch {
-                print("Widget Error retrieving random quote: \(error.localizedDescription)")
-                return getFallbackQuote()
-            }
-        }
-    }
-    
-    // Improved fallback quote in case of errors
-    func getFallbackQuote() -> Quote {
-        return Quote(
-            text: "The greatest glory in living lies not in never falling, but in rising every time we fall.",
-            author: "Nelson Mandela",
-            category: "Inspiration"
-        )
+        let day = calendar.ordinality(of: .day, in: .year, for: calendar.startOfDay(for: date)) ?? 1
+        return quotes[(day - 1) % quotes.count]
     }
 }
 
-// Timeline Entry
 struct QuoteEntry: TimelineEntry {
     let date: Date
     let quote: Quote
-    let eventDays: [Int: Bool]
-    let hasError: Bool
-    
-    // Default initializer with error flag
-    init(date: Date, quote: Quote, eventDays: [Int: Bool], hasError: Bool = false) {
-        self.date = date
-        self.quote = quote
-        self.eventDays = eventDays
-        self.hasError = hasError
-    }
-    
-    // Static factory method for creating error entries
-    static func createErrorEntry() -> QuoteEntry {
-        let errorQuote = Quote(
-            text: "The greatest glory in living lies not in never falling, but in rising every time we fall.",
-            author: "Nelson Mandela",
-            category: "Fallback"
-        )
-        
-        return QuoteEntry(
-            date: Date(),
-            quote: errorQuote,
-            eventDays: [:],
-            hasError: true
-        )
-    }
+    let monthEventDays: [Int: Bool]
+    let monthEventCount: Int
+    let upcomingEvents: [Event]
 }
 
-// Timeline Provider with robust error handling
 struct Provider: TimelineProvider {
-    // Creates a safe placeholder quote that always works
-    private func createSafePlaceholderQuote() -> Quote {
-        return Quote(
-            text: "The best way to predict the future is to create it.",
-            author: "Peter Drucker",
-            category: "Inspiration"
-        )
-    }
-    
-    // Creates a safe placeholder entry
-    private func createSafePlaceholderEntry() -> QuoteEntry {
-        return QuoteEntry(
-            date: Date(),
-            quote: createSafePlaceholderQuote(),
-            eventDays: [:]
-        )
-    }
-    
-    // Calculate next refresh date with error handling
-    private func nextRefreshDate(_ currentDate: Date) -> Date {
-        let calendar = Calendar.current
-        
-        // Try to get tomorrow at midnight
-        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: currentDate) {
-            // Don't use if let here since startOfDay returns a non-optional Date
-            let midnight = calendar.startOfDay(for: tomorrow)
-            return midnight
-        }
-        
-        // Fallback to +24 hours if date calculation fails
-        print("Widget Warning: Failed to calculate tomorrow's date, using 24 hours from now")
-        return Date(timeIntervalSinceNow: 24 * 60 * 60)
-    }
-    
-    // Fallback refresh date (1 hour from now)
-    private func fallbackRefreshDate() -> Date {
-        return Date(timeIntervalSinceNow: 60 * 60)
+    func placeholder(in context: Context) -> QuoteEntry {
+        sampleEntry
     }
 
-    func placeholder(in context: Context) -> QuoteEntry {
-        // Placeholder for widget gallery - must be reliable
-        return QuoteEntry(
-            date: Date(),
-            quote: createSafePlaceholderQuote(),
-            eventDays: [:]
-        )
-    }
-    
     func getSnapshot(in context: Context, completion: @escaping (QuoteEntry) -> Void) {
-        // Snapshot for widget gallery or when taking screenshot
-        
-        // Check for app group access first
-        if !WidgetEventService.isAppGroupAccessible() {
-            print("Widget Warning: App group not accessible for snapshot, using placeholder data")
-            completion(createSafePlaceholderEntry())
-            return
-        }
-        
-        // Get quote with error handling
-        let quote = QuoteService.shared.getQuote()
-        
-        // Get event days (non-throwing)
-        let eventDays = WidgetEventService.getEventDaysForCurrentMonth()
-        
-        // Create and return the entry
-        let entry = QuoteEntry(
-            date: Date(),
-            quote: quote,
-            eventDays: eventDays
-        )
-        completion(entry)
+        completion(makeEntry(for: .now))
     }
-    
+
     func getTimeline(in context: Context, completion: @escaping (Timeline<QuoteEntry>) -> Void) {
-        // Check for app group access first
-        if !WidgetEventService.isAppGroupAccessible() {
-            print("Widget Warning: App group not accessible for timeline, using placeholder data")
-            
-            let fallbackEntry = createSafePlaceholderEntry()
-            let fallbackTimeline = Timeline(entries: [fallbackEntry], policy: .after(fallbackRefreshDate()))
-            
-            completion(fallbackTimeline)
-            return
-        }
-        
-        // Get quote (non-throwing method)
-        let quote = QuoteService.shared.getQuote()
-        
-        // Get event days (non-throwing)
-        let eventDays = WidgetEventService.getEventDaysForCurrentMonth()
-        
-        // Create entry for current date
-        let currentDate = Date()
-        let entry = QuoteEntry(
-            date: currentDate,
-            quote: quote,
-            eventDays: eventDays
+        let now = Date()
+        let entry = makeEntry(for: now)
+        let refreshDate = Calendar.current.startOfDay(for: Calendar.current.date(byAdding: .day, value: 1, to: now) ?? now)
+        completion(Timeline(entries: [entry], policy: .after(refreshDate)))
+    }
+
+    private func makeEntry(for date: Date) -> QuoteEntry {
+        QuoteEntry(
+            date: date,
+            quote: QuoteService.shared.quoteForToday(on: date),
+            monthEventDays: WidgetEventService.eventDaysForMonth(containing: date),
+            monthEventCount: WidgetEventService.currentMonthEventCount(on: date),
+            upcomingEvents: WidgetEventService.upcomingEvents(limit: 3, from: date)
         )
-        
-        // Set next update to tomorrow's midnight
-        let refreshDate = nextRefreshDate(currentDate)
-        
-        // Create timeline with single entry and update at next midnight
-        let timeline = Timeline(entries: [entry], policy: .after(refreshDate))
-        completion(timeline)
+    }
+
+    private var sampleEntry: QuoteEntry {
+        let quote = Quote(
+            text: "The only way to do great work is to love what you do.",
+            author: "Steve Jobs",
+            category: "Success & Achievement"
+        )
+        let events = [
+            Event(title: "Gym", date: .now, notes: "", isCompleted: false),
+            Event(title: "Read 20 minutes", date: Calendar.current.date(byAdding: .day, value: 1, to: .now) ?? .now, notes: "", isCompleted: false)
+        ]
+
+        return QuoteEntry(
+            date: .now,
+            quote: quote,
+            monthEventDays: [4: true, 8: true, 14: true, 21: true],
+            monthEventCount: 4,
+            upcomingEvents: events
+        )
     }
 }
 
-// Widget View Content with Calendar for Large Widget
-struct QuoteContent: View {
-    var entry: Provider.Entry
-    @Environment(\.widgetFamily) var widgetFamily
-    
-    // Calculate font size based on widget size
-    var quoteFontSize: CGFloat {
-        switch widgetFamily {
-        case .systemSmall:
-            return 14
-        case .systemMedium:
-            return 16
-        case .systemLarge:
-            return 16  // Slightly smaller for large to accommodate calendar
-        default:
-            return 16
-        }
-    }
-    
-    var authorFontSize: CGFloat {
-        switch widgetFamily {
-        case .systemSmall:
-            return 12
-        case .systemMedium:
-            return 13
-        default:
-            return 13
-        }
-    }
-    
-    // Get current date information
-    var currentMonth: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
-        return formatter.string(from: entry.date)
-    }
-    
-    // Days of the week header
-    let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-    
-    // Calendar computation for current month with error handling
-    func calendarDays() -> (firstDay: Int, totalDays: Int, currentDay: Int) {
-        let calendar = Calendar.current
-        let date = entry.date
-        
-        // Get first day of month with error handling
-        guard let firstDayOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: date)) else {
-            print("Widget Error: Failed to calculate first day of month")
-            return (0, 30, 1) // Safe fallback values
-        }
-        
-        // Get the weekday of the first day (0-based index)
-        let firstWeekday = calendar.component(.weekday, from: firstDayOfMonth) - 1
-        
-        // Get the number of days in month with error handling
-        guard let range = calendar.range(of: .day, in: .month, for: date) else {
-            print("Widget Error: Failed to calculate days in month")
-            return (firstWeekday, 30, 1) // Safe fallback values
-        }
-        
-        let numberOfDays = range.count
-        
-        // Get the current day
-        let currentDay = calendar.component(.day, from: date)
-        
-        return (firstWeekday, numberOfDays, currentDay)
-    }
-    
-    // Check if a date has events using the entry data
-    func hasEvents(for day: Int) -> Bool {
-        return entry.eventDays[day] == true
-    }
-    
+private enum WidgetPalette {
+    static let backgroundTop = Color.black
+    static let backgroundMid = Color(red: 0.10, green: 0.11, blue: 0.17)
+    static let backgroundBottom = Color(red: 0.04, green: 0.06, blue: 0.11)
+    static let card = Color(red: 0.12, green: 0.12, blue: 0.18).opacity(0.96)
+    static let cardHighlight = Color.blue.opacity(0.10)
+    static let panel = Color.white.opacity(0.05)
+    static let panelBorder = Color.white.opacity(0.10)
+    static let primaryText = Color.white
+    static let secondaryText = Color.gray.opacity(0.95)
+    static let accent = Color.blue
+    static let accentSoft = Color.blue.opacity(0.18)
+    static let eventDot = Color.blue
+}
+
+private struct WidgetBackground: View {
     var body: some View {
         ZStack {
-            // Unified gradient background for all widget sizes
             LinearGradient(
-                gradient: Gradient(colors: [Color.black, Color(red: 0.1, green: 0.1, blue: 0.3)]),
+                colors: [WidgetPalette.backgroundTop, WidgetPalette.backgroundMid, WidgetPalette.backgroundBottom],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-            
-            // Add logo as a subtle watermark in the background
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    Text("M")
-                        .font(.system(size: widgetFamily == .systemSmall ? 70 : 100, weight: .bold))
-                        .foregroundColor(.white.opacity(0.08))
-                    Spacer()
-                }
-                Spacer()
-            }
-            
-            // Content based on widget size
-            if widgetFamily == .systemLarge {
-                // Large widget with quote and calendar
-                VStack(alignment: .center, spacing: 8) {
-                    // Quote part
-                    VStack(spacing: 4) {
-                        Text(entry.quote.text)
-                            .font(.system(size: quoteFontSize, weight: .medium))
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
-                            .lineLimit(5)
-                            .minimumScaleFactor(0.7)
-                            .padding(.top, 8)
-                        
-                        Text("— \(entry.quote.author)")
-                            .font(.system(size: authorFontSize, weight: .regular))
-                            .foregroundColor(.white.opacity(0.7))
-                            .lineLimit(1)
-                            .padding(.bottom, 2)
-                    }
-                    .padding(.bottom, 5)
-                    
-                    Divider()
-                        .background(Color.white.opacity(0.3))
-                        .padding(.horizontal, 20)
-                    
-                    // Calendar part
-                    VStack(alignment: .center, spacing: 4) {
-                        Text(currentMonth)
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(.top, 4)
-                        
-                        // Weekday headers
-                        HStack(spacing: 0) {
-                            ForEach(weekdays, id: \.self) { day in
-                                Text(day)
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.7))
-                                    .frame(maxWidth: .infinity)
-                            }
-                        }
-                        .padding(.horizontal, 4)
-                        .padding(.bottom, 2)
-                        
-                        // Calendar grid with error handling
-                        let calInfo = calendarDays()
-                        let rows = (calInfo.firstDay + calInfo.totalDays + 6) / 7 // Calculate rows needed
-                        
-                        // For each row in the calendar
-                        ForEach(0..<rows, id: \.self) { row in
-                            HStack(spacing: 0) {
-                                // For each column in the calendar
-                                ForEach(0..<7, id: \.self) { column in
-                                    let dayNumber = row * 7 + column - calInfo.firstDay + 1
-                                    
-                                    if dayNumber > 0 && dayNumber <= calInfo.totalDays {
-                                        ZStack {
-                                            // Highlight current day
-                                            if dayNumber == calInfo.currentDay {
-                                                Circle()
-                                                    .fill(Color.white)
-                                                    .frame(width: 22, height: 22)
-                                            }
-                                            
-                                            Text("\(dayNumber)")
-                                                .font(.system(size: 10))
-                                                .foregroundColor(dayNumber == calInfo.currentDay ? Color.black : .white)
-                                            
-                                            // Show indicator for days with events
-                                            if hasEvents(for: dayNumber) {
-                                                Circle()
-                                                    .fill(dayNumber == calInfo.currentDay ? Color.blue : Color.blue.opacity(0.7))
-                                                    .frame(width: 4, height: 4)
-                                                    .offset(y: 8)
-                                            }
-                                        }
-                                        .frame(maxWidth: .infinity, maxHeight: 24)
-                                    } else {
-                                        // Empty cell for days outside current month
-                                        Text("")
-                                            .frame(maxWidth: .infinity, maxHeight: 24)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 8)
-                }
-                .padding(12)
-                .widgetURL(URL(string: "moti://calendar"))  // Deep link to calendar view
-            } else {
-                // Regular widget with just the quote
-                VStack(alignment: .center, spacing: widgetFamily == .systemSmall ? 6 : 10) {
-                    // Show error message if hasError is true
-                    if entry.hasError {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.system(size: 24))
-                            .foregroundColor(.yellow)
-                            .padding(.top, 8)
-                    }
-                    
-                    // Quote text
-                    Text(entry.quote.text)
-                        .font(.system(size: quoteFontSize, weight: .medium))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(widgetFamily == .systemSmall ? 5 : 6)
-                        .minimumScaleFactor(0.7)
-                        .padding(.top, 8)
-                    
-                    Spacer()
-                    
-                    // Author
-                    Text("— \(entry.quote.author)")
-                        .font(.system(size: authorFontSize, weight: .regular))
-                        .foregroundColor(.white.opacity(0.7))
-                        .lineLimit(1)
-                        .padding(.top, 2)
-                }
-                .padding(widgetFamily == .systemSmall ? 12 : 16)
-                .widgetURL(URL(string: "moti://quotes"))  // Deep link to quotes view
-            }
-        }
-    }
-}
 
-// Widget Entry View with Container Background
-struct QuoteWidgetEntryView: View {
-    var entry: Provider.Entry
-    @Environment(\.widgetFamily) var widgetFamily
-    
-    var body: some View {
-        if widgetFamily == .accessoryRectangular || widgetFamily == .accessoryCircular || widgetFamily == .accessoryInline {
-            // For Apple Watch and Lock Screen widgets
-            Group {
-                if entry.hasError {
-                    // Show simplified error view for accessory widgets
-                    if widgetFamily == .accessoryInline {
-                        Text("Quote unavailable")
-                    } else {
-                        VStack {
-                            Image(systemName: "exclamationmark.triangle")
-                                .font(.system(size: widgetFamily == .accessoryCircular ? 16 : 12))
-                            Text("Tap to refresh")
-                                .font(.caption2)
-                        }
-                    }
-                } else {
-                    // Normal content
-                    Text(entry.quote.text)
-                        .font(.caption2)
-                        .lineLimit(widgetFamily == .accessoryInline ? 1 : 3)
-                }
-            }
-            .containerBackground(
-                LinearGradient(
-                    gradient: Gradient(colors: [Color.black, Color(red: 0.05, green: 0.05, blue: 0.2)]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                for: .widget
+            LinearGradient(
+                colors: [WidgetPalette.cardHighlight, .clear],
+                startPoint: .topLeading,
+                endPoint: .center
             )
-        } else {
-            // Use the unified QuoteContent for all standard widget sizes
-            QuoteContent(entry: entry)
-                .containerBackground(for: .widget) {
-                    LinearGradient(
-                        gradient: Gradient(colors: [Color.black, Color(red: 0.1, green: 0.1, blue: 0.3)]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                }
+
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(WidgetPalette.card)
+                .padding(8)
+
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(WidgetPalette.panelBorder, lineWidth: 1)
+                .padding(8)
         }
     }
 }
 
-// Standard Quote Widget
+private struct CapsuleLabel: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(WidgetPalette.accent)
+            .lineLimit(1)
+    }
+}
+
+private struct MetaRow: View {
+    let icon: String
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 10, weight: .semibold))
+            Text(text)
+                .lineLimit(1)
+        }
+        .font(.system(size: 11, weight: .medium))
+        .foregroundStyle(WidgetPalette.secondaryText)
+    }
+}
+
+private struct QuoteHeader: View {
+    let quote: Quote
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            CapsuleLabel(text: quote.category)
+            Text("Today’s Perspective")
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundStyle(WidgetPalette.primaryText)
+        }
+    }
+}
+
+private struct AdaptiveQuoteBlock: View {
+    let quote: String
+    let author: String
+    let sizes: [CGFloat]
+    let authorSize: CGFloat
+
+    var body: some View {
+        ViewThatFits(in: .vertical) {
+            ForEach(sizes, id: \.self) { size in
+                VStack(alignment: .leading, spacing: max(4, size * 0.3)) {
+                    Text("“\(quote)”")
+                        .font(.system(size: size, weight: .semibold, design: .rounded))
+                        .foregroundStyle(WidgetPalette.primaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text("— \(author)")
+                        .font(.system(size: authorSize, weight: .medium))
+                        .foregroundStyle(WidgetPalette.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+}
+
+private struct SmallQuoteWidgetView: View {
+    let entry: QuoteEntry
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            CapsuleLabel(text: entry.quote.category)
+
+            AdaptiveQuoteBlock(
+                quote: entry.quote.text,
+                author: entry.quote.author,
+                sizes: [15, 14, 13, 12, 11, 10],
+                authorSize: 11
+            )
+        }
+        .padding(14)
+        .widgetURL(URL(string: "moti://quotes"))
+    }
+}
+
+private struct MediumQuoteWidgetView: View {
+    let entry: QuoteEntry
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            QuoteHeader(quote: entry.quote)
+
+            AdaptiveQuoteBlock(
+                quote: entry.quote.text,
+                author: entry.quote.author,
+                sizes: [18, 17, 16, 15, 14, 13, 12],
+                authorSize: 12
+            )
+        }
+        .padding(16)
+        .widgetURL(URL(string: "moti://quotes"))
+    }
+}
+
+private struct LargeQuoteWidgetView: View {
+    let entry: QuoteEntry
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            QuoteHeader(quote: entry.quote)
+
+            AdaptiveQuoteBlock(
+                quote: entry.quote.text,
+                author: entry.quote.author,
+                sizes: [22, 20, 18, 16, 15, 14],
+                authorSize: 13
+            )
+
+            if let nextEvent = entry.upcomingEvents.first {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Next Plan")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(WidgetPalette.secondaryText)
+
+                    EventCard(event: nextEvent, style: .featured)
+                }
+            } else {
+                MetaRow(icon: "calendar", text: entry.monthEventCount == 1 ? "1 plan this month" : "\(entry.monthEventCount) plans this month")
+            }
+        }
+        .padding(16)
+        .widgetURL(URL(string: nextEventURL))
+    }
+
+    private var nextEventURL: String {
+        entry.upcomingEvents.isEmpty ? "moti://quotes" : "moti://calendar"
+    }
+}
+
+private enum EventCardStyle {
+    case featured
+}
+
+private struct EventCard: View {
+    let event: Event
+    let style: EventCardStyle
+
+    private var dateLabel: String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(event.date) {
+            return "Today"
+        }
+        if calendar.isDateInTomorrow(event.date) {
+            return "Tomorrow"
+        }
+        return event.date.formatted(.dateTime.weekday(.abbreviated).day())
+    }
+
+    private var timeLabel: String {
+        event.date.formatted(.dateTime.hour().minute())
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: style == .featured ? 8 : 5) {
+            HStack {
+                Text(dateLabel)
+                    .font(.system(size: style == .featured ? 12 : 11, weight: .semibold))
+                    .foregroundStyle(WidgetPalette.accent)
+
+                Spacer(minLength: 8)
+
+                Text(timeLabel)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(WidgetPalette.secondaryText)
+            }
+
+            Text(event.title)
+                .font(.system(size: style == .featured ? 14 : 12, weight: .semibold, design: .rounded))
+                .foregroundStyle(WidgetPalette.primaryText)
+                .lineLimit(2)
+        }
+        .padding(style == .featured ? 12 : 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(WidgetPalette.panel, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(WidgetPalette.panelBorder, lineWidth: 1)
+        )
+    }
+}
+
+private struct RectangularAccessoryView: View {
+    let entry: QuoteEntry
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(entry.quote.text)
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white)
+                .lineLimit(2)
+
+            Text("— \(entry.quote.author)")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(WidgetPalette.secondaryText)
+                .lineLimit(1)
+        }
+        .widgetURL(URL(string: "moti://quotes"))
+    }
+}
+
+private struct CircularAccessoryView: View {
+    let entry: QuoteEntry
+
+    private var day: String {
+        String(Calendar.current.component(.day, from: entry.date))
+    }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .strokeBorder(WidgetPalette.secondaryText.opacity(0.35), lineWidth: 1.2)
+            VStack(spacing: 2) {
+                Image(systemName: "quote.opening")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(WidgetPalette.accent)
+                Text(day)
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+            }
+        }
+        .widgetURL(URL(string: "moti://quotes"))
+    }
+}
+
+private struct InlineAccessoryView: View {
+    let entry: QuoteEntry
+
+    var body: some View {
+        Text("“\(entry.quote.author)”")
+            .widgetURL(URL(string: "moti://quotes"))
+    }
+}
+
+struct QuoteWidgetEntryView: View {
+    let entry: QuoteEntry
+    @Environment(\.widgetFamily) private var family
+
+    var body: some View {
+        switch family {
+        case .systemSmall:
+            SmallQuoteWidgetView(entry: entry)
+                .containerBackground(for: .widget) { WidgetBackground() }
+        case .systemMedium:
+            MediumQuoteWidgetView(entry: entry)
+                .containerBackground(for: .widget) { WidgetBackground() }
+        case .systemLarge:
+            LargeQuoteWidgetView(entry: entry)
+                .containerBackground(for: .widget) { WidgetBackground() }
+        case .accessoryRectangular:
+            RectangularAccessoryView(entry: entry)
+                .containerBackground(for: .widget) { WidgetBackground() }
+        case .accessoryCircular:
+            CircularAccessoryView(entry: entry)
+                .containerBackground(for: .widget) { WidgetBackground() }
+        case .accessoryInline:
+            InlineAccessoryView(entry: entry)
+        default:
+            SmallQuoteWidgetView(entry: entry)
+                .containerBackground(for: .widget) { WidgetBackground() }
+        }
+    }
+}
+
 struct QuoteWidget: Widget {
-    let kind: String = "DailyQuoteWidget"
-    
+    let kind = "DailyQuoteWidget"
+
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             QuoteWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Daily Quote")
-        .description("Displays a new inspirational quote each day.")
+        .configurationDisplayName("Daily Focus")
+        .description("A cleaner daily quote with your next plans and monthly rhythm.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
-// Compact Quote Widget for Lock Screen
 struct CompactQuoteWidget: Widget {
-    let kind: String = "CompactQuoteWidget"
-    
+    let kind = "CompactQuoteWidget"
+
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             QuoteWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Compact Quote")
-        .description("A compact inspirational quote for your Lock Screen.")
+        .configurationDisplayName("Focus Snapshot")
+        .description("Compact motivation and calendar context for the Lock Screen.")
         .supportedFamilies([.accessoryRectangular, .accessoryCircular, .accessoryInline])
     }
 }
 
-// Preview Provider
-struct MotiWidget_Previews: PreviewProvider {
-    static var previews: some View {
-        // Create sample data
-        let sampleQuote = Quote(from: SharedQuote(text: "The only way to do great work is to love what you do.", author: "Steve Jobs", category: "Success & Achievement"))
-        let sampleEvents = [5, 10, 15, 20, 25].reduce(into: [Int: Bool]()) { $0[$1] = true }
-        
-        // Create preview entries
-        let normalEntry = QuoteEntry(date: Date(), quote: sampleQuote, eventDays: sampleEvents)
-        let errorEntry = QuoteEntry(date: Date(), quote: sampleQuote, eventDays: [:], hasError: true)
-        
-        Group {
-            // Preview standard layouts
-            QuoteWidgetEntryView(entry: normalEntry)
-                .previewContext(WidgetPreviewContext(family: .systemSmall))
-                .previewDisplayName("Small Widget")
-            
-            QuoteWidgetEntryView(entry: normalEntry)
-                .previewContext(WidgetPreviewContext(family: .systemMedium))
-                .previewDisplayName("Medium Widget")
-            
-            QuoteWidgetEntryView(entry: normalEntry)
-                .previewContext(WidgetPreviewContext(family: .systemLarge))
-                .previewDisplayName("Large Widget")
-            
-            // Preview error state
-            QuoteWidgetEntryView(entry: errorEntry)
-                .previewContext(WidgetPreviewContext(family: .systemSmall))
-                .previewDisplayName("Error State")
-            
-            // Preview lock screen widgets
-            QuoteWidgetEntryView(entry: normalEntry)
-                .previewContext(WidgetPreviewContext(family: .accessoryRectangular))
-                .previewDisplayName("Lock Screen Rectangle")
-            
-            QuoteWidgetEntryView(entry: normalEntry)
-                .previewContext(WidgetPreviewContext(family: .accessoryCircular))
-                .previewDisplayName("Lock Screen Circle")
-            
-            QuoteWidgetEntryView(entry: normalEntry)
-                .previewContext(WidgetPreviewContext(family: .accessoryInline))
-                .previewDisplayName("Lock Screen Inline")
-        }
-    }
+#Preview(as: .systemSmall) {
+    QuoteWidget()
+} timeline: {
+    QuoteEntry(
+        date: .now,
+        quote: Quote(
+            text: "The only way to do great work is to love what you do.",
+            author: "Steve Jobs",
+            category: "Success & Achievement"
+        ),
+        monthEventDays: [4: true, 8: true, 14: true, 21: true],
+        monthEventCount: 4,
+        upcomingEvents: [
+            Event(title: "Morning run", date: .now, notes: "", isCompleted: false)
+        ]
+    )
 }
