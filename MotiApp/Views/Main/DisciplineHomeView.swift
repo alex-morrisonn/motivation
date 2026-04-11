@@ -2,9 +2,10 @@ import SwiftUI
 
 /// Main home view focused on the daily discipline system.
 struct DisciplineHomeView: View {
-    @StateObject private var disciplineSystem = DisciplineSystemState()
+    @ObservedObject private var disciplineSystem = DisciplineSystemState.shared
     @ObservedObject private var streakManager = StreakManager.shared
     @ObservedObject private var gamification = GamificationManager.shared
+    @ObservedObject private var eventService = EventService.shared
 
     @State private var showingTaskEditor = false
     @State private var showingHistory = false
@@ -23,6 +24,7 @@ struct DisciplineHomeView: View {
                     headerView
                     levelProgressCard
                     dailyTasksCard
+                    planningCard
                     progressSummaryCard
                 }
                 .padding(.horizontal, 20)
@@ -126,6 +128,7 @@ struct DisciplineHomeView: View {
 
     private var dailyTasksCard: some View {
         let today = disciplineSystem.getTodayDay()
+        let allTasksScheduled = today.tasks.allSatisfy { eventService.hasDisciplineEvent(for: $0) }
 
         return VStack(spacing: 20) {
             HStack(alignment: .top) {
@@ -182,7 +185,12 @@ struct DisciplineHomeView: View {
                     DisciplineTaskRow(
                         task: task,
                         onToggle: {
+                            let updatedCompletionState = !task.isCompleted
                             let result = disciplineSystem.toggleTodayTask(at: index)
+                            eventService.syncDisciplineTaskCompletion(
+                                for: task,
+                                isCompleted: updatedCompletionState
+                            )
                             if let xp = result.xpResult {
                                 showXPPopup(xp.xpGained)
                                 lastXPResult = xp
@@ -192,6 +200,51 @@ struct DisciplineHomeView: View {
                             }
                         }
                     )
+                }
+            }
+
+            VStack(spacing: 12) {
+                ForEach(today.tasks, id: \.id) { task in
+                    let isScheduled = eventService.hasDisciplineEvent(for: task)
+
+                    HStack(spacing: 10) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(task.title)
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(Color.themeText)
+
+                            Text(isScheduled ? "Added to Plan" : "Not scheduled yet")
+                                .font(.caption)
+                                .foregroundColor(Color.themeSecondaryText)
+                        }
+
+                        Spacer()
+
+                        Button(action: {
+                            Haptics.light()
+                            _ = eventService.scheduleDisciplineTask(task)
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: isScheduled ? "checkmark.circle.fill" : "calendar.badge.plus")
+                                    .font(.system(size: 13, weight: .semibold))
+
+                                Text(isScheduled ? "Scheduled" : "Schedule")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                            }
+                            .foregroundColor(isScheduled ? Color.themeSuccess : Color.themePrimary)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background((isScheduled ? Color.themeSuccess : Color.themePrimary).opacity(0.12))
+                            .cornerRadius(10)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isScheduled)
+                    }
+                    .padding(14)
+                    .background(Color.themeBackground.opacity(0.42))
+                    .cornerRadius(14)
                 }
             }
 
@@ -213,6 +266,28 @@ struct DisciplineHomeView: View {
                 .background(Color.themePrimary.opacity(0.1))
                 .cornerRadius(12)
             }
+
+            Button(action: {
+                Haptics.medium()
+                for task in today.tasks where !eventService.hasDisciplineEvent(for: task) {
+                    _ = eventService.scheduleDisciplineTask(task)
+                }
+            }) {
+                HStack {
+                    Image(systemName: allTasksScheduled ? "checkmark.circle.fill" : "calendar.badge.plus")
+                        .font(.system(size: 18))
+
+                    Text(allTasksScheduled ? "All Tasks Added to Plan" : "Add Today's Tasks to Plan")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                }
+                .foregroundColor(allTasksScheduled ? Color.themeSuccess : Color.themeText)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .background((allTasksScheduled ? Color.themeSuccess : Color.themeBackground).opacity(0.18))
+                .cornerRadius(12)
+            }
+            .disabled(allTasksScheduled)
         }
         .padding(20)
         .background(Color.themeCardBackground)
@@ -272,6 +347,112 @@ struct DisciplineHomeView: View {
                 ForEach(Array(history), id: \.id) { day in
                     WeekDayProgressRow(day: day)
                 }
+            }
+        }
+        .padding(20)
+        .background(
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color.themeCardBackground,
+                    Color.themeCardBackground.opacity(0.92)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(Color.themeDivider.opacity(0.35), lineWidth: 1)
+        )
+        .cornerRadius(22)
+    }
+
+    private var planningCard: some View {
+        let todaysEvents = eventService.getEvents(for: Date()).filter { !$0.isCompleted }
+        let nextEvent = todaysEvents.first ?? eventService.nextIncompleteEvent()
+
+        return VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Today's Plan")
+                        .font(.headline)
+                        .foregroundColor(Color.themeText)
+
+                    Text(todaysEvents.isEmpty ? "Turn discipline into a real schedule." : "\(todaysEvents.count) active item\(todaysEvents.count == 1 ? "" : "s") scheduled.")
+                        .font(.caption)
+                        .foregroundColor(Color.themeSecondaryText)
+                }
+
+                Spacer()
+
+                Button(action: openPlanningTab) {
+                    Text("Open Plan")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(Color.themePrimary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            if let nextEvent {
+                HStack(spacing: 14) {
+                    ZStack {
+                        Circle()
+                            .fill(nextEvent.tintColor.opacity(0.16))
+                            .frame(width: 46, height: 46)
+
+                        Image(systemName: nextEvent.iconName)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(nextEvent.tintColor)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(nextEvent.title)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(Color.themeText)
+
+                        Text(nextEvent.formattedDate + " • " + nextEvent.formattedTime)
+                            .font(.caption)
+                            .foregroundColor(Color.themeSecondaryText)
+
+                        if !nextEvent.notes.isEmpty {
+                            Text(nextEvent.notes)
+                                .font(.caption)
+                                .foregroundColor(Color.themeSecondaryText.opacity(0.85))
+                                .lineLimit(2)
+                        }
+                    }
+
+                    Spacer()
+                }
+                .padding(14)
+                .background(Color.themeBackground.opacity(0.42))
+                .cornerRadius(16)
+            } else {
+                Text("Nothing is scheduled yet. Put your workout, deep work, or reset block on the calendar so the day has structure.")
+                    .font(.subheadline)
+                    .foregroundColor(Color.themeSecondaryText)
+            }
+
+            HStack(spacing: 10) {
+                planShortcutButton(
+                    title: "Focus Block",
+                    symbol: "target",
+                    tint: Color.themePrimary
+                )
+
+                planShortcutButton(
+                    title: "Workout",
+                    symbol: "figure.run",
+                    tint: Color.themeSuccess
+                )
+
+                planShortcutButton(
+                    title: "Reset",
+                    symbol: "sun.max",
+                    tint: Color.themeWarning
+                )
             }
         }
         .padding(20)
@@ -409,6 +590,34 @@ struct DisciplineHomeView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             celebratingCompletion = true
         }
+    }
+
+    private func openPlanningTab() {
+        Haptics.light()
+        NotificationCenter.default.post(
+            name: Notification.Name("TabSelectionChanged"),
+            object: nil,
+            userInfo: ["selectedTab": 2]
+        )
+    }
+
+    private func planShortcutButton(title: String, symbol: String, tint: Color) -> some View {
+        Button(action: openPlanningTab) {
+            HStack(spacing: 8) {
+                Image(systemName: symbol)
+                    .font(.system(size: 14, weight: .semibold))
+
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+            }
+            .foregroundColor(tint)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(tint.opacity(0.12))
+            .cornerRadius(12)
+        }
+        .buttonStyle(.plain)
     }
 }
 

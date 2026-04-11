@@ -49,8 +49,8 @@ struct ContentView: View {
             // Calendar Tab
             CalendarView()
                 .tabItem {
-                    Image(systemName: "calendar")
-                    Text("Calendar")
+                    Image(systemName: "calendar.badge.clock")
+                    Text("Plan")
                 }
                 .tag(2)
             
@@ -96,7 +96,10 @@ struct ContentView: View {
         }
         .onOpenURL { url in
             if url.scheme == "moti" {
-                if url.host == "calendar" || url.host == "discipline" {
+                if url.host == "calendar" || url.host == "plan" {
+                    // Navigate to planning tab
+                    self.selectedTab = 2
+                } else if url.host == "discipline" {
                     // Navigate to discipline/home tab
                     self.selectedTab = 0
                 } else if url.host == "quotes" {

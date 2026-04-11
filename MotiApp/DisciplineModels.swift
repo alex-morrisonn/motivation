@@ -251,6 +251,8 @@ struct DisciplineDay: Identifiable, Codable, Hashable {
 // MARK: - Discipline System State
 
 final class DisciplineSystemState: ObservableObject {
+    static let shared = DisciplineSystemState()
+
     @Published private(set) var days: [String: DisciplineDay] = [:]
 
     private let daysKey = "discipline_days"
@@ -322,6 +324,27 @@ final class DisciplineSystemState: ObservableObject {
         let wasFullyCompleted = today.isFullyCompleted
         today.updateSelections(selections)
         updateDay(today, wasFullyCompleted: wasFullyCompleted)
+    }
+
+    func syncTaskCompletion(
+        on date: Date,
+        category: DisciplineCategory,
+        title: String,
+        isCompleted: Bool
+    ) {
+        var day = getOrCreateDay(for: date)
+        let wasFullyCompleted = day.isFullyCompleted
+
+        guard let index = day.tasks.firstIndex(where: { task in
+            task.category == category && task.title == title
+        }) else {
+            return
+        }
+
+        if day.tasks[index].isCompleted != isCompleted {
+            day.tasks[index].toggleCompletion()
+            updateDay(day, wasFullyCompleted: wasFullyCompleted)
+        }
     }
 
     func getCompletionHistory(days numberOfDays: Int = 30) -> [DisciplineDay] {
