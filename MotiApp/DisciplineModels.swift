@@ -284,7 +284,7 @@ final class DisciplineSystemState: ObservableObject {
     }
 
     func getTodayDay() -> DisciplineDay {
-        getOrCreateDay(for: Date())
+        day(for: Date())
     }
 
     struct ToggleResult {
@@ -352,7 +352,7 @@ final class DisciplineSystemState: ObservableObject {
         let today = Date()
 
         return (0..<numberOfDays).compactMap { offset in
-            calendar.date(byAdding: .day, value: -offset, to: today).map(getOrCreateDay(for:))
+            calendar.date(byAdding: .day, value: -offset, to: today).map(day(for:))
         }
         .sorted { $0.date > $1.date }
     }
@@ -406,6 +406,10 @@ final class DisciplineSystemState: ObservableObject {
         }
 
         saveData()
+    }
+
+    private func day(for date: Date) -> DisciplineDay {
+        days[dateToKey(date)] ?? DisciplineDay.createForDate(date)
     }
 
     private func dateToKey(_ date: Date) -> String {

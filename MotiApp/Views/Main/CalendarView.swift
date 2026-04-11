@@ -28,6 +28,7 @@ private enum AgendaScope: String, CaseIterable {
 
 struct CalendarView: View {
     @ObservedObject private var eventService = EventService.shared
+    @ObservedObject private var themeManager = ThemeManager.shared
     @State private var showingEventEditor = false
     @State private var showingPlannerSettings = false
     @State private var editingEvent: Event?
@@ -107,7 +108,7 @@ struct CalendarView: View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("PLANNER")
+                    Text("PLAN")
                         .font(.caption.weight(.semibold))
                         .tracking(2)
                         .foregroundColor(Color.themeSecondaryText)
@@ -162,7 +163,7 @@ struct CalendarView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("Next up")
+                        Text("Next step")
                             .font(.caption.weight(.semibold))
                             .foregroundColor(Color.themeSecondaryText)
 
@@ -181,7 +182,7 @@ struct CalendarView: View {
                 .background(Color.themeBackground.opacity(0.28))
                 .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             } else {
-                Text("Keep it light. Add only what matters, then let the day breathe.")
+                Text("Give the day a shape. Add only what matters.")
                     .font(.subheadline)
                     .foregroundColor(Color.themeSecondaryText)
             }
@@ -244,7 +245,7 @@ struct CalendarView: View {
                         .font(.headline.weight(.semibold))
                         .foregroundColor(Color.themeText)
 
-                    Text(layoutMode == .month ? "Tap a day to focus your plan" : "Swipe across your week")
+                    Text(layoutMode == .month ? "Choose a day and give it a shape" : "Move through the week with intention")
                         .font(.caption)
                         .foregroundColor(Color.themeSecondaryText)
                 }
@@ -298,9 +299,9 @@ struct CalendarView: View {
 
                 Spacer()
 
-                Text("Fast presets")
-                    .font(.caption)
-                    .foregroundColor(Color.themeSecondaryText)
+                    Text("Quick starts")
+                        .font(.caption)
+                        .foregroundColor(Color.themeSecondaryText)
             }
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -541,7 +542,7 @@ struct CalendarView: View {
     private var agendaTitle: String {
         switch agendaScope {
         case .day:
-            return "Schedule for " + shortSelectedDate
+            return "Plan for " + shortSelectedDate
         case .upcoming:
             return "Upcoming Flow"
         case .completed:
@@ -552,11 +553,11 @@ struct CalendarView: View {
     private var agendaSubtitle: String {
         switch agendaScope {
         case .day:
-            return "Everything planned for the selected day."
+            return "What matters on the selected day."
         case .upcoming:
-            return "The next two weeks, sorted and ready."
+            return "The next two weeks, clear and ready."
         case .completed:
-            return "Recent wins worth keeping visible."
+            return "Completed steps worth keeping visible."
         }
     }
 

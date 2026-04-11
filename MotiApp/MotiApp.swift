@@ -35,10 +35,7 @@ struct MotiApp: App {
     
     // Configure global appearance settings
     private func configureAppearance() {
-        // Set up dark mode for UI elements
-        UINavigationBar.appearance().tintColor = .white
-        UITabBar.appearance().backgroundColor = .black
-        UITableView.appearance().backgroundColor = .clear
+        ThemeManager.shared.applyAppearance()
     }
     
     // Handle deep links

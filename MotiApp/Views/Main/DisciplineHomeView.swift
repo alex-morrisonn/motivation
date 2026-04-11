@@ -6,6 +6,7 @@ struct DisciplineHomeView: View {
     @ObservedObject private var streakManager = StreakManager.shared
     @ObservedObject private var gamification = GamificationManager.shared
     @ObservedObject private var eventService = EventService.shared
+    @ObservedObject private var themeManager = ThemeManager.shared
 
     @State private var showingTaskEditor = false
     @State private var showingHistory = false
@@ -16,19 +17,26 @@ struct DisciplineHomeView: View {
 
     var body: some View {
         ZStack {
-            Color.themeBackground
-                .edgesIgnoringSafeArea(.all)
+            LinearGradient(
+                colors: [
+                    Color.themeBackground,
+                    Color.themeCardBackground.opacity(0.82),
+                    Color.themeBackground
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .edgesIgnoringSafeArea(.all)
 
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    headerView
-                    levelProgressCard
+                VStack(spacing: 20) {
+                    overviewCard
                     dailyTasksCard
                     planningCard
                     progressSummaryCard
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
+                .padding(.horizontal, 18)
+                .padding(.top, 18)
                 .padding(.bottom, 100)
             }
             .overlay(alignment: .top) {
@@ -65,120 +73,176 @@ struct DisciplineHomeView: View {
         }
     }
 
-    private var headerView: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("TODAY")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(Color.themeSecondaryText)
-                    .tracking(1.8)
+    private var overviewCard: some View {
+        let rank = gamification.currentRank
+        let rankColor = rankColorFromName(rank.color)
 
-                Text(formattedDate)
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundColor(Color.themeText)
-            }
-
-            Spacer()
-
-            Button(action: {
-                Haptics.light()
-                showingHistory = true
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "flame.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.orange)
-
-                    Text("\(streakManager.currentStreak)")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
-                        .foregroundColor(Color.themeText)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(Color.themeCardBackground)
-                .overlay(
-                    Capsule()
-                        .stroke(Color.orange.opacity(0.2), lineWidth: 1)
-                )
-                .clipShape(Capsule())
-            }
-            .buttonStyle(.plain)
-
-            Button(action: {
-                Haptics.light()
-                showingTaskEditor = true
-            }) {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(Color.themeText)
-                    .frame(width: 40, height: 40)
-                    .background(Color.themeCardBackground)
-                    .overlay(
-                        Circle()
-                            .stroke(Color.themeDivider.opacity(0.25), lineWidth: 1)
-                    )
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private var dailyTasksCard: some View {
-        let today = disciplineSystem.getTodayDay()
-        let allTasksScheduled = today.tasks.allSatisfy { eventService.hasDisciplineEvent(for: $0) }
-
-        return VStack(spacing: 20) {
+        return VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Today's Discipline")
-                        .font(.title2)
-                        .fontWeight(.bold)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("DISCIPLINE")
+                        .font(.caption.weight(.semibold))
+                        .tracking(2)
+                        .foregroundColor(Color.themeSecondaryText)
+
+                    Text(formattedDate)
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundColor(Color.themeText)
 
-                    Text("\(completedTasksCount)/3 completed")
+                    Text("One clear direction for today.")
                         .font(.subheadline)
                         .foregroundColor(Color.themeSecondaryText)
                 }
 
                 Spacer()
 
-                ZStack {
-                    Circle()
-                        .stroke(Color.themeDivider, lineWidth: 4)
-                        .frame(width: 52, height: 52)
-
-                    Circle()
-                        .trim(from: 0, to: completionPercentage)
-                        .stroke(
-                            completionPercentage == 1 ? Color.themeSuccess : Color.themePrimary,
-                            style: StrokeStyle(lineWidth: 4, lineCap: .round)
-                        )
-                        .frame(width: 52, height: 52)
-                        .rotationEffect(.degrees(-90))
-                        .animation(.easeInOut, value: completionPercentage)
-
-                    Text("\(Int(completionPercentage * 100))%")
-                        .font(.caption)
-                        .fontWeight(.bold)
+                Button(action: {
+                    Haptics.light()
+                    showingTaskEditor = true
+                }) {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(Color.themeText)
+                        .frame(width: 44, height: 44)
+                        .background(Color.themeBackground.opacity(0.28))
+                        .clipShape(Circle())
                 }
+                .buttonStyle(.plain)
+            }
+
+            HStack(spacing: 12) {
+                overviewMetricPill(
+                    title: "Streak",
+                    value: "\(streakManager.currentStreak)",
+                    symbol: "flame.fill",
+                    tint: .orange,
+                    action: {
+                        Haptics.light()
+                        showingHistory = true
+                    }
+                )
+
+                overviewMetricPill(
+                    title: "Level",
+                    value: "Lv. \(gamification.currentLevel)",
+                    symbol: rank.icon,
+                    tint: rankColor,
+                    action: {
+                        Haptics.light()
+                        showingJourney = true
+                    }
+                )
             }
 
             VStack(alignment: .leading, spacing: 10) {
-                Text("Choose one task from each category. Finishing all three earns one streak day.")
-                    .font(.subheadline)
+                HStack {
+                    Text(rank.name)
+                        .font(.headline.weight(.semibold))
+                        .foregroundColor(Color.themeText)
+
+                    Spacer()
+
+                    Text("\(gamification.xpInCurrentLevel)/\(gamification.xpToNextLevel) XP")
+                        .font(.caption)
+                        .foregroundColor(Color.themeSecondaryText)
+                }
+
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Color.themeDivider.opacity(0.22))
+                            .frame(height: 10)
+
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [rankColor, rankColor.opacity(0.6)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: max(10, geometry.size.width * gamification.levelProgress), height: 10)
+                            .animation(.easeInOut(duration: 0.35), value: gamification.levelProgress)
+                    }
+                }
+                .frame(height: 10)
+            }
+        }
+        .padding(22)
+        .background(
+            LinearGradient(
+                colors: [Color.themeCardBackground.opacity(0.96), Color.themePrimary.opacity(0.12)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 28)
+                .stroke(Color.themeDivider.opacity(0.16), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+    }
+
+    private var dailyTasksCard: some View {
+        let today = disciplineSystem.getTodayDay()
+        let allTasksScheduled = today.tasks.allSatisfy { eventService.hasDisciplineEvent(for: $0) }
+
+        return VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Today's Focus")
+                        .font(.title3.weight(.bold))
+                        .foregroundColor(Color.themeText)
+
+                    Text("\(completedTasksCount) of 3 complete")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundColor(Color.themeSecondaryText)
+                }
+
+                Spacer()
+
+                Text("\(Int(completionPercentage * 100))%")
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(completionPercentage == 1 ? Color.themeSuccess : Color.themePrimary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background((completionPercentage == 1 ? Color.themeSuccess : Color.themePrimary).opacity(0.12))
+                    .clipShape(Capsule())
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                    Text("Three tracks. One day.")
+                    .font(.subheadline.weight(.medium))
                     .foregroundColor(Color.themeSecondaryText)
 
                 HStack(spacing: 10) {
                     ForEach(DisciplineCategory.allCases.sorted { $0.displayOrder < $1.displayOrder }) { category in
-                        categoryChip(for: category, in: today)
+                        compactCategoryChip(for: category, in: today)
                     }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.themeDivider.opacity(0.16))
+                        .frame(height: 10)
+
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                colors: completionPercentage == 1
+                                    ? [Color.themeSuccess, Color.themeSuccess.opacity(0.7)]
+                                    : [Color.themePrimary, Color.themeSecondary.opacity(0.8)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: max(10, geometry.size.width * completionPercentage), height: 10)
+                }
+            }
+            .frame(height: 10)
 
             VStack(spacing: 12) {
                 ForEach(Array(today.tasks.enumerated()), id: \.element.id) { index, task in
@@ -203,7 +267,12 @@ struct DisciplineHomeView: View {
                 }
             }
 
-            VStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 10) {
+                    Text("Turn it into a plan")
+                    .font(.caption.weight(.semibold))
+                    .tracking(1.6)
+                    .foregroundColor(Color.themeSecondaryText)
+
                 ForEach(today.tasks, id: \.id) { task in
                     let isScheduled = eventService.hasDisciplineEvent(for: task)
 
@@ -243,90 +312,102 @@ struct DisciplineHomeView: View {
                         .disabled(isScheduled)
                     }
                     .padding(14)
-                    .background(Color.themeBackground.opacity(0.42))
-                    .cornerRadius(14)
+                    .background(Color.themeBackground.opacity(0.32))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
             }
 
-            Button(action: {
-                Haptics.light()
-                showingTaskEditor = true
-            }) {
-                HStack {
-                    Image(systemName: "line.3.horizontal.decrease.circle.fill")
-                        .font(.system(size: 18))
+            HStack(spacing: 12) {
+                Button(action: {
+                    Haptics.light()
+                    showingTaskEditor = true
+                }) {
+                    HStack {
+                        Image(systemName: "line.3.horizontal.decrease.circle.fill")
+                            .font(.system(size: 16, weight: .semibold))
 
-                    Text("Choose Today's 3 Tasks")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
+                        Text("Edit Tasks")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .foregroundColor(Color.themePrimary)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.themePrimary.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
-                .foregroundColor(Color.themePrimary)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity)
-                .background(Color.themePrimary.opacity(0.1))
-                .cornerRadius(12)
+                .buttonStyle(.plain)
+
+                Button(action: {
+                    Haptics.medium()
+                    for task in today.tasks where !eventService.hasDisciplineEvent(for: task) {
+                        _ = eventService.scheduleDisciplineTask(task)
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: allTasksScheduled ? "checkmark.circle.fill" : "calendar.badge.plus")
+                            .font(.system(size: 16, weight: .semibold))
+
+                        Text(allTasksScheduled ? "Planned" : "Add All to Plan")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .foregroundColor(allTasksScheduled ? Color.themeSuccess : Color.themeText)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity)
+                    .background((allTasksScheduled ? Color.themeSuccess : Color.themeBackground).opacity(0.18))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .disabled(allTasksScheduled)
             }
-
-            Button(action: {
-                Haptics.medium()
-                for task in today.tasks where !eventService.hasDisciplineEvent(for: task) {
-                    _ = eventService.scheduleDisciplineTask(task)
-                }
-            }) {
-                HStack {
-                    Image(systemName: allTasksScheduled ? "checkmark.circle.fill" : "calendar.badge.plus")
-                        .font(.system(size: 18))
-
-                    Text(allTasksScheduled ? "All Tasks Added to Plan" : "Add Today's Tasks to Plan")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                }
-                .foregroundColor(allTasksScheduled ? Color.themeSuccess : Color.themeText)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity)
-                .background((allTasksScheduled ? Color.themeSuccess : Color.themeBackground).opacity(0.18))
-                .cornerRadius(12)
-            }
-            .disabled(allTasksScheduled)
         }
         .padding(20)
-        .background(Color.themeCardBackground)
-        .cornerRadius(20)
-        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+        .background(Color.themeCardBackground.opacity(0.92))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.themeDivider.opacity(0.14), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
-    private func categoryChip(for category: DisciplineCategory, in day: DisciplineDay) -> some View {
+    private func compactCategoryChip(for category: DisciplineCategory, in day: DisciplineDay) -> some View {
         let selectedTask = day.tasks.first(where: { $0.category == category })
 
-        return VStack(alignment: .leading, spacing: 4) {
-            Text(category.rawValue.uppercased())
-                .font(.caption2)
-                .fontWeight(.semibold)
+        return HStack(spacing: 8) {
+            Image(systemName: category.iconName)
+                .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(Color.themePrimary)
 
-            Text(selectedTask?.title ?? "")
-                .font(.caption)
-                .foregroundColor(Color.themeText)
-                .lineLimit(2)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(category.rawValue.uppercased())
+                    .font(.caption2.weight(.semibold))
+                    .foregroundColor(Color.themePrimary)
+
+                Text(selectedTask?.title ?? "")
+                    .font(.caption2)
+                    .foregroundColor(Color.themeText)
+                    .lineLimit(1)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
-        .background(Color.themeBackground.opacity(0.45))
-        .cornerRadius(12)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 9)
+        .background(Color.themeBackground.opacity(0.28))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private var progressSummaryCard: some View {
         let history = disciplineSystem.getCompletionHistory(days: 7).reversed()
+        let completedDays = history.filter(\.isFullyCompleted).count
 
         return VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Weekly Snapshot")
-                        .font(.headline)
+                    Text("This Week")
+                        .font(.headline.weight(.semibold))
                         .foregroundColor(Color.themeText)
 
-                    Text("Track how consistently you’re closing all three categories.")
-                        .font(.caption)
+                    Text("\(completedDays) of 7 days fully completed.")
+                        .font(.subheadline)
                         .foregroundColor(Color.themeSecondaryText)
                 }
 
@@ -343,28 +424,25 @@ struct DisciplineHomeView: View {
                 }
             }
 
-            VStack(spacing: 12) {
-                ForEach(Array(history), id: \.id) { day in
-                    WeekDayProgressRow(day: day)
+            VStack(spacing: 14) {
+                HStack(spacing: 10) {
+                    ForEach(Array(history), id: \.id) { day in
+                        WeeklySnapshotDayPill(day: day)
+                    }
+                }
+
+                if let focusedDay = history.last(where: \.isToday) ?? history.last {
+                    WeeklySnapshotFocusCard(day: focusedDay)
                 }
             }
         }
         .padding(20)
-        .background(
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color.themeCardBackground,
-                    Color.themeCardBackground.opacity(0.92)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
+        .background(Color.themeCardBackground.opacity(0.92))
         .overlay(
-            RoundedRectangle(cornerRadius: 22)
-                .stroke(Color.themeDivider.opacity(0.35), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.themeDivider.opacity(0.14), lineWidth: 1)
         )
-        .cornerRadius(22)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
     private var planningCard: some View {
@@ -375,7 +453,7 @@ struct DisciplineHomeView: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Today's Plan")
-                        .font(.headline)
+                        .font(.headline.weight(.semibold))
                         .foregroundColor(Color.themeText)
 
                     Text(todaysEvents.isEmpty ? "Turn discipline into a real schedule." : "\(todaysEvents.count) active item\(todaysEvents.count == 1 ? "" : "s") scheduled.")
@@ -427,8 +505,8 @@ struct DisciplineHomeView: View {
                     Spacer()
                 }
                 .padding(14)
-                .background(Color.themeBackground.opacity(0.42))
-                .cornerRadius(16)
+                .background(Color.themeBackground.opacity(0.32))
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             } else {
                 Text("Nothing is scheduled yet. Put your workout, deep work, or reset block on the calendar so the day has structure.")
                     .font(.subheadline)
@@ -456,97 +534,12 @@ struct DisciplineHomeView: View {
             }
         }
         .padding(20)
-        .background(
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color.themeCardBackground,
-                    Color.themeCardBackground.opacity(0.92)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
+        .background(Color.themeCardBackground.opacity(0.92))
         .overlay(
-            RoundedRectangle(cornerRadius: 22)
-                .stroke(Color.themeDivider.opacity(0.35), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.themeDivider.opacity(0.14), lineWidth: 1)
         )
-        .cornerRadius(22)
-    }
-
-    private var levelProgressCard: some View {
-        let rank = gamification.currentRank
-        let rankColor = rankColorFromName(rank.color)
-
-        return Button(action: {
-            Haptics.light()
-            showingJourney = true
-        }) {
-            HStack(spacing: 14) {
-                // Rank icon badge
-                ZStack {
-                    Circle()
-                        .fill(rankColor.opacity(0.15))
-                        .frame(width: 44, height: 44)
-
-                    Image(systemName: rank.icon)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(rankColor)
-                }
-
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text(rank.name)
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(Color.themeText)
-
-                        Text("Lv.\(gamification.currentLevel)")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundColor(rankColor)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(rankColor.opacity(0.12))
-                            .cornerRadius(6)
-
-                        Spacer()
-
-                        Text("\(gamification.xpInCurrentLevel)/\(gamification.xpToNextLevel) XP")
-                            .font(.caption)
-                            .foregroundColor(Color.themeSecondaryText)
-
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(Color.themeSecondaryText.opacity(0.5))
-                    }
-
-                    GeometryReader { geometry in
-                        ZStack(alignment: .leading) {
-                            Capsule()
-                                .fill(Color.themeDivider.opacity(0.3))
-                                .frame(height: 8)
-
-                            Capsule()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [rankColor, rankColor.opacity(0.6)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .frame(width: max(8, geometry.size.width * gamification.levelProgress), height: 8)
-                                .animation(.easeInOut(duration: 0.4), value: gamification.levelProgress)
-                        }
-                    }
-                    .frame(height: 8)
-                }
-            }
-            .padding(16)
-            .background(Color.themeCardBackground)
-            .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 3)
-        }
-        .buttonStyle(.plain)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
     private func rankColorFromName(_ name: String) -> Color {
@@ -619,6 +612,44 @@ struct DisciplineHomeView: View {
         }
         .buttonStyle(.plain)
     }
+
+    private func overviewMetricPill(
+        title: String,
+        value: String,
+        symbol: String,
+        tint: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(tint.opacity(0.16))
+                        .frame(width: 38, height: 38)
+
+                    Image(systemName: symbol)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(tint)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.caption)
+                        .foregroundColor(Color.themeSecondaryText)
+
+                    Text(value)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(Color.themeText)
+                }
+
+                Spacer()
+            }
+            .padding(14)
+            .background(Color.themeBackground.opacity(0.24))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
 }
 
 struct DisciplineTaskRow: View {
@@ -633,73 +664,75 @@ struct DisciplineTaskRow: View {
     @State private var hapticFired = false
 
     var body: some View {
-        HStack(spacing: 16) {
-            // Checkbox circle
+        HStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .stroke(task.isCompleted ? Color.themeSuccess : Color.themeDivider, lineWidth: 2)
-                    .frame(width: 28, height: 28)
+                    .fill(task.isCompleted ? Color.themeSuccess.opacity(0.16) : Color.themeBackground.opacity(0.5))
+                    .frame(width: 36, height: 36)
 
-                if task.isCompleted {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(Color.themeSuccess)
-                }
+                Image(systemName: task.isCompleted ? "checkmark" : task.category.iconName)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(task.isCompleted ? Color.themeSuccess : Color.themePrimary)
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     Text(task.category.rawValue.uppercased())
-                        .font(.caption2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(Color.themePrimary)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundColor(task.isCompleted ? Color.themeSuccess : Color.themePrimary)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 4)
+                        .background((task.isCompleted ? Color.themeSuccess : Color.themePrimary).opacity(0.12))
+                        .clipShape(Capsule())
 
                     if let completedAt = task.completedAt {
-                        Text("Completed at \(formatTime(completedAt))")
+                        Text(formatTime(completedAt))
                             .font(.caption2)
                             .foregroundColor(Color.themeSecondaryText)
+                    } else {
+                        Text("Hold to complete")
+                            .font(.caption2)
+                            .foregroundColor(Color.themeSecondaryText.opacity(isHolding ? 0 : 0.7))
                     }
                 }
 
                 Text(task.title)
-                    .font(.body)
-                    .fontWeight(.medium)
+                    .font(.body.weight(.semibold))
                     .foregroundColor(Color.themeText)
                     .strikethrough(task.isCompleted)
+                    .lineLimit(2)
 
                 Text(task.detail)
                     .font(.caption)
                     .foregroundColor(Color.themeSecondaryText)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if !task.isCompleted {
-                    Text("Hold to complete")
-                        .font(.caption2)
-                        .foregroundColor(Color.themeSecondaryText.opacity(isHolding ? 0 : 0.6))
-                }
+                    .lineLimit(2)
             }
 
             Spacer()
 
-            Image(systemName: task.category.iconName)
-                .font(.system(size: 18))
-                .foregroundColor(task.isCompleted ? Color.themeSuccess : Color.themeSecondaryText)
+            if task.isCompleted {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(Color.themeSuccess)
+            } else {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(Color.themeSecondaryText.opacity(0.45))
+            }
         }
-        .padding(16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
         .background(
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
-                    // Base background
                     RoundedRectangle(cornerRadius: 14)
-                        .fill(task.isCompleted ? Color.themeSuccess.opacity(0.1) : Color.themeBackground.opacity(0.5))
+                        .fill(task.isCompleted ? Color.themeSuccess.opacity(0.08) : Color.themeBackground.opacity(0.32))
 
-                    // Hold progress fill — sweeps left to right
                     if !task.isCompleted && holdProgress > 0 {
                         RoundedRectangle(cornerRadius: 14)
                             .fill(Color.themeSuccess.opacity(0.12))
                             .frame(width: geometry.size.width * holdProgress)
 
-                        // Leading edge glow
                         RoundedRectangle(cornerRadius: 14)
                             .fill(Color.themeSuccess.opacity(0.06))
                             .frame(width: geometry.size.width * holdProgress)
@@ -709,15 +742,14 @@ struct DisciplineTaskRow: View {
             }
         )
         .overlay(
-            // Border that fills as you hold
             RoundedRectangle(cornerRadius: 14)
                 .stroke(
-                    isHolding ? Color.themeSuccess.opacity(0.4) : Color.clear,
-                    lineWidth: 1.5
+                    task.isCompleted ? Color.themeSuccess.opacity(0.2) : (isHolding ? Color.themeSuccess.opacity(0.4) : Color.themeDivider.opacity(0.08)),
+                    lineWidth: 1.2
                 )
         )
         .cornerRadius(14)
-        .scaleEffect(isHolding ? 0.97 : 1.0)
+        .scaleEffect(isHolding ? 0.985 : 1.0)
         .animation(.easeInOut(duration: 0.15), value: isHolding)
         .onTapGesture {
             if task.isCompleted {
@@ -784,89 +816,67 @@ struct DisciplineTaskRow: View {
     }
 }
 
-struct WeekDayProgressRow: View {
+struct WeeklySnapshotDayPill: View {
     let day: DisciplineDay
 
     var body: some View {
-        HStack(spacing: 14) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(dayLabel)
-                    .font(.subheadline)
-                    .fontWeight(day.isToday ? .semibold : .medium)
-                    .foregroundColor(Color.themeText)
-                    .lineLimit(1)
+        VStack(spacing: 10) {
+            Text(shortDayLabel)
+                .font(.caption2.weight(.semibold))
+                .foregroundColor(day.isToday ? Color.themePrimary : Color.themeSecondaryText)
 
-                Text(dateLabel)
-                    .font(.caption)
-                    .foregroundColor(Color.themeSecondaryText)
+            ZStack {
+                Circle()
+                    .fill(backgroundColor)
+                    .frame(width: 42, height: 42)
+
+                Text("\(day.completedTaskCount)")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundColor(foregroundColor)
             }
-            .frame(width: 76, alignment: .leading)
 
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    Capsule()
-                        .fill(day.isFullyCompleted ? Color.themeSuccess : Color.themePrimary.opacity(0.3))
-                        .frame(width: 10, height: 10)
-
-                    Text(statusText)
-                        .font(.caption)
-                        .foregroundColor(day.isFullyCompleted ? Color.themeSuccess : Color.themeSecondaryText)
-
-                    Spacer()
-
-                    Text("\(day.completedTaskCount)/3")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(Color.themeText)
-                }
-
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.themeBackground.opacity(0.65))
-                            .frame(height: 10)
-
-                        Capsule()
-                            .fill(progressGradient)
-                            .frame(width: max(10, geometry.size.width * day.completionPercentage), height: 10)
-                    }
-                }
-                .frame(height: 10)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(Color.themeBackground.opacity(0.42))
-            .cornerRadius(16)
+            Text(dateLabel)
+                .font(.caption2)
+                .foregroundColor(Color.themeSecondaryText)
         }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(Color.themeBackground.opacity(day.isToday ? 0.34 : 0.22))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(day.isToday ? Color.themePrimary.opacity(0.28) : Color.themeDivider.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
-    private var statusText: String {
+    private var backgroundColor: Color {
         if day.isFullyCompleted {
-            return "Complete"
+            return Color.themeSuccess.opacity(0.16)
         }
 
         if day.completedTaskCount == 0 {
-            return day.isToday ? "Not started" : "Missed"
+            return day.isToday ? Color.themeWarning.opacity(0.16) : Color.themeDivider.opacity(0.16)
         }
 
-        return "In progress"
+        return Color.themePrimary.opacity(0.16)
     }
 
-    private var progressGradient: LinearGradient {
-        LinearGradient(
-            gradient: Gradient(colors: day.isFullyCompleted
-                ? [Color.themeSuccess, Color.themeSuccess.opacity(0.75)]
-                : [Color.themePrimary, Color.themePrimary.opacity(0.55)]
-            ),
-            startPoint: .leading,
-            endPoint: .trailing
-        )
+    private var foregroundColor: Color {
+        if day.isFullyCompleted {
+            return Color.themeSuccess
+        }
+
+        if day.completedTaskCount == 0 {
+            return day.isToday ? Color.themeWarning : Color.themeSecondaryText
+        }
+
+        return Color.themePrimary
     }
 
-    private var dayLabel: String {
+    private var shortDayLabel: String {
         if day.isToday { return "Today" }
         let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE"
+        formatter.dateFormat = "EEE"
         return formatter.string(from: day.date)
     }
 
@@ -874,6 +884,87 @@ struct WeekDayProgressRow: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d"
         return formatter.string(from: day.date)
+    }
+}
+
+struct WeeklySnapshotFocusCard: View {
+    let day: DisciplineDay
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(dayTitle)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(Color.themeText)
+
+                    Text(statusText)
+                        .font(.caption)
+                        .foregroundColor(statusTint)
+                }
+
+                Spacer()
+
+                Text("\(day.completedTaskCount)/3")
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(Color.themeText)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.themeBackground.opacity(0.34))
+                    .clipShape(Capsule())
+            }
+
+            HStack(spacing: 8) {
+                ForEach(0..<3, id: \.self) { index in
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(index < day.completedTaskCount ? statusTint : Color.themeDivider.opacity(0.18))
+                            .frame(width: 10, height: 10)
+
+                        RoundedRectangle(cornerRadius: 999)
+                            .fill(index < day.completedTaskCount ? statusTint.opacity(0.85) : Color.themeDivider.opacity(0.12))
+                            .frame(height: 8)
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(Color.themeBackground.opacity(0.26))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private var dayTitle: String {
+        if day.isToday {
+            return "Today"
+        }
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMM d"
+        return formatter.string(from: day.date)
+    }
+
+    private var statusText: String {
+        if day.isFullyCompleted {
+            return "All three tasks completed."
+        }
+
+        if day.completedTaskCount == 0 {
+            return day.isToday ? "No tasks completed yet." : "No tasks completed."
+        }
+
+        return "\(day.completedTaskCount) task\(day.completedTaskCount == 1 ? "" : "s") completed."
+    }
+
+    private var statusTint: Color {
+        if day.isFullyCompleted {
+            return Color.themeSuccess
+        }
+
+        if day.completedTaskCount == 0 {
+            return day.isToday ? Color.themeWarning : Color.themeSecondaryText
+        }
+
+        return Color.themePrimary
     }
 }
 

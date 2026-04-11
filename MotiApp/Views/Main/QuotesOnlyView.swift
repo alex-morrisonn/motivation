@@ -3,6 +3,7 @@ import SwiftUI
 /// Quotes-only view - focused on motivational quotes
 struct QuotesOnlyView: View {
     @ObservedObject private var quoteService = QuoteService.shared
+    @ObservedObject private var themeManager = ThemeManager.shared
     @State private var quote: Quote
     @State private var showingShareSheet = false
 
@@ -13,16 +14,25 @@ struct QuotesOnlyView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.themeBackground.edgesIgnoringSafeArea(.all)
+                LinearGradient(
+                    colors: [
+                        Color.themeBackground,
+                        Color.themeCardBackground.opacity(0.82),
+                        Color.themeBackground
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
 
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 28) {
-                        quoteHeader
+                    VStack(spacing: 20) {
+                        overviewCard
                         quoteCard
                         librarySection
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
+                    .padding(.horizontal, 18)
+                    .padding(.top, 18)
                     .padding(.bottom, 32)
                 }
             }
@@ -33,46 +43,116 @@ struct QuotesOnlyView: View {
         }
     }
 
-    private var quoteHeader: some View {
-        HStack {
-            Text("QUOTE OF THE DAY")
-                .font(.caption)
-                .foregroundColor(Color.themeSecondaryText)
-                .tracking(2)
+    private var overviewCard: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("QUOTE")
+                        .font(.caption.weight(.semibold))
+                        .tracking(2)
+                        .foregroundColor(Color.themeSecondaryText)
+
+                    Text("Keep your direction")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(Color.themeText)
+
+                    Text("A clear thought for the day, so action stays intentional.")
+                        .font(.subheadline)
+                        .foregroundColor(Color.themeSecondaryText)
+                }
+
+                Spacer()
+
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        quote = quoteService.getRandomQuote()
+                    }
+                }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(Color.themeText)
+                        .frame(width: 44, height: 44)
+                        .background(Color.themeBackground.opacity(0.28))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+            }
+
+            HStack(spacing: 12) {
+                overviewPill(
+                    title: "Category",
+                    value: quote.category,
+                    symbol: "quote.bubble",
+                    tint: Color.themePrimary
+                )
+
+                overviewPill(
+                    title: "Saved",
+                    value: "\(quoteService.favorites.count)",
+                    symbol: "heart.fill",
+                    tint: Color.themeError
+                )
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(22)
+        .background(
+            LinearGradient(
+                colors: [Color.themeCardBackground.opacity(0.96), Color.themePrimary.opacity(0.12)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 28)
+                .stroke(Color.themeDivider.opacity(0.16), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 
     private var quoteCard: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            HStack(alignment: .top) {
-                Image(systemName: "quote.opening")
-                    .font(.title3)
-                    .foregroundColor(Color.themePrimary)
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Text("Today’s Perspective")
+                    .font(.headline.weight(.semibold))
+                    .foregroundColor(Color.themeText)
 
                 Spacer()
 
                 Text(quote.category.uppercased())
-                    .font(.caption2)
-                    .fontWeight(.semibold)
+                    .font(.caption2.weight(.semibold))
                     .foregroundColor(Color.themePrimary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(Color.themePrimary.opacity(0.14))
+                    .background(Color.themePrimary.opacity(0.12))
                     .clipShape(Capsule())
             }
 
-            VStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 16) {
+                Image(systemName: "quote.opening")
+                    .font(.title3.weight(.semibold))
+                    .foregroundColor(Color.themePrimary)
+
                 Text(quote.text)
                     .font(.system(size: 28, weight: .medium, design: .rounded))
                     .foregroundColor(Color.themeText)
                     .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text("— \(quote.author)")
                     .font(.headline)
                     .foregroundColor(Color.themeSecondaryText)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Take it with you")
+                    .font(.caption.weight(.semibold))
+                    .tracking(1.6)
+                    .foregroundColor(Color.themeSecondaryText)
+
+                Text(reflectionLine)
+                    .font(.subheadline)
+                    .foregroundColor(Color.themeSecondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             HStack(spacing: 12) {
@@ -80,58 +160,42 @@ struct QuotesOnlyView: View {
                     title: quoteService.isFavorite(quote) ? "Saved" : "Save",
                     systemImage: quoteService.isFavorite(quote) ? "heart.fill" : "heart",
                     tint: quoteService.isFavorite(quote) ? Color.themeError : Color.themeText,
-                    background: quoteService.isFavorite(quote) ? Color.themeError.opacity(0.14) : Color.themeBackground.opacity(0.5)
+                    background: quoteService.isFavorite(quote) ? Color.themeError.opacity(0.14) : Color.themeBackground.opacity(0.32)
                 ) {
                     toggleFavorite()
-                }
-
-                quoteActionButton(
-                    title: "New Quote",
-                    systemImage: "arrow.clockwise",
-                    tint: Color.themePrimary,
-                    background: Color.themePrimary.opacity(0.14)
-                ) {
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        quote = quoteService.getRandomQuote()
-                    }
                 }
 
                 quoteActionButton(
                     title: "Share",
                     systemImage: "square.and.arrow.up",
                     tint: Color.themeText,
-                    background: Color.themeBackground.opacity(0.5)
+                    background: Color.themeBackground.opacity(0.32)
                 ) {
                     showingShareSheet = true
                 }
             }
         }
-        .padding(24)
-        .background(
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color.themeCardBackground,
-                    Color.themeCardBackground.opacity(0.88)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
+        .padding(22)
+        .background(Color.themeCardBackground.opacity(0.92))
         .overlay(
             RoundedRectangle(cornerRadius: 24)
-                .stroke(Color.themeDivider.opacity(0.6), lineWidth: 1)
+                .stroke(Color.themeDivider.opacity(0.14), lineWidth: 1)
         )
-        .cornerRadius(24)
-        .shadow(color: Color.black.opacity(0.12), radius: 16, x: 0, y: 8)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
     private var librarySection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("YOUR LIBRARY")
-                    .font(.caption)
-                    .foregroundColor(Color.themeSecondaryText)
-                    .tracking(2)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Keep Close")
+                        .font(.headline.weight(.semibold))
+                        .foregroundColor(Color.themeText)
+
+                    Text("Save the lines worth returning to.")
+                        .font(.caption)
+                        .foregroundColor(Color.themeSecondaryText)
+                }
 
                 Spacer()
 
@@ -140,11 +204,11 @@ struct QuotesOnlyView: View {
                     .foregroundColor(Color.themeSecondaryText)
             }
 
-            HStack(spacing: 16) {
+            HStack(spacing: 12) {
                 NavigationLink(destination: FavoritesView()) {
-                    QuoteLibraryCard(
+                    QuoteUtilityCard(
                         title: "Favorites",
-                        subtitle: quoteService.favorites.isEmpty ? "Save quotes to build your list" : "\(quoteService.favorites.count) saved quotes",
+                        subtitle: quoteService.favorites.isEmpty ? "Save the best ones" : "\(quoteService.favorites.count) quotes kept",
                         value: "\(quoteService.favorites.count)",
                         systemImage: "heart.fill",
                         tint: Color.themeError
@@ -153,9 +217,9 @@ struct QuotesOnlyView: View {
                 .buttonStyle(.plain)
 
                 NavigationLink(destination: CategoriesView()) {
-                    QuoteLibraryCard(
+                    QuoteUtilityCard(
                         title: "Categories",
-                        subtitle: "Browse by theme",
+                        subtitle: "Browse by mindset",
                         value: "\(quoteService.getAllCategories().count)",
                         systemImage: "square.grid.2x2.fill",
                         tint: Color.themeSecondary
@@ -164,6 +228,58 @@ struct QuotesOnlyView: View {
                 .buttonStyle(.plain)
             }
         }
+        .padding(20)
+        .background(Color.themeCardBackground.opacity(0.92))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.themeDivider.opacity(0.14), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    private var reflectionLine: String {
+        switch quote.category.lowercased() {
+        case "discipline":
+            return "Use this as your standard for the day. Keep showing up even when the feeling is absent."
+        case "success":
+            return "Treat this as a prompt to move, not just a line to admire. One action is enough to begin."
+        case "mindset":
+            return "Let this shape your attitude before you shape your schedule."
+        case "focus":
+            return "Come back to this when attention drifts. Simplicity beats force."
+        default:
+            return "Take one useful idea from this and carry it into your next action."
+        }
+    }
+
+    private func overviewPill(title: String, value: String, symbol: String, tint: Color) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(tint.opacity(0.16))
+                    .frame(width: 38, height: 38)
+
+                Image(systemName: symbol)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(tint)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(Color.themeSecondaryText)
+
+                Text(value)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(Color.themeText)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+        }
+        .padding(14)
+        .background(Color.themeBackground.opacity(0.24))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     private func quoteActionButton(
@@ -174,20 +290,19 @@ struct QuotesOnlyView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            VStack(spacing: 10) {
+            HStack(spacing: 8) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
+
                 Text(title)
-                    .font(.caption)
-                    .fontWeight(.semibold)
+                    .font(.subheadline.weight(.semibold))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
             }
             .foregroundColor(tint)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
+            .padding(.vertical, 12)
             .background(background)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -201,7 +316,7 @@ struct QuotesOnlyView: View {
     }
 }
 
-private struct QuoteLibraryCard: View {
+private struct QuoteUtilityCard: View {
     let title: String
     let subtitle: String
     let value: String
@@ -209,21 +324,21 @@ private struct QuoteLibraryCard: View {
     let tint: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(tint.opacity(0.18))
-                    .frame(width: 54, height: 54)
+                    .fill(tint.opacity(0.16))
+                    .frame(width: 48, height: 48)
 
                 Image(systemName: systemImage)
-                    .font(.system(size: 22, weight: .semibold))
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(tint)
             }
 
             Spacer(minLength: 0)
 
             Text(value)
-                .font(.system(size: 30, weight: .bold, design: .rounded))
+                .font(.system(size: 28, weight: .bold, design: .rounded))
                 .foregroundColor(Color.themeText)
 
             VStack(alignment: .leading, spacing: 4) {
@@ -237,14 +352,10 @@ private struct QuoteLibraryCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 200, alignment: .topLeading)
-        .padding(20)
-        .background(Color.themeCardBackground)
-        .overlay(
-            RoundedRectangle(cornerRadius: 22)
-                .stroke(Color.themeDivider.opacity(0.5), lineWidth: 1)
-        )
-        .cornerRadius(22)
+        .frame(maxWidth: .infinity, minHeight: 180, alignment: .topLeading)
+        .padding(18)
+        .background(Color.themeBackground.opacity(0.26))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 }
 

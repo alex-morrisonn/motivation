@@ -66,6 +66,8 @@ struct ContentView: View {
         .environment(\.appTheme, themeManager.currentTheme) // Pass theme through environment
         .preferredColorScheme(themeManager.currentTheme.isDark ? .dark : .light) // Set color scheme based on theme
         .onAppear {
+            themeManager.applyAppearance()
+
             // Add observer to listen for tab selection changes
             tabNavigationCancellable = NotificationCenter.default.addObserver(
                 forName: Notification.Name("TabSelectionChanged"),
@@ -132,6 +134,9 @@ struct ContentView: View {
         .onAppear {
             // Check for tracking permission status on app appear
             checkAndShowTrackingConsentIfNeeded()
+        }
+        .onChange(of: themeManager.currentTheme.id) { _, _ in
+            themeManager.applyAppearance()
         }
         .fullScreenCover(isPresented: $showingStreakCelebration) {
             StreakCelebrationView(

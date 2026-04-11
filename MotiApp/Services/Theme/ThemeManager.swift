@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Theme definition struct containing all the colors for a specific theme
 struct AppTheme: Identifiable, Equatable {
@@ -149,12 +150,15 @@ class ThemeManager: ObservableObject {
         } else {
             self.currentTheme = AppTheme.midnight
         }
+
+        applyAppearance()
     }
     
     /// Set a new theme and save the preference
     func setTheme(_ theme: AppTheme) {
         self.currentTheme = theme
         UserDefaults.standard.set(theme.id, forKey: themeKey)
+        applyAppearance()
         
         // Post notification for theme change - IMPORTANT for UI updates
         NotificationCenter.default.post(name: ThemeManager.themeChangedNotification, object: nil)
@@ -165,6 +169,149 @@ class ThemeManager: ObservableObject {
     /// Get all available themes
     func getAvailableThemes() -> [AppTheme] {
         return AppTheme.allThemes
+    }
+
+    /// Apply the current theme to UIKit-driven chrome such as tab and navigation bars.
+    func applyAppearance() {
+        let theme = currentTheme
+        let primaryColor = UIColor(theme.primary)
+        let backgroundColor = UIColor(theme.background)
+        let cardColor = UIColor(theme.cardBackground)
+        let textColor = UIColor(theme.text)
+        let secondaryTextColor = UIColor(theme.secondaryText)
+        let dividerColor = UIColor(theme.divider)
+
+        let navigationAppearance = UINavigationBarAppearance()
+        navigationAppearance.configureWithOpaqueBackground()
+        navigationAppearance.backgroundColor = cardColor
+        navigationAppearance.shadowColor = dividerColor.withAlphaComponent(0.4)
+        navigationAppearance.titleTextAttributes = [.foregroundColor: textColor]
+        navigationAppearance.largeTitleTextAttributes = [.foregroundColor: textColor]
+
+        let navigationBar = UINavigationBar.appearance()
+        navigationBar.tintColor = primaryColor
+        navigationBar.standardAppearance = navigationAppearance
+        navigationBar.scrollEdgeAppearance = navigationAppearance
+        navigationBar.compactAppearance = navigationAppearance
+
+        let tabBarAppearance = UITabBarAppearance()
+        tabBarAppearance.configureWithOpaqueBackground()
+        tabBarAppearance.backgroundColor = cardColor
+        tabBarAppearance.shadowColor = dividerColor.withAlphaComponent(0.35)
+
+        let stackedAppearance = tabBarAppearance.stackedLayoutAppearance
+        stackedAppearance.selected.iconColor = primaryColor
+        stackedAppearance.selected.titleTextAttributes = [.foregroundColor: primaryColor]
+        stackedAppearance.normal.iconColor = secondaryTextColor
+        stackedAppearance.normal.titleTextAttributes = [.foregroundColor: secondaryTextColor]
+
+        let inlineAppearance = tabBarAppearance.inlineLayoutAppearance
+        inlineAppearance.selected.iconColor = primaryColor
+        inlineAppearance.selected.titleTextAttributes = [.foregroundColor: primaryColor]
+        inlineAppearance.normal.iconColor = secondaryTextColor
+        inlineAppearance.normal.titleTextAttributes = [.foregroundColor: secondaryTextColor]
+
+        let compactInlineAppearance = tabBarAppearance.compactInlineLayoutAppearance
+        compactInlineAppearance.selected.iconColor = primaryColor
+        compactInlineAppearance.selected.titleTextAttributes = [.foregroundColor: primaryColor]
+        compactInlineAppearance.normal.iconColor = secondaryTextColor
+        compactInlineAppearance.normal.titleTextAttributes = [.foregroundColor: secondaryTextColor]
+
+        let tabBar = UITabBar.appearance()
+        tabBar.tintColor = primaryColor
+        tabBar.unselectedItemTintColor = secondaryTextColor
+        tabBar.standardAppearance = tabBarAppearance
+
+        if #available(iOS 15.0, *) {
+            tabBar.scrollEdgeAppearance = tabBarAppearance
+        }
+
+        UITableView.appearance().backgroundColor = .clear
+        UICollectionView.appearance().backgroundColor = .clear
+
+        refreshVisibleChrome(
+            primaryColor: primaryColor,
+            backgroundColor: backgroundColor,
+            secondaryTextColor: secondaryTextColor,
+            navigationAppearance: navigationAppearance,
+            tabBarAppearance: tabBarAppearance
+        )
+    }
+
+    private func refreshVisibleChrome(
+        primaryColor: UIColor,
+        backgroundColor: UIColor,
+        secondaryTextColor: UIColor,
+        navigationAppearance: UINavigationBarAppearance,
+        tabBarAppearance: UITabBarAppearance
+    ) {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        let windows = scenes.flatMap(\.windows)
+
+        for window in windows {
+            window.overrideUserInterfaceStyle = currentTheme.isDark ? .dark : .light
+            refreshViewControllerChrome(
+                for: window.rootViewController,
+                primaryColor: primaryColor,
+                backgroundColor: backgroundColor,
+                secondaryTextColor: secondaryTextColor,
+                navigationAppearance: navigationAppearance,
+                tabBarAppearance: tabBarAppearance
+            )
+        }
+    }
+
+    private func refreshViewControllerChrome(
+        for viewController: UIViewController?,
+        primaryColor: UIColor,
+        backgroundColor: UIColor,
+        secondaryTextColor: UIColor,
+        navigationAppearance: UINavigationBarAppearance,
+        tabBarAppearance: UITabBarAppearance
+    ) {
+        guard let viewController else { return }
+
+        viewController.view.tintColor = primaryColor
+        viewController.view.backgroundColor = backgroundColor
+
+        if let navigationController = viewController as? UINavigationController {
+            navigationController.navigationBar.tintColor = primaryColor
+            navigationController.navigationBar.standardAppearance = navigationAppearance
+            navigationController.navigationBar.scrollEdgeAppearance = navigationAppearance
+            navigationController.navigationBar.compactAppearance = navigationAppearance
+        }
+
+        if let tabBarController = viewController as? UITabBarController {
+            tabBarController.tabBar.tintColor = primaryColor
+            tabBarController.tabBar.unselectedItemTintColor = secondaryTextColor
+            tabBarController.tabBar.standardAppearance = tabBarAppearance
+
+            if #available(iOS 15.0, *) {
+                tabBarController.tabBar.scrollEdgeAppearance = tabBarAppearance
+            }
+        }
+
+        for child in viewController.children {
+            refreshViewControllerChrome(
+                for: child,
+                primaryColor: primaryColor,
+                backgroundColor: backgroundColor,
+                secondaryTextColor: secondaryTextColor,
+                navigationAppearance: navigationAppearance,
+                tabBarAppearance: tabBarAppearance
+            )
+        }
+
+        if let presented = viewController.presentedViewController {
+            refreshViewControllerChrome(
+                for: presented,
+                primaryColor: primaryColor,
+                backgroundColor: backgroundColor,
+                secondaryTextColor: secondaryTextColor,
+                navigationAppearance: navigationAppearance,
+                tabBarAppearance: tabBarAppearance
+            )
+        }
     }
 }
 
