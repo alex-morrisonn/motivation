@@ -4,8 +4,7 @@ import Firebase
 import FirebaseFirestore
 import FirebaseAppCheck
 import FirebaseCrashlytics
-import FirebaseAnalytics // Explicit import added
-import AppTrackingTransparency
+import FirebaseAnalytics
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     
@@ -15,7 +14,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         case firebaseInitFailed
         case appGroupAccessFailed
         case notificationPermissionDenied
-        case trackingPermissionDenied
         case firebaseConfigError
         case notificationConfigError
         
@@ -27,8 +25,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
                 return "Failed to access app group for widget data sharing"
             case .notificationPermissionDenied:
                 return "Notification permission denied by user"
-            case .trackingPermissionDenied:
-                return "Tracking permission denied by user"
             case .firebaseConfigError:
                 return "Error configuring Firebase services"
             case .notificationConfigError:
@@ -62,10 +58,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         
         // Reset badge count using the new UNUserNotificationCenter API in iOS 17+
         resetBadgeCount()
-        
-        // Check tracking status without automatically requesting permission
-        // The actual permission request will happen through the TrackingConsentView
-        checkTrackingStatus()
     }
     
     func applicationWillTerminate(_ application: UIApplication) {
@@ -127,19 +119,20 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     }
     
     private func configureAnalytics() {
-        // Initially disable analytics until ATT permission is granted
-        FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(false)
-        
-        // Set user properties for analytics
+        let consentState = AnalyticsConsentState(
+            rawValue: UserDefaults.standard.string(forKey: AppDefaultsKey.analyticsConsentState) ?? ""
+        ) ?? .unknown
+        let analyticsEnabled = consentState == .allowed
+
+        FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(analyticsEnabled)
+
         if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String {
             FirebaseAnalytics.Analytics.setUserProperty(version, forName: "app_version")
-        } else {
-            print("WARNING: Could not retrieve app version for analytics")
         }
-        
-        // Log app open event
-        FirebaseAnalytics.Analytics.logEvent(AnalyticsEventAppOpen, parameters: nil)
-        print("Analytics initially configured (disabled until permission)")
+
+        if analyticsEnabled {
+            FirebaseAnalytics.Analytics.logEvent(AnalyticsEventAppOpen, parameters: nil)
+        }
     }
     
     private func configureNotifications(_ application: UIApplication) {
@@ -281,40 +274,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         }
     }
     
-    // MARK: - Privacy and Tracking
-    
-    /// Check the App Tracking Transparency status without requesting permission
-    private func checkTrackingStatus() {
-        if #available(iOS 14.0, *) {
-            // Get the current status directly
-            let status = ATTrackingManager.trackingAuthorizationStatus
-            
-            // Update analytics collection based on current authorization status
-            let isEnabled = status == .authorized
-            DispatchQueue.main.async {
-                FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(isEnabled)
-                print("App Tracking Transparency status checked: \(status.rawValue)")
-                
-                if isEnabled {
-                    print("User already allowed tracking - analytics enabled")
-                } else if status == .notDetermined {
-                    print("Tracking permission not determined - will show consent view")
-                    // Actual permission request will be handled by TrackingConsentView
-                } else {
-                    print("User denied tracking or restricted - limited analytics only")
-                }
-                
-                // Log the tracking status if Firebase is initialized
-                if self.isFirebaseInitialized {
-                    FirebaseAnalytics.Analytics.logEvent("tracking_status", parameters: ["status": status.rawValue])
-                }
-            }
-        } else {
-            // For iOS versions below 14, enable analytics by default
-            FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(true)
-        }
-    }
-    
     // MARK: - Error Recovery
     
     private func attemptFirebaseRecovery() {
@@ -349,7 +308,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         
         if identifier == "com.alexmorrison.moti.dailyReminder" {
             // Open the quotes tab
-            NotificationCenter.default.post(name: NSNotification.Name("OpenQuotesTab"), object: nil)
+            NotificationCenter.default.post(name: .openQuotesTab, object: nil)
             
             // Log the event if Firebase is initialized
             if isFirebaseInitialized {
@@ -357,7 +316,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
             }
         } else if identifier.contains("streak") {
             // Open streak details
-            NotificationCenter.default.post(name: NSNotification.Name("OpenStreakDetails"), object: nil)
+            NotificationCenter.default.post(name: .openStreakDetails, object: nil)
             
             // Log the event if Firebase is initialized
             if isFirebaseInitialized {

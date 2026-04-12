@@ -39,6 +39,7 @@ struct CalendarView: View {
     @State private var draftIconName = EventIconLibrary.defaultIcon
     @State private var draftTintHex = EventTintPalette.defaultHex
     @State private var draftIsAllDay = false
+    @State private var plannerHandoffTitle: String?
 
     @AppStorage("calendar_layout_mode") private var layoutModeRawValue = CalendarLayoutMode.month.rawValue
     @AppStorage("calendar_agenda_scope") private var agendaScopeRawValue = AgendaScope.day.rawValue
@@ -63,6 +64,10 @@ struct CalendarView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 22) {
+                    if let plannerHandoffTitle {
+                        plannerHandoffCard(title: plannerHandoffTitle)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
                     heroCard
                     plannerModeBar
                     calendarCard
@@ -98,6 +103,9 @@ struct CalendarView: View {
                 showWeekends: $showWeekends,
                 showInsights: $showInsights
             )
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openPlannerComposer)) { notification in
+            handlePlannerComposerNotification(notification)
         }
         .onChange(of: selectedDate) { _, newValue in
             visibleMonth = startOfMonth(for: newValue)
@@ -182,9 +190,13 @@ struct CalendarView: View {
                 .background(Color.themeBackground.opacity(0.28))
                 .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             } else {
-                Text("Give the day a shape. Add only what matters.")
-                    .font(.subheadline)
-                    .foregroundColor(Color.themeSecondaryText)
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Give the day a shape. Add only what matters.")
+                        .font(.subheadline)
+                        .foregroundColor(Color.themeSecondaryText)
+
+                    plannerBridgeButtons
+                }
             }
         }
         .padding(22)
@@ -455,6 +467,55 @@ struct CalendarView: View {
         .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
     }
 
+    private var plannerBridgeButtons: some View {
+        HStack(spacing: 12) {
+            plannerBridgeButton(
+                title: "Discipline",
+                systemImage: "flame.fill",
+                tint: Color.themePrimary,
+                action: openDisciplineTab
+            )
+
+            plannerBridgeButton(
+                title: "Quotes",
+                systemImage: "quote.bubble.fill",
+                tint: Color.themeSecondary,
+                action: openQuotesTab
+            )
+        }
+    }
+
+    private func plannerHandoffCard(title: String) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: "arrow.triangle.branch")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(Color.themePrimary)
+                .frame(width: 38, height: 38)
+                .background(Color.themePrimary.opacity(0.12))
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Ready to Plan")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(Color.themeText)
+
+                Text("\(title) was sent here from Discipline. Give it a time and place while the intent is still fresh.")
+                    .font(.caption)
+                    .foregroundColor(Color.themeSecondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer()
+        }
+        .padding(16)
+        .background(Color.themeCardBackground.opacity(0.92))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.themePrimary.opacity(0.18), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
     private var insightsCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Insights")
@@ -588,6 +649,76 @@ struct CalendarView: View {
         draftTintHex = tint
         draftIsAllDay = isAllDay
         showingEventEditor = true
+    }
+
+    private func handlePlannerComposerNotification(_ notification: Notification) {
+        let userInfo = notification.userInfo ?? [:]
+        let date = userInfo[AppNotification.plannerDateUserInfoKey] as? Date ?? Date()
+        let title = userInfo[AppNotification.plannerTitleUserInfoKey] as? String ?? ""
+        let notes = userInfo[AppNotification.plannerNotesUserInfoKey] as? String ?? ""
+        let icon = userInfo[AppNotification.plannerIconUserInfoKey] as? String ?? EventIconLibrary.defaultIcon
+        let tint = userInfo[AppNotification.plannerTintHexUserInfoKey] as? String ?? EventTintPalette.defaultHex
+        let isAllDay = userInfo[AppNotification.plannerAllDayUserInfoKey] as? Bool ?? false
+
+        withAnimation(.easeInOut(duration: 0.2)) {
+            plannerHandoffTitle = title.isEmpty ? nil : title
+        }
+
+        if !title.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    if plannerHandoffTitle == title {
+                        plannerHandoffTitle = nil
+                    }
+                }
+            }
+        }
+
+        openNewEvent(
+            title: title,
+            notes: notes,
+            date: date,
+            icon: icon,
+            tint: tint,
+            isAllDay: isAllDay
+        )
+    }
+
+    private func openDisciplineTab() {
+        Haptics.light()
+        NotificationCenter.default.post(
+            name: .tabSelectionChanged,
+            object: nil,
+            userInfo: [AppNotification.selectedTabUserInfoKey: 0]
+        )
+    }
+
+    private func openQuotesTab() {
+        Haptics.light()
+        NotificationCenter.default.post(name: .openQuotesTab, object: nil)
+    }
+
+    private func plannerBridgeButton(
+        title: String,
+        systemImage: String,
+        tint: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 14, weight: .semibold))
+
+                Text(title)
+                    .font(.caption.weight(.semibold))
+            }
+            .foregroundColor(tint)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(tint.opacity(0.12))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 
     private func shiftVisibleMonth(by value: Int) {

@@ -1,72 +1,56 @@
-# Motii - Daily Motivation App Support
+# Motii Support
 
-## Welcome to Motii Support!
+Last updated: January 1, 2026
 
-Thank you for choosing Motii as your daily motivation companion. This support page will help you get the most out of the app and answer common questions. We're dedicated to providing you with daily inspiration to fuel your journey.
+Motii is a motivation and planning app built around daily quotes, reminders, streaks, favorites, widgets, and lightweight planning tools.
 
 ## Frequently Asked Questions
 
-### Getting Started
+### How do I add a Motii widget?
 
-**Q: How do I install Motii widgets?**
-A: For Home Screen widgets:
-   1. Long press on an empty area of your Home Screen
-   2. Tap the + button in the top-left corner
-   3. Search for "Motii" or scroll to find it
-   4. Choose your preferred widget size
-   5. Tap "Add Widget" and position it where you want
+For Home Screen widgets:
+
+1. Touch and hold an empty area on the Home Screen
+2. Tap the `+` button
+3. Search for `Motii`
+4. Choose a widget size
+5. Tap `Add Widget`
 
 For Lock Screen widgets:
-   1. Long press on your Lock Screen to enter edit mode
-   2. Tap "Customize"
-   3. Select the area where you want to add a widget
-   4. Tap the + button
-   5. Find "Motii" and select a widget style
 
-**Q: How do I turn on daily notifications?**
-A: Go to the More tab, and under Settings, toggle "Daily Quote Reminder" on. You can also customize the time you receive your daily motivation.
+1. Touch and hold the Lock Screen
+2. Tap `Customize`
+3. Choose the Lock Screen area for widgets
+4. Tap the widget area or `+`
+5. Select `Motii`
 
-**Q: How does the streak system work?**
-A: Simply open the app once each day to maintain your streak. Your current streak counter shows how many consecutive days you've used Motii. Check the More tab to see detailed streak information.
+### How do I enable daily reminders?
 
-### Troubleshooting
+Open the `More` tab, turn on `Daily Reminder`, and choose your preferred reminder time. If notifications were previously denied, enable them in iPhone Settings.
 
-**Q: My widgets aren't updating daily**
-A: Ensure Background App Refresh is enabled for Motii in your device settings. You can also manually refresh widgets by touching and holding the widget, then choosing "Edit Widget" or removing and re-adding it.
+### Why did my streak reset?
 
-**Q: Why did I lose my streak?**
-A: Streaks reset if you don't open the app for more than one day. Make sure to open the app at least once every day to maintain your streak.
+Streaks require opening the app each day. Missing a full day resets the streak.
 
-**Q: My notifications aren't working**
-A: Check that notifications are enabled both in the app (More tab) and in your device Settings. Make sure your device is not in Do Not Disturb mode at your scheduled notification time.
+### Why are widgets not updating?
 
-**Q: How do I restore my favorites after reinstalling?**
-A: Your favorites are stored locally on your device. Currently, there is no cloud backup system, so favorites cannot be restored after complete app removal.
+Check that widget support is enabled for the app, Background App Refresh is available, and the widget has been added correctly. Removing and re-adding the widget can also help.
 
-**Q: How can I clear the app cache?**
-A: Go to the More tab and scroll to the bottom. Tap "Clear Cache" to refresh the app data. Note that this won't affect your favorites or streak.
+### Can I restore favorites after reinstalling the app?
 
-## Privacy Information
+No. Favorites are stored locally on the device and are removed if the app is deleted.
 
-Motii respects your privacy:
-- Most data is stored locally on your device
-- No personally identifiable information is collected without consent
-- Analytics helps us improve the app but can be disabled in your device settings
-- You can view our complete Privacy Policy in the More tab
+### What happens when I send feedback?
 
-## Contact Us
+Feedback is submitted securely to our backend through Firebase. You can optionally include an email address and device diagnostics. If the device is offline, feedback is not stored locally for later upload.
 
-Need more help? We'd love to hear from you!
+## Privacy And Legal
 
-- Email: motii.team@gmail.com
-- Feedback: Use the "Send Feedback" option in the More tab
+- Privacy Policy: https://alex-morrisonn.github.io/motivation/privacy-policy
+- Terms of Service: https://alex-morrisonn.github.io/motivation/terms-of-service
 
-When contacting support, please include:
-- Your device model and iOS version
-- A detailed description of your issue
-- Screenshots if applicable (but no personal information)
+## Contact
 
-Thank you for using Motii! We hope our daily quotes bring positivity and inspiration to your day.
+For support, privacy questions, or deletion requests:
 
-Version: 1.0.2 (April 2025)
-
+`motii.team@gmail.com`

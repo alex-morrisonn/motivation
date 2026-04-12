@@ -168,6 +168,15 @@ struct DisciplineDay: Identifiable, Codable, Hashable {
     var date: Date
     var tasks: [DisciplineTask]
 
+    var minimumTasksForConsistency: Int {
+        guard !tasks.isEmpty else { return 0 }
+        return min(tasks.count, max(1, tasks.count - 1))
+    }
+
+    var isConsistencyDay: Bool {
+        completedTaskCount >= minimumTasksForConsistency
+    }
+
     var isFullyCompleted: Bool {
         tasks.count == DisciplineCategory.allCases.count && tasks.allSatisfy(\.isCompleted)
     }
@@ -182,9 +191,7 @@ struct DisciplineDay: Identifiable, Codable, Hashable {
     }
 
     var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: date)
+        DateFormatter.mediumDate.string(from: date)
     }
 
     var isToday: Bool {
@@ -288,6 +295,7 @@ final class DisciplineSystemState: ObservableObject {
     }
 
     struct ToggleResult {
+        let reachedConsistency: Bool
         let justCompletedAllTasks: Bool
         let xpResult: XPAwardResult?
     }
@@ -295,10 +303,12 @@ final class DisciplineSystemState: ObservableObject {
     @discardableResult
     func toggleTodayTask(at index: Int) -> ToggleResult {
         var today = getTodayDay()
+        let previousDay = today
         let wasFullyCompleted = today.isFullyCompleted
+        let wasConsistencyDay = today.isConsistencyDay
         let taskWasCompleted = today.tasks.indices.contains(index) ? !today.tasks[index].isCompleted : false
         today.toggleTask(at: index)
-        updateDay(today, wasFullyCompleted: wasFullyCompleted)
+        updateDay(today, previousDay: previousDay)
 
         // Award or reverse XP
         let xpResult: XPAwardResult?
@@ -314,6 +324,7 @@ final class DisciplineSystemState: ObservableObject {
         }
 
         return ToggleResult(
+            reachedConsistency: !wasConsistencyDay && today.isConsistencyDay,
             justCompletedAllTasks: !wasFullyCompleted && today.isFullyCompleted,
             xpResult: xpResult
         )
@@ -321,9 +332,15 @@ final class DisciplineSystemState: ObservableObject {
 
     func updateTodaySelections(_ selections: [DisciplineCategory: String]) {
         var today = getTodayDay()
-        let wasFullyCompleted = today.isFullyCompleted
+        let previousDay = today
         today.updateSelections(selections)
-        updateDay(today, wasFullyCompleted: wasFullyCompleted)
+        updateDay(today, previousDay: previousDay)
+    }
+
+    func updateTodayTask(for category: DisciplineCategory, optionID: String) {
+        var selections = Dictionary(uniqueKeysWithValues: getTodayDay().tasks.map { ($0.category, $0.optionID) })
+        selections[category] = optionID
+        updateTodaySelections(selections)
     }
 
     func syncTaskCompletion(
@@ -333,7 +350,7 @@ final class DisciplineSystemState: ObservableObject {
         isCompleted: Bool
     ) {
         var day = getOrCreateDay(for: date)
-        let wasFullyCompleted = day.isFullyCompleted
+        let previousDay = day
 
         guard let index = day.tasks.firstIndex(where: { task in
             task.category == category && task.title == title
@@ -343,7 +360,7 @@ final class DisciplineSystemState: ObservableObject {
 
         if day.tasks[index].isCompleted != isCompleted {
             day.tasks[index].toggleCompletion()
-            updateDay(day, wasFullyCompleted: wasFullyCompleted)
+            updateDay(day, previousDay: previousDay)
         }
     }
 
@@ -394,17 +411,23 @@ final class DisciplineSystemState: ObservableObject {
         }
     }
 
-    private func updateDay(_ day: DisciplineDay, wasFullyCompleted: Bool) {
+    private func updateDay(_ day: DisciplineDay, previousDay: DisciplineDay?) {
         days[dateToKey(day.date)] = day
 
-        if day.isFullyCompleted && !wasFullyCompleted {
+        let wasConsistencyDay = previousDay?.isConsistencyDay ?? false
+
+        if day.isConsistencyDay && !wasConsistencyDay {
             StreakManager.shared.recordCompletedDay(day.date)
-        } else if !day.isFullyCompleted && wasFullyCompleted {
+        } else if !day.isConsistencyDay && wasConsistencyDay {
             StreakManager.shared.removeCompletedDay(day.date)
         } else {
             StreakManager.shared.checkInToday()
         }
 
+        GamificationManager.shared.updateWeeklyQuestProgress(
+            tasksCompletedThisWeek: completionCountForCurrentWeek(),
+            perfectDaysThisWeek: perfectDayCountForCurrentWeek()
+        )
         saveData()
     }
 
@@ -413,8 +436,28 @@ final class DisciplineSystemState: ObservableObject {
     }
 
     private func dateToKey(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: date)
+        DateFormatter.dayStorageKey.string(from: date)
+    }
+
+    private func completionCountForCurrentWeek() -> Int {
+        let calendar = Calendar.current
+        guard let interval = calendar.dateInterval(of: .weekOfYear, for: Date()) else {
+            return 0
+        }
+
+        return days.values
+            .filter { interval.contains($0.date) }
+            .reduce(0) { $0 + $1.completedTaskCount }
+    }
+
+    private func perfectDayCountForCurrentWeek() -> Int {
+        let calendar = Calendar.current
+        guard let interval = calendar.dateInterval(of: .weekOfYear, for: Date()) else {
+            return 0
+        }
+
+        return days.values
+            .filter { interval.contains($0.date) && $0.isFullyCompleted }
+            .count
     }
 }

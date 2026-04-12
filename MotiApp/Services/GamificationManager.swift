@@ -31,6 +31,41 @@ struct XPAwardResult {
     let newAchievements: [Achievement]
 }
 
+struct WeeklyQuest: Codable, Hashable {
+    enum QuestType: String, Codable, Hashable, CaseIterable {
+        case tasks
+        case xp
+        case perfectDays
+
+        var title: String {
+            switch self {
+            case .tasks:
+                return "Task Sprint"
+            case .xp:
+                return "XP Push"
+            case .perfectDays:
+                return "Perfect Days"
+            }
+        }
+
+        var unitLabel: String {
+            switch self {
+            case .tasks:
+                return "tasks"
+            case .xp:
+                return "XP"
+            case .perfectDays:
+                return "perfect days"
+            }
+        }
+    }
+
+    let type: QuestType
+    let target: Int
+    let title: String
+    let detail: String
+}
+
 // MARK: - Rank Tier
 
 struct RankTier {
@@ -69,12 +104,23 @@ final class GamificationManager: ObservableObject {
     @Published private(set) var achievements: [Achievement] = []
     @Published private(set) var totalTasksCompleted: Int = 0
     @Published private(set) var totalPerfectDays: Int = 0
+    @Published private(set) var weeklyQuest: WeeklyQuest = WeeklyQuest(
+        type: .tasks,
+        target: 8,
+        title: "Task Sprint",
+        detail: "Finish 8 tasks this week."
+    )
+    @Published private(set) var weeklyQuestProgress: Int = 0
 
     private let totalXPKey = "gamification_totalXP"
     private let currentLevelKey = "gamification_currentLevel"
     private let achievementsKey = "gamification_achievements"
     private let totalTasksCompletedKey = "gamification_totalTasksCompleted"
     private let totalPerfectDaysKey = "gamification_totalPerfectDays"
+    private let weeklyQuestKey = "gamification_weeklyQuest"
+    private let weeklyQuestProgressKey = "gamification_weeklyQuestProgress"
+    private let weeklyQuestWeekKey = "gamification_weeklyQuestWeek"
+    private let celebratedQuestWeekKey = "gamification_celebratedQuestWeek"
     private let defaults: UserDefaults
 
     // XP constants
@@ -85,6 +131,7 @@ final class GamificationManager: ObservableObject {
         self.defaults = defaults
         loadData()
         initializeAchievementsIfNeeded()
+        refreshWeeklyQuestIfNeeded()
     }
 
     // MARK: - Level Calculations
@@ -162,6 +209,7 @@ final class GamificationManager: ObservableObject {
         let didLevelUp = currentLevel > previousLevel
 
         let newAchievements = checkAchievements()
+        syncProgressForCurrentQuest(xpGained: xpGained, didCompletePerfectDay: isPerfectDay)
 
         saveData()
 
@@ -185,6 +233,11 @@ final class GamificationManager: ObservableObject {
         }
 
         recalculateLevel()
+        syncProgressForCurrentQuest(
+            xpGained: -GamificationManager.xpPerTask - (wasFullyCompletedBefore ? GamificationManager.perfectDayBonus : 0),
+            didCompletePerfectDay: wasFullyCompletedBefore,
+            reversing: true
+        )
         saveData()
     }
 
@@ -194,14 +247,45 @@ final class GamificationManager: ObservableObject {
         totalTasksCompleted = 0
         totalPerfectDays = 0
         achievements = []
+        weeklyQuestProgress = 0
 
         defaults.removeObject(forKey: totalXPKey)
         defaults.removeObject(forKey: currentLevelKey)
         defaults.removeObject(forKey: achievementsKey)
         defaults.removeObject(forKey: totalTasksCompletedKey)
         defaults.removeObject(forKey: totalPerfectDaysKey)
+        defaults.removeObject(forKey: weeklyQuestKey)
+        defaults.removeObject(forKey: weeklyQuestProgressKey)
+        defaults.removeObject(forKey: weeklyQuestWeekKey)
 
         initializeAchievementsIfNeeded()
+        refreshWeeklyQuestIfNeeded(forceRefresh: true)
+    }
+
+    var weeklyQuestCompletion: Double {
+        guard weeklyQuest.target > 0 else { return 0 }
+        return min(1, Double(weeklyQuestProgress) / Double(weeklyQuest.target))
+    }
+
+    var isWeeklyQuestComplete: Bool {
+        weeklyQuestProgress >= weeklyQuest.target
+    }
+
+    func updateWeeklyQuestProgress(tasksCompletedThisWeek: Int, perfectDaysThisWeek: Int) {
+        refreshWeeklyQuestIfNeeded()
+        let wasComplete = isWeeklyQuestComplete
+
+        switch weeklyQuest.type {
+        case .tasks:
+            weeklyQuestProgress = tasksCompletedThisWeek
+        case .xp:
+            break
+        case .perfectDays:
+            weeklyQuestProgress = perfectDaysThisWeek
+        }
+
+        notifyIfQuestJustCompleted(wasComplete: wasComplete)
+        saveData()
     }
 
     // MARK: - Private
@@ -290,6 +374,13 @@ final class GamificationManager: ObservableObject {
             achievements = decoded
         }
 
+        if let data = defaults.data(forKey: weeklyQuestKey),
+           let decoded = try? JSONDecoder().decode(WeeklyQuest.self, from: data) {
+            weeklyQuest = decoded
+        }
+
+        weeklyQuestProgress = defaults.integer(forKey: weeklyQuestProgressKey)
+
         // Recalculate level from XP in case of inconsistency
         if totalXP > 0 {
             recalculateLevel()
@@ -305,5 +396,72 @@ final class GamificationManager: ObservableObject {
         if let encoded = try? JSONEncoder().encode(achievements) {
             defaults.set(encoded, forKey: achievementsKey)
         }
+
+        if let encodedQuest = try? JSONEncoder().encode(weeklyQuest) {
+            defaults.set(encodedQuest, forKey: weeklyQuestKey)
+        }
+        defaults.set(weeklyQuestProgress, forKey: weeklyQuestProgressKey)
+        defaults.set(currentWeekIdentifier(), forKey: weeklyQuestWeekKey)
+    }
+
+    private func refreshWeeklyQuestIfNeeded(forceRefresh: Bool = false) {
+        let storedWeekIdentifier = defaults.string(forKey: weeklyQuestWeekKey)
+        let currentIdentifier = currentWeekIdentifier()
+
+        guard forceRefresh || storedWeekIdentifier != currentIdentifier else {
+            return
+        }
+
+        weeklyQuest = makeWeeklyQuest(for: currentIdentifier)
+        weeklyQuestProgress = 0
+        saveData()
+    }
+
+    private func makeWeeklyQuest(for identifier: String) -> WeeklyQuest {
+        let questTemplates: [WeeklyQuest] = [
+            WeeklyQuest(type: .tasks, target: 8, title: "Task Sprint", detail: "Finish 8 tasks this week."),
+            WeeklyQuest(type: .xp, target: 140, title: "XP Push", detail: "Earn 140 XP before the week ends."),
+            WeeklyQuest(type: .perfectDays, target: 2, title: "Perfect Days", detail: "Finish all 3 tasks on 2 different days.")
+        ]
+
+        let index = identifier.unicodeScalars.map(\.value).reduce(0, +) % UInt32(questTemplates.count)
+        return questTemplates[Int(index)]
+    }
+
+    private func currentWeekIdentifier() -> String {
+        let calendar = Calendar.current
+        let yearForWeek = calendar.component(.yearForWeekOfYear, from: Date())
+        let weekOfYear = calendar.component(.weekOfYear, from: Date())
+        return "\(yearForWeek)-W\(weekOfYear)"
+    }
+
+    private func syncProgressForCurrentQuest(
+        xpGained: Int,
+        didCompletePerfectDay: Bool,
+        reversing: Bool = false
+    ) {
+        refreshWeeklyQuestIfNeeded()
+        let wasComplete = isWeeklyQuestComplete
+
+        switch weeklyQuest.type {
+        case .tasks:
+            break
+        case .xp:
+            weeklyQuestProgress = max(0, weeklyQuestProgress + xpGained)
+        case .perfectDays:
+            break
+        }
+
+        notifyIfQuestJustCompleted(wasComplete: wasComplete)
+    }
+
+    private func notifyIfQuestJustCompleted(wasComplete: Bool) {
+        guard !wasComplete, isWeeklyQuestComplete else { return }
+
+        let weekIdentifier = currentWeekIdentifier()
+        guard defaults.string(forKey: celebratedQuestWeekKey) != weekIdentifier else { return }
+
+        defaults.set(weekIdentifier, forKey: celebratedQuestWeekKey)
+        NotificationCenter.default.post(name: .weeklyQuestCompleted, object: nil)
     }
 }

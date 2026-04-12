@@ -136,7 +136,7 @@ class ThemeManager: ObservableObject {
     private let themeKey = "selectedThemeId"
     
     // Notification name for theme changes
-    static let themeChangedNotification = NSNotification.Name("ThemeChanged")
+    static let themeChangedNotification = Notification.Name.themeChanged
     
     // Singleton instance
     static let shared = ThemeManager()

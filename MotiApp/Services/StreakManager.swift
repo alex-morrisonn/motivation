@@ -74,7 +74,7 @@ final class StreakManager: ObservableObject {
         defaults.set(0, forKey: longestStreakKey)
         defaults.removeObject(forKey: lastCompletionDateKey)
 
-        NotificationCenter.default.post(name: NSNotification.Name("StreakUpdated"), object: nil)
+        NotificationCenter.default.post(name: .streakUpdated, object: nil)
     }
 
     func getStreakStartDate() -> Date? {
@@ -135,7 +135,7 @@ final class StreakManager: ObservableObject {
         saveStreakData(lastCompletionDate: days.last)
 
         if notifyObservers && (previousCurrentStreak != currentStreak || previousLongestStreak != longestStreak) {
-            NotificationCenter.default.post(name: NSNotification.Name("StreakUpdated"), object: nil)
+            NotificationCenter.default.post(name: .streakUpdated, object: nil)
         }
     }
 

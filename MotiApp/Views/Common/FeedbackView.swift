@@ -1,320 +1,73 @@
 import SwiftUI
-import Firebase
-import FirebaseFirestore
-
-// Break down into smaller components to reduce compile-time complexity
-struct FeedbackTypeSelector: View {
-    @Binding var selectedType: Int
-    let types: [String]
-    
-    var body: some View {
-        HStack(spacing: 8) {
-            ForEach(0..<types.count, id: \.self) { index in
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        selectedType = index
-                    }
-                }) {
-                    Text(types[index])
-                        .font(.system(size: 14, weight: selectedType == index ? .semibold : .regular))
-                        .foregroundColor(selectedType == index ? .black : .white)
-                        .padding(.vertical, 12)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(selectedType == index ?
-                                      Color.white :
-                                      Color.white.opacity(0.1))
-                        )
-                }
-            }
-        }
-    }
-}
-
-struct FeedbackTextField: View {
-    @Binding var text: String
-    let placeholder: String
-    
-    var body: some View {
-        ZStack(alignment: .topLeading) {
-            // Single background for the entire component
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.07))
-                .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
-            
-            ZStack(alignment: .topLeading) {
-                // Placeholder directly overlaid on TextEditor
-                if text.isEmpty {
-                    Text(placeholder)
-                        .foregroundColor(.gray)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 16)
-                        .allowsHitTesting(false) // Let taps pass through to TextEditor
-                }
-                
-                TextEditor(text: $text)
-                    .scrollContentBackground(.hidden) // iOS 16+ way to hide background
-                    .background(Color.clear) // Extra assurance for transparency
-                    .foregroundColor(.white)
-                    .frame(minHeight: 180)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 8)
-            }
-        }
-    }
-}
-
-struct DeviceInfoToggle: View {
-    @Binding var isEnabled: Bool
-    
-    var body: some View {
-        HStack {
-            Image(systemName: "square.and.arrow.up.circle")
-                .foregroundColor(.white)
-                .font(.system(size: 20))
-                .frame(width: 36, height: 36)
-                .background(Color.white.opacity(0.1))
-                .clipShape(Circle())
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Include Device Information")
-                    .font(.subheadline)
-                    .foregroundColor(.white)
-                
-                Text("Helps us understand issues better")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-            }
-            
-            Spacer()
-            
-            // Custom styled toggle
-            ZStack {
-                Capsule()
-                    .fill(isEnabled ? Color.green.opacity(0.5) : Color.gray.opacity(0.3))
-                    .frame(width: 50, height: 30)
-                
-                Circle()
-                    .fill(isEnabled ? Color.white : Color.gray.opacity(0.7))
-                    .frame(width: 24, height: 24)
-                    .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
-                    .offset(x: isEnabled ? 10 : -10)
-            }
-            .onTapGesture {
-                withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
-                    isEnabled.toggle()
-                }
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.07))
-        )
-    }
-}
-
-struct SubmitButton: View {
-    let isEnabled: Bool
-    let isSubmitting: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                if isSubmitting {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .black))
-                        .padding(.trailing, 5)
-                }
-                
-                Text(isSubmitting ? "Submitting..." : "Submit Feedback")
-                    .font(.headline)
-                    .foregroundColor(.black)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 25)
-                    .fill(
-                        !isEnabled ?
-                        Color.gray.opacity(0.5) :
-                        Color.white
-                    )
-            )
-        }
-        .disabled(!isEnabled || isSubmitting)
-    }
-}
 
 struct FeedbackView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @State private var feedbackText = ""
     @State private var feedbackType = 0
     @State private var contactEmail = ""
     @State private var includeDeviceInfo = true
     @State private var showingConfirmation = false
     @State private var isSubmitting = false
-    
-    // Error handling
     @State private var showingErrorAlert = false
     @State private var errorMessage = ""
-    
+
     private let feedbackTypes = ["General", "Bug Report", "Feature", "Question"]
-    
+
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
-                // Simple background
-                Color.black.edgesIgnoringSafeArea(.all)
-                
-                // Content
-                ScrollView {
-                    VStack(spacing: 24) {
-                        // Header with icon
-                        VStack(spacing: 14) {
-                            Image(systemName: "envelope.fill")
-                                .font(.system(size: 36))
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Circle().fill(Color(red: 0.1, green: 0.1, blue: 0.3)))
-                            
-                            Text("We'd Love Your Feedback")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                            
-                            Text("Your thoughts help us improve Motii")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                        }
-                        .padding(.top, 10)
-                        .padding(.bottom, 20)
-                        
-                        // Feedback type selector component
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("FEEDBACK TYPE")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white.opacity(0.6))
-                                .tracking(2)
-                                .padding(.horizontal, 4)
-                            
-                            FeedbackTypeSelector(selectedType: $feedbackType, types: feedbackTypes)
-                        }
-                        .padding(.horizontal)
-                        
-                        // Feedback text editor
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack {
-                                Text("YOUR FEEDBACK")
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.white.opacity(0.6))
-                                    .tracking(2)
-                                
-                                Spacer()
-                                
-                                Text("\(feedbackText.count)/500")
-                                    .font(.caption)
-                                    .foregroundColor(feedbackText.count > 400 ?
-                                                    (feedbackText.count > 500 ? .red : .orange) :
-                                                    .gray)
-                            }
-                            .padding(.horizontal, 4)
-                            
-                            FeedbackTextField(
-                                text: $feedbackText,
-                                placeholder: "Share your experience, suggestions, or report issues here..."
-                            )
-                            // Updated to use the new onChange API syntax with two parameters
-                            .onChange(of: feedbackText) { oldValue, newValue in
-                                if newValue.count > 500 {
-                                    feedbackText = String(newValue.prefix(500))
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-                        
-                        // Contact email
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("CONTACT EMAIL (OPTIONAL)")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white.opacity(0.6))
-                                .tracking(2)
-                                .padding(.horizontal, 4)
-                            
-                            HStack {
-                                Image(systemName: "envelope")
-                                    .foregroundColor(.gray)
-                                    .padding(.leading, 16)
-                                
-                                TextField("your.email@example.com", text: $contactEmail)
-                                    .foregroundColor(.white)
-                                    .padding(.vertical, 16)
-                                    .keyboardType(.emailAddress)
-                                    .autocapitalization(.none)
-                                    .autocorrectionDisabled()
-                            }
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.white.opacity(0.07))
-                            )
-                        }
-                        .padding(.horizontal)
-                        
-                        // Device info toggle
-                        VStack(alignment: .leading, spacing: 12) {
-                            DeviceInfoToggle(isEnabled: $includeDeviceInfo)
-                        }
-                        .padding(.horizontal)
-                        
-                        // Submit button
-                        SubmitButton(
-                            isEnabled: !feedbackText.isEmpty,
-                            isSubmitting: isSubmitting,
-                            action: {
-                                submitFeedback()
-                            }
-                        )
-                        .padding(.horizontal)
-                        .padding(.top, 10)
-                        
-                        Text("Thank you for helping us improve Motii!")
-                            .font(.footnote)
-                            .foregroundColor(.gray)
-                            .padding(.top, 5)
-                            .padding(.bottom, 40)
+                LinearGradient(
+                    colors: [
+                        Color.themeBackground,
+                        Color.themeCardBackground.opacity(0.82),
+                        Color.themeBackground
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        headerCard
+                        feedbackTypeCard
+                        feedbackTextCard
+                        contactCard
+                        deviceInfoCard
+                        submitCard
                     }
-                    .padding(.vertical, 20)
+                    .padding(.horizontal, 18)
+                    .padding(.top, 18)
+                    .padding(.bottom, 32)
                 }
-                
-                // Loading overlay when submitting
+
                 if isSubmitting {
-                    Color.black.opacity(0.4)
-                        .edgesIgnoringSafeArea(.all)
+                    Color.black.opacity(0.18)
+                        .ignoresSafeArea()
+
+                    ProgressView("Sending...")
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 14)
+                        .background(Color.themeCardBackground.opacity(0.98))
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 }
             }
             .navigationTitle("Send Feedback")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") {
-                        presentationMode.wrappedValue.dismiss()
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(Color.themePrimary)
                 }
             }
-            .alert(isPresented: $showingConfirmation) {
-                Alert(
-                    title: Text("Thank You!"),
-                    message: Text("Your feedback has been submitted. We appreciate your input and will use it to make Motii even better."),
-                    dismissButton: .default(Text("OK")) {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                )
+            .alert("Thank You", isPresented: $showingConfirmation) {
+                Button("OK") {
+                    dismiss()
+                }
+            } message: {
+                Text("Your feedback has been submitted and will help guide the next improvements.")
             }
             .alert("Error Submitting Feedback", isPresented: $showingErrorAlert) {
                 Button("OK", role: .cancel) { }
@@ -322,31 +75,192 @@ struct FeedbackView: View {
                 Text(errorMessage)
             }
         }
-        .preferredColorScheme(.dark)
     }
-    
+
+    private var headerCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("FEEDBACK")
+                .font(.caption.weight(.semibold))
+                .tracking(2)
+                .foregroundColor(Color.themeSecondaryText)
+
+            Text("Tell me what needs to get better")
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundColor(Color.themeText)
+
+            Text("Use this to report friction, bugs, or missing features while the context is still fresh.")
+                .font(.subheadline)
+                .foregroundColor(Color.themeSecondaryText)
+        }
+        .padding(22)
+        .background(
+            LinearGradient(
+                colors: [Color.themeCardBackground.opacity(0.96), Color.themePrimary.opacity(0.12)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 28)
+                .stroke(Color.themeDivider.opacity(0.16), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+    }
+
+    private var feedbackTypeCard: some View {
+        cardSection(title: "Type", subtitle: "Choose the best fit so the feedback is easier to triage.") {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), spacing: 10)], spacing: 10) {
+                ForEach(Array(feedbackTypes.enumerated()), id: \.offset) { index, type in
+                    Button(action: {
+                        feedbackType = index
+                    }) {
+                        Text(type)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundColor(feedbackType == index ? Color.themeBackground : Color.themeText)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(feedbackType == index ? Color.themePrimary : Color.themeBackground.opacity(0.28))
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private var feedbackTextCard: some View {
+        cardSection(title: "Your Feedback", subtitle: "\(feedbackText.count)/500 characters") {
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Color.themeBackground.opacity(0.28))
+
+                if feedbackText.isEmpty {
+                    Text("Share your experience, what felt off, and what you expected instead.")
+                        .font(.subheadline)
+                        .foregroundColor(Color.themeSecondaryText)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 16)
+                        .allowsHitTesting(false)
+                }
+
+                TextEditor(text: $feedbackText)
+                    .scrollContentBackground(.hidden)
+                    .background(Color.clear)
+                    .foregroundColor(Color.themeText)
+                    .frame(minHeight: 180)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .onChange(of: feedbackText) { _, newValue in
+                        if newValue.count > 500 {
+                            feedbackText = String(newValue.prefix(500))
+                        }
+                    }
+            }
+        }
+    }
+
+    private var contactCard: some View {
+        cardSection(title: "Contact Email", subtitle: "Optional, if you want a follow-up.") {
+            TextField("your.email@example.com", text: $contactEmail)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .keyboardType(.emailAddress)
+                .foregroundColor(Color.themeText)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .background(Color.themeBackground.opacity(0.28))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+    }
+
+    private var deviceInfoCard: some View {
+        cardSection(title: "Diagnostics", subtitle: "Useful when reporting a bug or crash.") {
+            Toggle(isOn: $includeDeviceInfo) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Include device information")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(Color.themeText)
+
+                    Text("App and device details help reproduce issues faster. Feedback is sent securely and is not stored locally if the device is offline.")
+                        .font(.caption)
+                        .foregroundColor(Color.themeSecondaryText)
+                }
+            }
+            .toggleStyle(SwitchToggleStyle(tint: Color.themePrimary))
+        }
+    }
+
+    private var submitCard: some View {
+        VStack(spacing: 14) {
+            Button(action: submitFeedback) {
+                Text(isSubmitting ? "Submitting..." : "Submit Feedback")
+                    .font(.headline)
+                    .foregroundColor(Color.themeBackground)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(feedbackText.isEmpty ? Color.themeSecondaryText.opacity(0.45) : Color.themePrimary)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .disabled(feedbackText.isEmpty || isSubmitting)
+
+            Text("Short, specific feedback is the most useful.")
+                .font(.caption)
+                .foregroundColor(Color.themeSecondaryText)
+        }
+        .padding(20)
+        .background(Color.themeCardBackground.opacity(0.92))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.themeDivider.opacity(0.14), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    private func cardSection<Content: View>(
+        title: String,
+        subtitle: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline.weight(.semibold))
+                    .foregroundColor(Color.themeText)
+
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(Color.themeSecondaryText)
+            }
+
+            content()
+        }
+        .padding(20)
+        .background(Color.themeCardBackground.opacity(0.92))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.themeDivider.opacity(0.14), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
     private func submitFeedback() {
-        // Basic validation
-        if feedbackText.isEmpty {
+        guard !feedbackText.isEmpty else {
             return
         }
-        
-        // Email validation if provided
+
         if !contactEmail.isEmpty && !isValidEmail(contactEmail) {
             errorMessage = "Please enter a valid email address or leave the field empty."
             showingErrorAlert = true
             return
         }
-        
-        // Show loading state
+
         withAnimation {
             isSubmitting = true
         }
-        
-        // Get feedback type string
+
         let typeString = feedbackTypes[feedbackType]
-        
-        // Submit to Firebase
+
         Task {
             do {
                 let result = try await FeedbackService.sendFeedback(
@@ -355,9 +269,10 @@ struct FeedbackView: View {
                     email: contactEmail,
                     includeDeviceInfo: includeDeviceInfo
                 )
-                
+
                 await MainActor.run {
                     isSubmitting = false
+
                     if result.success {
                         showingConfirmation = true
                     } else {
@@ -374,11 +289,10 @@ struct FeedbackView: View {
             }
         }
     }
-    
-    // Basic email validation
+
     private func isValidEmail(_ email: String) -> Bool {
         let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
-        let emailPred = NSPredicate(format:"SELF MATCHES %@", emailRegEx)
+        let emailPred = NSPredicate(format: "SELF MATCHES %@", emailRegEx)
         return emailPred.evaluate(with: email)
     }
 }

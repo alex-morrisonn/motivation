@@ -4,6 +4,7 @@ import SwiftUI
 struct QuotesOnlyView: View {
     @ObservedObject private var quoteService = QuoteService.shared
     @ObservedObject private var themeManager = ThemeManager.shared
+    @ObservedObject private var profileManager = ProfileManager.shared
     @State private var quote: Quote
     @State private var showingShareSheet = false
 
@@ -153,9 +154,23 @@ struct QuotesOnlyView: View {
                     .font(.subheadline)
                     .foregroundColor(Color.themeSecondaryText)
                     .fixedSize(horizontal: false, vertical: true)
+
+                Text("Applying this sends it into today’s discipline flow so you can act on it instead of just admiring it.")
+                    .font(.caption)
+                    .foregroundColor(Color.themeSecondaryText.opacity(0.85))
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             HStack(spacing: 12) {
+                quoteActionButton(
+                    title: "Apply to Today",
+                    systemImage: "sparkles.rectangle.stack.fill",
+                    tint: Color.themePrimary,
+                    background: Color.themePrimary.opacity(0.12)
+                ) {
+                    applyQuoteToToday()
+                }
+
                 quoteActionButton(
                     title: quoteService.isFavorite(quote) ? "Saved" : "Save",
                     systemImage: quoteService.isFavorite(quote) ? "heart.fill" : "heart",
@@ -313,6 +328,22 @@ struct QuotesOnlyView: View {
         } else {
             quoteService.addToFavorites(quote)
         }
+    }
+
+    private func applyQuoteToToday() {
+        let option = quoteService.suggestedTaskOption(for: quote, focus: profileManager.focus)
+        DisciplineSystemState.shared.updateTodayTask(for: option.category, optionID: option.id)
+        Haptics.success()
+        NotificationCenter.default.post(
+            name: .quoteAppliedToToday,
+            object: nil,
+            userInfo: [AppNotification.quoteTaskTitleUserInfoKey: option.title]
+        )
+        NotificationCenter.default.post(
+            name: .tabSelectionChanged,
+            object: nil,
+            userInfo: [AppNotification.selectedTabUserInfoKey: 0]
+        )
     }
 }
 

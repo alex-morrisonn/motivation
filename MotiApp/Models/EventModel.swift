@@ -19,15 +19,8 @@ struct Event: Identifiable, Codable, Equatable {
     var tintHex: String = EventTintPalette.defaultHex
     var isAllDay: Bool = false
 
-    enum CodingKeys: String, CodingKey {
-        case id
-        case title
-        case date
-        case notes
-        case isCompleted
-        case iconName
-        case tintHex
-        case isAllDay
+    private enum CodingKeys: String, CodingKey {
+        case id, title, date, notes, isCompleted, iconName, tintHex, isAllDay
     }
 
     init(
@@ -74,16 +67,6 @@ struct Event: Identifiable, Codable, Equatable {
         Calendar.current.isDateInToday(date)
     }
 
-    /// Check if event is in the past
-    var isPast: Bool {
-        date < Date()
-    }
-
-    /// Check if event is in the future
-    var isFuture: Bool {
-        date > Date()
-    }
-
     var tintColor: Color {
         EventTintPalette.color(for: tintHex)
     }
@@ -94,44 +77,12 @@ struct Event: Identifiable, Codable, Equatable {
             return "All day"
         }
 
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        return formatter.string(from: date)
+        return DateFormatter.eventTime.string(from: date)
     }
 
     /// Returns a formatted date string
     var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        return formatter.string(from: date)
-    }
-
-    // MARK: - Factory Methods
-
-    /// Create a new event scheduled for today
-    static func createForToday(title: String, notes: String = "") -> Event {
-        let today = Date()
-        return Event(title: title, date: today, notes: notes)
-    }
-
-    /// Create a new event scheduled for tomorrow
-    static func createForTomorrow(title: String, notes: String = "") -> Event {
-        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
-        return Event(title: title, date: tomorrow, notes: notes)
-    }
-
-    /// Create a sample event for UI previews
-    static var sample: Event {
-        Event(
-            id: UUID(),
-            title: "Sample Event",
-            date: Date(),
-            notes: "This is a sample event for testing",
-            isCompleted: false,
-            iconName: "sparkles",
-            tintHex: EventTintPalette.options[0].hex
-        )
+        return DateFormatter.mediumDate.string(from: date)
     }
 }
 

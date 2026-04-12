@@ -11,21 +11,8 @@
 			<string>com.alexmorrison.moti</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>motii</string>
+				<string>moti</string>
 			</array>
-		</dict>
-	</array>
-	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3143440761815563~5924361622</string>
-	<key>NSPrivacyCollectedDataTypes</key>
-	<array>
-		<dict>
-			<key>NSPrivacyCollectedDataType</key>
-			<string>NSPrivacyCollectedDataTypeOtherDataTypes</string>
-			<key>NSPrivacyCollectedDataTypeLinked</key>
-			<true/>
-			<key>NSPrivacyCollectedDataTypeTracking</key>
-			<true/>
 		</dict>
 	</array>
 	<key>NSUserNotificationsUsageDescription</key>

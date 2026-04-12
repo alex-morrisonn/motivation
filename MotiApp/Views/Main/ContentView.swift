@@ -1,5 +1,4 @@
 import SwiftUI
-import AppTrackingTransparency
 
 struct ContentView: View {
     // MARK: - Properties
@@ -10,6 +9,7 @@ struct ContentView: View {
     // Environment objects and observable objects
     @EnvironmentObject var notificationManager: NotificationManager
     @ObservedObject var streakManager = StreakManager.shared
+    @ObservedObject private var profileManager = ProfileManager.shared
     
     // Theme manager
     @ObservedObject var themeManager = ThemeManager.shared
@@ -18,13 +18,13 @@ struct ContentView: View {
     @State private var showingStreakCelebration = false
     @State private var previousStreak = 0
     @State private var showingPremiumAlert = false
-    @State private var showingTrackingConsent = false
+    @State private var showingAnalyticsConsent = false
+    @State private var showingWeeklyQuestCelebration = false
+    @State private var hasRegisteredSessionOpen = false
     
-    // Track whether tracking consent has been shown
-    @AppStorage("hasShownTrackingConsent") private var hasShownTrackingConsent = false
-    
-    // Add observer for tab selection changes
-    @State private var tabNavigationCancellable: NSObjectProtocol? = nil
+    @AppStorage(AppDefaultsKey.analyticsConsentState) private var analyticsConsentState = AnalyticsConsentState.unknown.rawValue
+    @AppStorage(AppDefaultsKey.shouldPromptAnalyticsConsent) private var shouldPromptAnalyticsConsent = false
+    @AppStorage(AppDefaultsKey.analyticsConsentEligibleOpenCount) private var analyticsConsentEligibleOpenCount = 0
     
     // MARK: - Body
     
@@ -67,37 +67,18 @@ struct ContentView: View {
         .preferredColorScheme(themeManager.currentTheme.isDark ? .dark : .light) // Set color scheme based on theme
         .onAppear {
             themeManager.applyAppearance()
-
-            // Add observer to listen for tab selection changes
-            tabNavigationCancellable = NotificationCenter.default.addObserver(
-                forName: Notification.Name("TabSelectionChanged"),
-                object: nil,
-                queue: .main
-            ) { notification in
-                if let userInfo = notification.userInfo,
-                   let newTab = userInfo["selectedTab"] as? Int {
-                    withAnimation {
-                        self.selectedTab = newTab
-                    }
-                }
-            }
+            registerSessionOpenIfNeeded()
         }
-        .onDisappear {
-            // Remove observer when view disappears
-            if let cancellable = tabNavigationCancellable {
-                NotificationCenter.default.removeObserver(cancellable)
-            }
-        }
-        .fullScreenCover(isPresented: $showingTrackingConsent) {
-            TrackingConsentView()
+        .fullScreenCover(isPresented: $showingAnalyticsConsent) {
+            AnalyticsConsentView()
         }
         .alert("Premium Coming Soon", isPresented: $showingPremiumAlert) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text("Premium features are currently under development. For now, enjoy the free version with all quotes and widgets available!")
+                    Text("Premium features are currently under development. For now, enjoy the free version with all quotes and widgets available.")
         }
         .onOpenURL { url in
-            if url.scheme == "moti" {
+            if url.scheme == AppMetadata.deepLinkScheme {
                 if url.host == "calendar" || url.host == "plan" {
                     // Navigate to planning tab
                     self.selectedTab = 2
@@ -113,15 +94,30 @@ struct ContentView: View {
                 }
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenQuotesTab"))) { _ in
-            // When a notification is tapped, navigate to the quotes tab
-            self.selectedTab = 1 // Quotes tab
+        .onReceive(NotificationCenter.default.publisher(for: .tabSelectionChanged)) { notification in
+            guard
+                let newTab = notification.userInfo?[AppNotification.selectedTabUserInfoKey] as? Int
+            else {
+                return
+            }
+
+            withAnimation {
+                selectedTab = newTab
+            }
+
+            checkAndShowAnalyticsConsentIfNeeded(for: newTab)
         }
-        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenStreakDetails"))) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: .openQuotesTab)) { _ in
+            // When a notification is tapped, navigate to the quotes tab
+            withAnimation {
+                self.selectedTab = 1 // Quotes tab
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openStreakDetails)) { _ in
             // Open streak details when a streak notification is tapped
             self.selectedTab = 3 // Index of the More tab
         }
-        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("StreakUpdated"))) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: .streakUpdated)) { _ in
             // Check if streak increased (but not first day)
             if streakManager.currentStreak > previousStreak && previousStreak > 0 {
                 // Only show celebration for meaningful increases (no need to celebrate the 1st day)
@@ -131,18 +127,23 @@ struct ContentView: View {
             // Update previous streak for next comparison
             previousStreak = streakManager.currentStreak
         }
-        .onAppear {
-            // Check for tracking permission status on app appear
-            checkAndShowTrackingConsentIfNeeded()
-        }
         .onChange(of: themeManager.currentTheme.id) { _, _ in
             themeManager.applyAppearance()
+        }
+        .onChange(of: selectedTab) { _, newValue in
+            checkAndShowAnalyticsConsentIfNeeded(for: newValue)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .weeklyQuestCompleted)) { _ in
+            showingWeeklyQuestCelebration = true
         }
         .fullScreenCover(isPresented: $showingStreakCelebration) {
             StreakCelebrationView(
                 streakCount: streakManager.currentStreak,
                 isShowing: $showingStreakCelebration
             )
+        }
+        .fullScreenCover(isPresented: $showingWeeklyQuestCelebration) {
+            WeeklyQuestCelebrationView(isShowing: $showingWeeklyQuestCelebration)
         }
     }
     
@@ -153,27 +154,26 @@ struct ContentView: View {
         showingPremiumAlert = true
     }
     
-    /// Check tracking status and show consent if needed
-    private func checkAndShowTrackingConsentIfNeeded() {
-        // Skip the check if the tracking consent has already been shown
-        // OR if we're coming from SplashScreenView (which already handles this)
-        if !hasShownTrackingConsent && !UserDefaults.standard.bool(forKey: "isFromSplashScreen") {
-            if #available(iOS 14.0, *) {
-                // Get the current status directly
-                let status = ATTrackingManager.trackingAuthorizationStatus
-                
-                DispatchQueue.main.async {
-                    if status == .notDetermined {
-                        // Present tracking consent after a small delay
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                            showingTrackingConsent = true
-                        }
-                    }
-                }
-            }
-        } else {
-            // Reset the flag for next time
-            UserDefaults.standard.removeObject(forKey: "isFromSplashScreen")
+    private func registerSessionOpenIfNeeded() {
+        guard !hasRegisteredSessionOpen else { return }
+        hasRegisteredSessionOpen = true
+        analyticsConsentEligibleOpenCount += 1
+    }
+
+    private func checkAndShowAnalyticsConsentIfNeeded(for selectedTab: Int) {
+        guard
+            profileManager.hasCompletedOnboarding,
+            shouldPromptAnalyticsConsent,
+            analyticsConsentState == AnalyticsConsentState.unknown.rawValue,
+            selectedTab == 3,
+            analyticsConsentEligibleOpenCount >= 3
+        else {
+            return
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.25) {
+            showingAnalyticsConsent = true
+            shouldPromptAnalyticsConsent = false
         }
     }
 }

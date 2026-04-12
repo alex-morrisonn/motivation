@@ -1,97 +1,137 @@
 import SwiftUI
 
 struct AboutView: View {
-    @Environment(\.presentationMode) var presentationMode
-    
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
-                Color.black.edgesIgnoringSafeArea(.all)
-                
-                ScrollView {
+                LinearGradient(
+                    colors: [
+                        Color.themeBackground,
+                        Color.themeCardBackground.opacity(0.82),
+                        Color.themeBackground
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+
+                ScrollView(showsIndicators: false) {
                     VStack(spacing: 20) {
-                        Image(systemName: "quote.bubble.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.white)
-                            .padding(.top, 30)
-                        
-                        Text("Moti")
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundColor(.white)
-                        
-                        Text("Version 1.0")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                        
-                        Divider()
-                            .background(Color.white.opacity(0.2))
-                            .padding(.horizontal, 40)
-                            .padding(.vertical, 20)
-                        
-                        Text("About Moti")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal)
-                        
-                        Text("Motii is a daily motivation companion designed to inspire and encourage you through life's journey. With a collection of carefully curated quotes across multiple categories, Motii helps you stay focused, positive, and motivated.")
-                            .font(.body)
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(.horizontal)
-                            .multilineTextAlignment(.leading)
-                        
-                        VStack(alignment: .leading, spacing: 15) {
-                            FeaturesRow(icon: "quote.bubble", title: "Daily Quotes", description: "A new inspirational quote each day")
-                            FeaturesRow(icon: "calendar", title: "Event Tracking", description: "Keep track of important dates and events")
-                            FeaturesRow(icon: "square.grid.2x2", title: "Home & Lock Screen Widgets", description: "Quick inspiration at a glance")
-                            FeaturesRow(icon: "heart", title: "Favorites Collection", description: "Save quotes that resonate with you")
-                        }
-                        .padding()
-                        .background(Color(UIColor.systemGray6).opacity(0.2))
-                        .cornerRadius(16)
-                        .padding(.horizontal)
-                        .padding(.top, 10)
-                        
-                        Spacer(minLength: 40)
+                        headerCard
+                        storyCard
+                        featureCard
                     }
+                    .padding(.horizontal, 18)
+                    .padding(.top, 18)
+                    .padding(.bottom, 32)
                 }
             }
             .navigationTitle("About")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
+                    .foregroundColor(Color.themePrimary)
                 }
             }
         }
-        .preferredColorScheme(.dark)
     }
-}
 
-// Features row for About view
-struct FeaturesRow: View {
-    let icon: String
-    let title: String
-    let description: String
-    
-    var body: some View {
-        HStack(spacing: 15) {
+    private var headerCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("ABOUT")
+                .font(.caption.weight(.semibold))
+                .tracking(2)
+                .foregroundColor(Color.themeSecondaryText)
+
+            Text("Motii helps turn motivation into structure")
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundColor(Color.themeText)
+
+            Text("Quotes are useful, but only if they carry into action. The app is built to connect mindset, daily tasks, and a plan you can actually follow.")
+                .font(.subheadline)
+                .foregroundColor(Color.themeSecondaryText)
+        }
+        .padding(22)
+        .background(
+            LinearGradient(
+                colors: [Color.themeCardBackground.opacity(0.96), Color.themePrimary.opacity(0.12)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 28)
+                .stroke(Color.themeDivider.opacity(0.16), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+    }
+
+    private var storyCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("What it is for")
+                .font(.headline.weight(.semibold))
+                .foregroundColor(Color.themeText)
+
+            Text("Motii is designed to give each day a little more direction. It starts with a quote, pushes that into a practical focus, and keeps the plan visible through reminders, streaks, and widgets.")
+                .font(.subheadline)
+                .foregroundColor(Color.themeSecondaryText)
+        }
+        .padding(20)
+        .background(Color.themeCardBackground.opacity(0.92))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.themeDivider.opacity(0.14), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    private var featureCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Core Features")
+                .font(.headline.weight(.semibold))
+                .foregroundColor(Color.themeText)
+
+            VStack(spacing: 14) {
+                featureRow(icon: "quote.bubble.fill", title: "Daily Quotes", description: "A focused thought for the day.")
+                featureRow(icon: "flame.fill", title: "Discipline System", description: "Small actions that keep momentum visible.")
+                featureRow(icon: "calendar.badge.clock", title: "Planning", description: "Turn ideas into scheduled steps.")
+                featureRow(icon: "square.grid.2x2.fill", title: "Widgets", description: "Keep the app visible even when you are not inside it.")
+            }
+        }
+        .padding(20)
+        .background(Color.themeCardBackground.opacity(0.92))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.themeDivider.opacity(0.14), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    private func featureRow(icon: String, title: String, description: String) -> some View {
+        HStack(spacing: 14) {
             Image(systemName: icon)
-                .font(.system(size: 22))
-                .foregroundColor(.white)
-                .frame(width: 24)
-            
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(Color.themePrimary)
+                .frame(width: 34, height: 34)
+                .background(Color.themePrimary.opacity(0.12))
+                .clipShape(Circle())
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.headline)
-                    .foregroundColor(.white)
-                
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(Color.themeText)
+
                 Text(description)
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
+                    .font(.caption)
+                    .foregroundColor(Color.themeSecondaryText)
             }
+
+            Spacer()
         }
     }
 }

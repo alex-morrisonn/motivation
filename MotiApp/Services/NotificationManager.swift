@@ -9,7 +9,8 @@ class NotificationManager: ObservableObject {
     static let shared = NotificationManager()
     
     /// Published properties that will update the UI when changed
-    @Published var isNotificationsEnabled: Bool = true
+    @Published private(set) var isNotificationsEnabled: Bool = false
+    @Published private(set) var authorizationStatus: UNAuthorizationStatus = .notDetermined
     @Published var reminderTime: Date = {
         // Default to 9:00 AM
         var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
@@ -40,7 +41,7 @@ class NotificationManager: ObservableObject {
     }
     
     private let notificationCenter = UNUserNotificationCenter.current()
-    private let notificationIdentifier = "com.MotiApp.dailyReminder"
+    private let notificationIdentifier = "com.alexmorrison.moti.dailyReminder"
     
     // User defaults keys for persistence
     private let enabledKey = "notificationsEnabled"
@@ -50,24 +51,7 @@ class NotificationManager: ObservableObject {
     
     private init() {
         loadSettings()
-        
-        // Check if this is the first launch
-        let defaults = UserDefaults.standard
-        let isFirstLaunch = defaults.object(forKey: enabledKey) == nil
-        
-        if isFirstLaunch {
-            // First launch - request permission automatically
-            requestNotificationPermission { granted in
-                // Even if permission is denied, we keep the UI toggle on
-                // The user will see a permission alert when they interact with the app
-                if granted {
-                    self.scheduleNotification()
-                }
-            }
-        } else {
-            // Not first launch - check status
-            checkNotificationStatus()
-        }
+        checkNotificationStatus()
     }
     
     // MARK: - Public Methods
@@ -80,15 +64,17 @@ class NotificationManager: ObservableObject {
                 if let error = error {
                     print("Error requesting notification permission: \(error.localizedDescription)")
                 }
-                
+
+                self.authorizationStatus = granted ? .authorized : .denied
+                self.isNotificationsEnabled = granted
+                self.saveSettings()
+
                 if granted {
-                    self.isNotificationsEnabled = true
-                    self.saveSettings()
-                    if self.isNotificationsEnabled {
-                        self.scheduleNotification()
-                    }
+                    self.scheduleNotification()
+                } else {
+                    self.cancelNotifications()
                 }
-                
+
                 completion(granted)
             }
         }
@@ -98,18 +84,19 @@ class NotificationManager: ObservableObject {
     func checkNotificationStatus() {
         notificationCenter.getNotificationSettings { settings in
             DispatchQueue.main.async {
+                self.authorizationStatus = settings.authorizationStatus
+
                 switch settings.authorizationStatus {
                 case .authorized, .provisional, .ephemeral:
-                    // Permissions are granted, schedule if enabled in app
                     if self.isNotificationsEnabled {
                         self.scheduleNotification()
                     }
                 case .denied, .notDetermined:
-                    // If permissions are denied, we keep the UI enabled but notifications won't work
-                    // This encourages the user to grant permissions when interacting with the app
-                    break
+                    self.isNotificationsEnabled = false
+                    self.cancelNotifications()
                 @unknown default:
-                    break
+                    self.isNotificationsEnabled = false
+                    self.cancelNotifications()
                 }
             }
         }
@@ -118,28 +105,34 @@ class NotificationManager: ObservableObject {
     /// Toggle notifications on/off
     /// - Parameter enabled: Boolean indicating whether notifications should be enabled
     func toggleNotifications(_ enabled: Bool) {
-        self.isNotificationsEnabled = enabled
-        
-        if enabled {
-            // First check/request permission if enabled
-            notificationCenter.getNotificationSettings { settings in
-                DispatchQueue.main.async {
-                    if settings.authorizationStatus == .authorized {
-                        // Already authorized, just schedule
-                        self.scheduleNotification()
-                    } else {
-                        // Need to request permission
-                        self.requestNotificationPermission { granted in
-                            // Even if permission denied, keep UI toggle on to encourage enabling later
-                        }
-                    }
+        guard enabled else {
+            self.isNotificationsEnabled = false
+            cancelNotifications()
+            saveSettings()
+            return
+        }
+
+        notificationCenter.getNotificationSettings { settings in
+            DispatchQueue.main.async {
+                self.authorizationStatus = settings.authorizationStatus
+
+                switch settings.authorizationStatus {
+                case .authorized, .provisional, .ephemeral:
+                    self.isNotificationsEnabled = true
+                    self.saveSettings()
+                    self.scheduleNotification()
+                case .notDetermined:
+                    self.requestNotificationPermission { _ in }
+                case .denied:
+                    self.isNotificationsEnabled = false
+                    self.cancelNotifications()
+                    self.saveSettings()
+                @unknown default:
+                    self.isNotificationsEnabled = false
+                    self.cancelNotifications()
                     self.saveSettings()
                 }
             }
-        } else {
-            // If disabled, cancel scheduled notifications
-            cancelNotifications()
-            saveSettings()
         }
     }
     
@@ -245,6 +238,32 @@ class NotificationManager: ObservableObject {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
         return formatter.string(from: reminderTime)
+    }
+
+    var remindersStatusText: String {
+        switch authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+            return isNotificationsEnabled ? "On at \(getReminderTimeFormatted())" : "Off"
+        case .notDetermined:
+            return "Off"
+        case .denied:
+            return "Off in Settings"
+        @unknown default:
+            return "Unavailable"
+        }
+    }
+
+    var remindersDetailText: String {
+        switch authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+            return isNotificationsEnabled ? "Daily reminder scheduled." : "Enable reminders when you want a daily prompt."
+        case .notDetermined:
+            return "Enable reminders when you want a daily prompt."
+        case .denied:
+            return "Notifications are blocked at the system level."
+        @unknown default:
+            return "Notification status could not be determined."
+        }
     }
 }
 

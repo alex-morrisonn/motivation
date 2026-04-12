@@ -1,104 +1,113 @@
 import SwiftUI
-import AppTrackingTransparency
 import FirebaseAnalytics
 
-struct TrackingConsentView: View {
-    @Environment(\.presentationMode) var presentationMode
-    
+struct AnalyticsConsentView: View {
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         ZStack {
-            // Background
-            Color.black.edgesIgnoringSafeArea(.all)
-            
+            LinearGradient(
+                colors: [
+                    Color.themeBackground,
+                    Color.themeCardBackground.opacity(0.86),
+                    Color.themeBackground
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+
             VStack(spacing: 24) {
-                // Icon - using a neutral icon
-                Image(systemName: "info.circle.fill")
-                    .font(.system(size: 60))
-                    .foregroundColor(.blue)
-                    .padding(.top, 40)
-                
-                // Title - neutral language
-                Text("About App Tracking")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                
-                // Description - neutral explanation
-                Text("This app uses device identifiers to measure app usage and improve your experience. On the next screen, you can choose whether to allow tracking.")
-                    .font(.body)
-                    .foregroundColor(.white.opacity(0.9))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 30)
-                
                 Spacer()
-                
-                // Privacy notes - neutral information
-                VStack(alignment: .leading, spacing: 16) {
-                    privacyPoint(icon: "lock.shield", text: "Your data is handled according to our privacy policy")
-                    privacyPoint(icon: "person.crop.circle", text: "You can change this setting anytime in your device settings")
+
+                VStack(spacing: 18) {
+                    Image(systemName: "hand.raised.app.fill")
+                        .font(.system(size: 42))
+                        .foregroundColor(Color.themePrimary)
+                        .frame(width: 86, height: 86)
+                        .background(Color.themePrimary.opacity(0.12))
+                        .clipShape(Circle())
+
+                    Text("Analytics Preferences")
+                        .font(.system(size: 30, weight: .bold, design: .rounded))
+                        .foregroundColor(Color.themeText)
+
+                    Text("Motii can use privacy-friendly product analytics to understand which features are useful and improve future releases. Core app features work the same either way.")
+                        .font(.body)
+                        .foregroundColor(Color.themeSecondaryText)
+                        .multilineTextAlignment(.center)
                 }
-                .padding()
-                .background(Color.white.opacity(0.05))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                
+
+                VStack(alignment: .leading, spacing: 14) {
+                    privacyPoint(icon: "lock.shield", text: "Motii does not use this screen for cross-app tracking.")
+                    privacyPoint(icon: "chart.bar", text: "Allowing analytics helps measure feature usage and app quality.")
+                    privacyPoint(icon: "gearshape", text: "You can change this choice later from within the app.")
+                }
+                .padding(20)
+                .background(Color.themeCardBackground.opacity(0.92))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(Color.themeDivider.opacity(0.14), lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+
                 Spacer()
-                
-                // ONLY ONE button that leads directly to system prompt
-                Button(action: {
-                    proceedToSystemPrompt()
-                }) {
-                    Text("Continue")
-                        .font(.headline)
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.white)
-                        .cornerRadius(12)
+
+                VStack(spacing: 12) {
+                    Button(action: allowAnalytics) {
+                        Text("Allow Analytics")
+                            .font(.headline)
+                            .foregroundColor(Color.themeBackground)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.themePrimary)
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+
+                    Button(action: declineAnalytics) {
+                        Text("Not Now")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundColor(Color.themeSecondaryText)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.themeBackground.opacity(0.24))
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 30)
-                .padding(.bottom, 40)
             }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 32)
         }
     }
-    
-    /// UI component for privacy points
+
     private func privacyPoint(icon: String, text: String) -> some View {
         HStack(spacing: 14) {
             Image(systemName: icon)
-                .font(.system(size: 18))
-                .foregroundColor(.blue.opacity(0.8))
-                .frame(width: 24)
-            
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(Color.themePrimary)
+                .frame(width: 32, height: 32)
+                .background(Color.themePrimary.opacity(0.12))
+                .clipShape(Circle())
+
             Text(text)
                 .font(.subheadline)
-                .foregroundColor(.white.opacity(0.9))
-            
+                .foregroundColor(Color.themeText)
+
             Spacer()
         }
     }
-    
-    /// Proceed directly to system prompt - no way to skip
-    private func proceedToSystemPrompt() {
-        if #available(iOS 14.0, *) {
-            ATTrackingManager.requestTrackingAuthorization { status in
-                // Update analytics based on user's choice
-                let isEnabled = status == .authorized
-                DispatchQueue.main.async {
-                    FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(isEnabled)
-                    // Mark that we've shown the consent view
-                    UserDefaults.standard.set(true, forKey: "hasShownTrackingConsent")
-                    self.presentationMode.wrappedValue.dismiss()
-                }
-            }
-        } else {
-            // For iOS versions below 14, handle appropriately
-            DispatchQueue.main.async {
-                FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(true)
-                UserDefaults.standard.set(true, forKey: "hasShownTrackingConsent")
-                self.presentationMode.wrappedValue.dismiss()
-            }
-        }
+
+    private func allowAnalytics() {
+        FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(true)
+        UserDefaults.standard.set(AnalyticsConsentState.allowed.rawValue, forKey: AppDefaultsKey.analyticsConsentState)
+        dismiss()
+    }
+
+    private func declineAnalytics() {
+        FirebaseAnalytics.Analytics.setAnalyticsCollectionEnabled(false)
+        UserDefaults.standard.set(AnalyticsConsentState.declined.rawValue, forKey: AppDefaultsKey.analyticsConsentState)
+        dismiss()
     }
 }

@@ -10,27 +10,6 @@ final class EventService: ObservableObject {
     // Singleton instance for shared access
     static let shared = EventService()
 
-    // Error types for better error handling
-    enum EventServiceError: Error {
-        case saveFailed
-        case loadFailed
-        case updateFailed
-        case eventNotFound
-        case appGroupAccessDenied
-        case invalidEventData
-
-        var description: String {
-            switch self {
-            case .saveFailed: return "Failed to save events"
-            case .loadFailed: return "Failed to load events"
-            case .updateFailed: return "Failed to update event"
-            case .eventNotFound: return "Event not found"
-            case .appGroupAccessDenied: return "Failed to access app group"
-            case .invalidEventData: return "Invalid event data"
-            }
-        }
-    }
-
     // Published property with all events
     @Published var events: [Event] = []
 
@@ -125,9 +104,7 @@ final class EventService: ObservableObject {
     func hasDisciplineEvent(for task: DisciplineTask, on date: Date = Date()) -> Bool {
         let calendar = Calendar.current
         return events.contains { event in
-            calendar.isDate(event.date, inSameDayAs: date) &&
-                event.title == task.title &&
-                event.notes.contains("Discipline • \(task.category.rawValue)")
+            matchesDisciplineEvent(event, task: task, on: date, calendar: calendar)
         }
     }
 
@@ -136,9 +113,7 @@ final class EventService: ObservableObject {
         let calendar = Calendar.current
 
         if let existingEvent = events.first(where: { event in
-            calendar.isDate(event.date, inSameDayAs: date) &&
-                event.title == task.title &&
-                event.notes.contains("Discipline • \(task.category.rawValue)")
+            matchesDisciplineEvent(event, task: task, on: date, calendar: calendar)
         }) {
             return existingEvent
         }
@@ -161,9 +136,7 @@ final class EventService: ObservableObject {
         let calendar = Calendar.current
 
         guard let index = events.firstIndex(where: { event in
-            calendar.isDate(event.date, inSameDayAs: date) &&
-                event.title == task.title &&
-                event.notes.contains("Discipline • \(task.category.rawValue)")
+            matchesDisciplineEvent(event, task: task, on: date, calendar: calendar)
         }) else {
             return
         }
@@ -399,8 +372,23 @@ final class EventService: ObservableObject {
 
     private func disciplineCategory(for event: Event) -> DisciplineCategory? {
         DisciplineCategory.allCases.first { category in
-            event.notes.contains("Discipline • \(category.rawValue)")
+            event.notes.contains(disciplineMarker(for: category))
         }
+    }
+
+    private func matchesDisciplineEvent(
+        _ event: Event,
+        task: DisciplineTask,
+        on date: Date,
+        calendar: Calendar
+    ) -> Bool {
+        calendar.isDate(event.date, inSameDayAs: date) &&
+            event.title == task.title &&
+            event.notes.contains(disciplineMarker(for: task.category))
+    }
+
+    private func disciplineMarker(for category: DisciplineCategory) -> String {
+        "Discipline • \(category.rawValue)"
     }
 
     private func suggestedDate(for category: DisciplineCategory, on date: Date) -> Date {

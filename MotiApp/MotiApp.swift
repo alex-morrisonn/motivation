@@ -1,6 +1,5 @@
 import SwiftUI
 import Firebase
-import FirebaseAnalytics  // Explicit import added
 
 @main
 struct MotiApp: App {
@@ -14,11 +13,6 @@ struct MotiApp: App {
     init() {
         // Configure initial appearance settings
         configureAppearance()
-        
-        // Log app launch for analytics
-        #if !DEBUG
-        FirebaseAnalytics.Analytics.logEvent("app_launch", parameters: nil)
-        #endif
     }
     
     var body: some Scene {
@@ -27,9 +21,7 @@ struct MotiApp: App {
                 SplashScreenView()
                     .environmentObject(notificationManager)
             }
-            .onOpenURL { url in
-                handleDeepLink(url)
-            }
+            .onOpenURL(perform: handleDeepLink)
         }
     }
     
@@ -40,13 +32,11 @@ struct MotiApp: App {
     
     // Handle deep links
     private func handleDeepLink(_ url: URL) {
-        guard url.scheme == "moti" else { return }
-        
-        print("Received deep link: \(url.absoluteString)")
-        
+        guard url.scheme == AppMetadata.deepLinkScheme else { return }
+
         // Post notification for other components to handle specific deep links
         NotificationCenter.default.post(
-            name: Notification.Name("DeepLinkReceived"),
+            name: .deepLinkReceived,
             object: nil,
             userInfo: ["url": url]
         )

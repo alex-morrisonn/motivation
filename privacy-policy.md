@@ -1,54 +1,74 @@
 # Privacy Policy
 
-## Introduction
+Last updated: January 1, 2026
 
-Welcome to Motii! This Privacy Policy explains how we collect, use, and share information about you when you use our mobile application. By using Motii, you agree to the practices described below.
+This Privacy Policy explains how Motii handles information when you use the app.
 
-## Information We Collect
+## Overview
 
-- **Usage Data**: Information about your interactions with the app, including features used, time spent, and content engagement.
-- **Device Information**: Details such as your device model, operating system, unique identifiers, and network information.
-- **User Preferences**: Your in-app settings, favorites, and preferences to help personalize your experience.
+Motii is designed so that most personal app data stays on your device. The app may also use Firebase services for analytics, crash diagnostics, and feedback processing, depending on the feature and your choices.
 
-## How We Use Your Information
+## Information Stored On Your Device
 
-We use the information we collect to:
+Motii stores the following locally on your device so the app and widgets can function:
 
-- Operate, maintain, and improve the app
-- Understand how users interact with the app to enhance the experience
-- Identify and resolve technical issues
-- Monitor usage trends and perform analytics
+- Favorites
+- Streak and progress data
+- Reminder preferences
+- Theme and onboarding preferences
+- Planned events and related calendar-style content
+
+## Feedback You Submit
+
+If you choose to send feedback from inside the app, Motii may collect:
+
+- The feedback message you write
+- The feedback category you choose
+- Your optional contact email
+- Optional device diagnostics you choose to include
+
+This feedback is submitted to Firebase Firestore. If your device is offline, the app does not store that feedback locally for later upload.
+
+## Analytics and Crash Diagnostics
+
+If you allow analytics, Motii may send app usage events to Firebase Analytics to help improve features and understand which parts of the app are useful.
+
+Motii may also use Firebase Crashlytics to receive crash diagnostics and technical stability information.
+
+Motii does not use this flow for cross-app tracking.
+
+## Notifications
+
+If you enable notifications, Motii schedules local reminders on your device at the time you choose. Notification content is generated from the app’s quote library.
 
 ## Third-Party Services
 
-We use trusted third-party services to support our app functionality:
+Motii uses Google Firebase services, which may process technical information related to app performance, app version, device type, coarse usage activity, crash diagnostics, and the feedback data you choose to submit.
 
-- **Firebase Analytics** – Collects usage data and performance metrics
-- **Firebase Crashlytics** – Tracks crashes and technical issues
+Relevant third-party materials:
 
-These services may receive data directly from your device. Please review their privacy policies to understand how your data is handled.
-
-## Data Storage
-
-- Most app data is stored locally on your device.
-- Some information (e.g., analytics data) may be stored on secure servers operated by us or our service providers.
+- Firebase: https://firebase.google.com/support/privacy
+- Google Privacy Policy: https://policies.google.com/privacy
 
 ## Your Choices
 
-- **Opt-Out of Analytics**: You can disable analytics tracking via your device settings.
-- **Data Deletion**: To remove all app data, simply uninstall the app from your device.
+You can:
 
-## Children's Privacy
+- Decline analytics in the app
+- Disable notifications in iPhone Settings
+- Remove local app data by deleting the app
+- Request deletion of submitted feedback by contacting support
 
-Motii is not intended for children under 13. We do not knowingly collect personal data from anyone under 13. If you believe your child has provided us with personal information, please contact us so we can delete it.
+## Children’s Privacy
 
-## Changes to This Privacy Policy
+Motii is not directed to children under 13, and we do not knowingly collect personal information from children under 13.
 
-We may update this Privacy Policy occasionally. All changes will be posted within the app. Continued use after updates indicates your acceptance of the revised policy.
+## Changes To This Policy
 
-## Contact Us
+This Privacy Policy may be updated from time to time. Material changes will be reflected in the app and on this page.
 
-If you have any questions or concerns, please contact us at:
-**motii.team@gmail.com**
+## Contact
 
-**Last Updated:** March 2025
+For privacy questions, support, or deletion requests, contact:
+
+`motii.team@gmail.com`

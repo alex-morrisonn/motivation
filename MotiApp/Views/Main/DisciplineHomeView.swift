@@ -7,13 +7,16 @@ struct DisciplineHomeView: View {
     @ObservedObject private var gamification = GamificationManager.shared
     @ObservedObject private var eventService = EventService.shared
     @ObservedObject private var themeManager = ThemeManager.shared
+    @ObservedObject private var profileManager = ProfileManager.shared
 
+    @AppStorage("hasSeenHomeWalkthrough") private var hasSeenHomeWalkthrough = false
     @State private var showingTaskEditor = false
     @State private var showingHistory = false
     @State private var showingJourney = false
     @State private var celebratingCompletion = false
     @State private var xpPopup: Int? = nil
     @State private var lastXPResult: XPAwardResult? = nil
+    @State private var quoteAppliedTaskTitle: String?
 
     var body: some View {
         ZStack {
@@ -31,9 +34,21 @@ struct DisciplineHomeView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
                     overviewCard
+                    if let quoteAppliedTaskTitle {
+                        quoteAppliedCard(taskTitle: quoteAppliedTaskTitle)
+                    }
+                    if shouldShowHomeWalkthrough {
+                        homeWalkthroughCard
+                    }
+                    nextStepCard
                     dailyTasksCard
-                    planningCard
-                    progressSummaryCard
+                    if shouldShowHomeWalkthrough {
+                        unlockDashboardCard
+                    } else {
+                        planningCard
+                        progressSummaryCard
+                        weeklyQuestCard
+                    }
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, 18)
@@ -71,6 +86,27 @@ struct DisciplineHomeView: View {
                 }
             )
         }
+        .onReceive(NotificationCenter.default.publisher(for: .quoteAppliedToToday)) { notification in
+            guard let taskTitle = notification.userInfo?[AppNotification.quoteTaskTitleUserInfoKey] as? String else {
+                return
+            }
+
+            withAnimation(.easeInOut(duration: 0.2)) {
+                quoteAppliedTaskTitle = taskTitle
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    if quoteAppliedTaskTitle == taskTitle {
+                        quoteAppliedTaskTitle = nil
+                    }
+                }
+            }
+        }
+        .onChange(of: completedTasksCount) { _, newValue in
+            guard newValue > 0, shouldShowHomeWalkthrough else { return }
+            completeHomeWalkthrough()
+        }
     }
 
     private var overviewCard: some View {
@@ -89,7 +125,7 @@ struct DisciplineHomeView: View {
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundColor(Color.themeText)
 
-                    Text("One clear direction for today.")
+                    Text(profileManager.todayPrompt)
                         .font(.subheadline)
                         .foregroundColor(Color.themeSecondaryText)
                 }
@@ -183,6 +219,135 @@ struct DisciplineHomeView: View {
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 
+    private var homeWalkthroughCard: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top, spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(Color.themePrimary.opacity(0.12))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: "figure.walk.motion")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(Color.themePrimary)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Start Here")
+                        .font(.title3.weight(.bold))
+                        .foregroundColor(Color.themeText)
+
+                    Text("You do not need every feature on day one. Start with one task on this screen, then branch into quotes or planning after your first win.")
+                        .font(.subheadline)
+                        .foregroundColor(Color.themeSecondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            VStack(spacing: 12) {
+                walkthroughStep(
+                    number: "1",
+                    title: "Check Today's Focus",
+                    detail: "Your three default tasks are already set up below. Completing two protects the day."
+                )
+                walkthroughStep(
+                    number: "2",
+                    title: "Use Next Move",
+                    detail: "This card tells you the best action right now, so you do not have to decide where to start."
+                )
+                walkthroughStep(
+                    number: "3",
+                    title: "Open more later",
+                    detail: "Quotes, planning, and progress are still here. They unlock once you want the full dashboard."
+                )
+            }
+
+            HStack(spacing: 12) {
+                Button(action: primaryNextStepAction) {
+                    HStack {
+                        Image(systemName: firstRunPrimaryActionSymbol)
+                            .font(.system(size: 16, weight: .semibold))
+
+                        Text(firstRunPrimaryActionTitle)
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .foregroundColor(Color.themeBackground)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.themePrimary)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .buttonStyle(.plain)
+
+                Button("Show Everything") {
+                    completeHomeWalkthrough()
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundColor(Color.themeText)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color.themeBackground.opacity(0.28))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+        }
+        .padding(20)
+        .background(Color.themeCardBackground.opacity(0.92))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.themePrimary.opacity(0.18), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    private func walkthroughStep(number: String, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text(number)
+                .font(.caption.weight(.bold))
+                .foregroundColor(Color.themeBackground)
+                .frame(width: 24, height: 24)
+                .background(Color.themePrimary)
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(Color.themeText)
+
+                Text(detail)
+                    .font(.caption)
+                    .foregroundColor(Color.themeSecondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer()
+        }
+    }
+
+    private var unlockDashboardCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Once this page feels familiar, bring back the full dashboard.")
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(Color.themeSecondaryText)
+
+            Button("Show Planning, Quotes, and Progress") {
+                completeHomeWalkthrough()
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundColor(Color.themePrimary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 13)
+            .background(Color.themePrimary.opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .padding(20)
+        .background(Color.themeCardBackground.opacity(0.92))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.themeDivider.opacity(0.14), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
     private var dailyTasksCard: some View {
         let today = disciplineSystem.getTodayDay()
         let allTasksScheduled = today.tasks.allSatisfy { eventService.hasDisciplineEvent(for: $0) }
@@ -211,7 +376,7 @@ struct DisciplineHomeView: View {
             }
 
             VStack(alignment: .leading, spacing: 10) {
-                    Text("Three tracks. One day.")
+                    Text("Two tasks keeps the streak. Three makes it a perfect day.")
                     .font(.subheadline.weight(.medium))
                     .foregroundColor(Color.themeSecondaryText)
 
@@ -267,56 +432,6 @@ struct DisciplineHomeView: View {
                 }
             }
 
-            VStack(alignment: .leading, spacing: 10) {
-                    Text("Turn it into a plan")
-                    .font(.caption.weight(.semibold))
-                    .tracking(1.6)
-                    .foregroundColor(Color.themeSecondaryText)
-
-                ForEach(today.tasks, id: \.id) { task in
-                    let isScheduled = eventService.hasDisciplineEvent(for: task)
-
-                    HStack(spacing: 10) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(task.title)
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(Color.themeText)
-
-                            Text(isScheduled ? "Added to Plan" : "Not scheduled yet")
-                                .font(.caption)
-                                .foregroundColor(Color.themeSecondaryText)
-                        }
-
-                        Spacer()
-
-                        Button(action: {
-                            Haptics.light()
-                            _ = eventService.scheduleDisciplineTask(task)
-                        }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: isScheduled ? "checkmark.circle.fill" : "calendar.badge.plus")
-                                    .font(.system(size: 13, weight: .semibold))
-
-                                Text(isScheduled ? "Scheduled" : "Schedule")
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                            }
-                            .foregroundColor(isScheduled ? Color.themeSuccess : Color.themePrimary)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background((isScheduled ? Color.themeSuccess : Color.themePrimary).opacity(0.12))
-                            .cornerRadius(10)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(isScheduled)
-                    }
-                    .padding(14)
-                    .background(Color.themeBackground.opacity(0.32))
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                }
-            }
-
             HStack(spacing: 12) {
                 Button(action: {
                     Haptics.light()
@@ -369,6 +484,133 @@ struct DisciplineHomeView: View {
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
+    private var nextStepCard: some View {
+        let today = disciplineSystem.getTodayDay()
+        let nextTask = today.tasks.first(where: { !$0.isCompleted })
+        let scheduledCount = today.tasks.filter { eventService.hasDisciplineEvent(for: $0) }.count
+
+        return VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("NEXT MOVE")
+                        .font(.caption.weight(.semibold))
+                        .tracking(2)
+                        .foregroundColor(Color.themeSecondaryText)
+
+                    Text(nextStepTitle(nextTask: nextTask))
+                        .font(.title3.weight(.bold))
+                        .foregroundColor(Color.themeText)
+
+                    Text(nextStepDescription(nextTask: nextTask, scheduledCount: scheduledCount))
+                        .font(.subheadline)
+                        .foregroundColor(Color.themeSecondaryText)
+                }
+
+                Spacer()
+
+                Image(systemName: nextStepSymbol(nextTask: nextTask, scheduledCount: scheduledCount))
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(Color.themePrimary)
+                    .frame(width: 44, height: 44)
+                    .background(Color.themePrimary.opacity(0.12))
+                    .clipShape(Circle())
+            }
+
+            if let nextTask {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(nextTask.category.rawValue.uppercased())
+                        .font(.caption2.weight(.semibold))
+                        .tracking(1.4)
+                        .foregroundColor(Color.themePrimary)
+
+                    Text(nextTask.title)
+                        .font(.headline.weight(.semibold))
+                        .foregroundColor(Color.themeText)
+
+                    Text(eventService.hasDisciplineEvent(for: nextTask) ? "This task is already on your plan. Hold the task row below when you finish it." : "Put this on your calendar first if you want the day to feel more real.")
+                        .font(.caption)
+                        .foregroundColor(Color.themeSecondaryText)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.themeBackground.opacity(0.28))
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            }
+
+            HStack(spacing: 12) {
+                Button(action: primaryNextStepAction) {
+                    HStack {
+                        Image(systemName: primaryNextStepActionSymbol(nextTask: nextTask, scheduledCount: scheduledCount))
+                            .font(.system(size: 16, weight: .semibold))
+
+                        Text(primaryNextStepActionTitle(nextTask: nextTask, scheduledCount: scheduledCount))
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .foregroundColor(Color.themeBackground)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.themePrimary)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .buttonStyle(.plain)
+
+                Button(action: secondaryNextStepAction) {
+                    HStack {
+                        Image(systemName: secondaryNextStepActionSymbol(nextTask: nextTask))
+                            .font(.system(size: 16, weight: .semibold))
+
+                        Text(secondaryNextStepActionTitle(nextTask: nextTask))
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .foregroundColor(Color.themeText)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.themeBackground.opacity(0.28))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(20)
+        .background(Color.themeCardBackground.opacity(0.92))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.themeDivider.opacity(0.14), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    private func quoteAppliedCard(taskTitle: String) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: "quote.bubble.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(Color.themePrimary)
+                .frame(width: 38, height: 38)
+                .background(Color.themePrimary.opacity(0.12))
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Quote Applied")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(Color.themeText)
+
+                Text("\(taskTitle) is now part of today's focus. Use the next step below to schedule it or move straight into completing it.")
+                    .font(.caption)
+                    .foregroundColor(Color.themeSecondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer()
+        }
+        .padding(16)
+        .background(Color.themeCardBackground.opacity(0.92))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.themePrimary.opacity(0.18), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
     private func compactCategoryChip(for category: DisciplineCategory, in day: DisciplineDay) -> some View {
         let selectedTask = day.tasks.first(where: { $0.category == category })
 
@@ -406,7 +648,7 @@ struct DisciplineHomeView: View {
                         .font(.headline.weight(.semibold))
                         .foregroundColor(Color.themeText)
 
-                    Text("\(completedDays) of 7 days fully completed.")
+                    Text("\(history.filter(\.isConsistencyDay).count) of 7 consistency days. \(completedDays) perfect.")
                         .font(.subheadline)
                         .foregroundColor(Color.themeSecondaryText)
                 }
@@ -542,6 +784,64 @@ struct DisciplineHomeView: View {
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
+    private var weeklyQuestCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("This Week's Push")
+                        .font(.headline.weight(.semibold))
+                        .foregroundColor(Color.themeText)
+
+                    Text(gamification.weeklyQuest.detail)
+                        .font(.caption)
+                        .foregroundColor(Color.themeSecondaryText)
+                }
+
+                Spacer()
+
+                Text("\(gamification.weeklyQuestProgress)/\(gamification.weeklyQuest.target)")
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(gamification.isWeeklyQuestComplete ? Color.themeSuccess : Color.themePrimary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background((gamification.isWeeklyQuestComplete ? Color.themeSuccess : Color.themePrimary).opacity(0.12))
+                    .clipShape(Capsule())
+            }
+
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.themeDivider.opacity(0.16))
+                        .frame(height: 10)
+
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                colors: gamification.isWeeklyQuestComplete
+                                    ? [Color.themeSuccess, Color.themeSuccess.opacity(0.7)]
+                                    : [Color.themePrimary, Color.themeSecondary.opacity(0.8)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: max(10, geometry.size.width * gamification.weeklyQuestCompletion), height: 10)
+                }
+            }
+            .frame(height: 10)
+
+            Text(gamification.isWeeklyQuestComplete ? "Weekly quest complete. Keep stacking days." : "Progress updates as you complete tasks this week.")
+                .font(.subheadline)
+                .foregroundColor(Color.themeSecondaryText)
+        }
+        .padding(20)
+        .background(Color.themeCardBackground.opacity(0.92))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.themeDivider.opacity(0.14), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
     private func rankColorFromName(_ name: String) -> Color {
         switch name {
         case "green": return .green
@@ -566,9 +866,7 @@ struct DisciplineHomeView: View {
     }
 
     private var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE, MMMM d"
-        return formatter.string(from: Date())
+        DateFormatter.disciplineDate.string(from: Date())
     }
 
     private var completedTasksCount: Int {
@@ -579,19 +877,142 @@ struct DisciplineHomeView: View {
         disciplineSystem.getTodayDay().completionPercentage
     }
 
+    private var shouldShowHomeWalkthrough: Bool {
+        !hasSeenHomeWalkthrough && completedTasksCount == 0
+    }
+
+    private var firstRunPrimaryActionTitle: String {
+        let today = disciplineSystem.getTodayDay()
+        let nextTask = today.tasks.first(where: { !$0.isCompleted })
+        let scheduledCount = today.tasks.filter { eventService.hasDisciplineEvent(for: $0) }.count
+        return primaryNextStepActionTitle(nextTask: nextTask, scheduledCount: scheduledCount)
+    }
+
+    private var firstRunPrimaryActionSymbol: String {
+        let today = disciplineSystem.getTodayDay()
+        let nextTask = today.tasks.first(where: { !$0.isCompleted })
+        let scheduledCount = today.tasks.filter { eventService.hasDisciplineEvent(for: $0) }.count
+        return primaryNextStepActionSymbol(nextTask: nextTask, scheduledCount: scheduledCount)
+    }
+
     private func showCompletionCelebration() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             celebratingCompletion = true
         }
     }
 
+    private func completeHomeWalkthrough() {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            hasSeenHomeWalkthrough = true
+        }
+    }
+
     private func openPlanningTab() {
         Haptics.light()
         NotificationCenter.default.post(
-            name: Notification.Name("TabSelectionChanged"),
+            name: .tabSelectionChanged,
             object: nil,
-            userInfo: ["selectedTab": 2]
+            userInfo: [AppNotification.selectedTabUserInfoKey: 2]
         )
+    }
+
+    private func nextStepTitle(nextTask: DisciplineTask?) -> String {
+        if let nextTask {
+            return eventService.hasDisciplineEvent(for: nextTask) ? "Finish your next scheduled task" : "Make the next task real"
+        }
+
+        if eventService.nextIncompleteEvent() != nil {
+            return "Protect the rest of the day"
+        }
+
+        return "You cleared today's focus"
+    }
+
+    private func nextStepDescription(nextTask: DisciplineTask?, scheduledCount: Int) -> String {
+        if let nextTask {
+            if eventService.hasDisciplineEvent(for: nextTask) {
+                return scheduledCount == 0 ? "Your next win is already chosen. Complete it when it is done." : "You already have structure. Stay with the next task instead of adding more."
+            }
+
+            return scheduledCount == 0 ? "Nothing is on the calendar yet. Start by giving one task a time and place." : "One task is still unscheduled. Add it so the plan matches the intention."
+        }
+
+        if eventService.nextIncompleteEvent() != nil {
+            return "Tasks are complete. Keep momentum by following the remaining plan."
+        }
+
+        return "Take the win, review the week, or set up tomorrow."
+    }
+
+    private func nextStepSymbol(nextTask: DisciplineTask?, scheduledCount: Int) -> String {
+        if let nextTask {
+            return eventService.hasDisciplineEvent(for: nextTask) ? "checkmark.circle" : "calendar.badge.plus"
+        }
+
+        return scheduledCount > 0 ? "calendar" : "sparkles"
+    }
+
+    private func primaryNextStepAction() {
+        let today = disciplineSystem.getTodayDay()
+
+        if let nextTask = today.tasks.first(where: { !$0.isCompleted }),
+           !eventService.hasDisciplineEvent(for: nextTask) {
+            openPlanningComposer(for: nextTask)
+            return
+        }
+
+        if eventService.nextIncompleteEvent() != nil {
+            openPlanningTab()
+            return
+        }
+
+        Haptics.light()
+        showingHistory = true
+    }
+
+    private func secondaryNextStepAction() {
+        let today = disciplineSystem.getTodayDay()
+
+        if today.tasks.contains(where: { !$0.isCompleted }) {
+            Haptics.light()
+            showingTaskEditor = true
+            return
+        }
+
+        Haptics.light()
+        showingJourney = true
+    }
+
+    private func primaryNextStepActionTitle(nextTask: DisciplineTask?, scheduledCount: Int) -> String {
+        if let nextTask, !eventService.hasDisciplineEvent(for: nextTask) {
+            return scheduledCount == 0 ? "Schedule First Task" : "Schedule Next Task"
+        }
+
+        if eventService.nextIncompleteEvent() != nil {
+            return "Open Plan"
+        }
+
+        return "Review Week"
+    }
+
+    private func primaryNextStepActionSymbol(nextTask: DisciplineTask?, scheduledCount: Int) -> String {
+        if let nextTask, !eventService.hasDisciplineEvent(for: nextTask) {
+            return scheduledCount == 0 ? "calendar.badge.plus" : "plus.circle.fill"
+        }
+
+        if eventService.nextIncompleteEvent() != nil {
+            return "calendar.badge.clock"
+        }
+
+        return "chart.line.uptrend.xyaxis"
+    }
+
+    private func secondaryNextStepActionTitle(nextTask: DisciplineTask?) -> String {
+        nextTask == nil ? "View Progress" : "Edit Tasks"
+    }
+
+    private func secondaryNextStepActionSymbol(nextTask: DisciplineTask?) -> String {
+        nextTask == nil ? "figure.walk.motion" : "slider.horizontal.3"
     }
 
     private func planShortcutButton(title: String, symbol: String, tint: Color) -> some View {
@@ -611,6 +1032,38 @@ struct DisciplineHomeView: View {
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
+    }
+
+    private func openPlanningComposer(for task: DisciplineTask) {
+        Haptics.medium()
+        NotificationCenter.default.post(
+            name: .openPlannerComposer,
+            object: nil,
+            userInfo: [
+                AppNotification.plannerDateUserInfoKey: Date(),
+                AppNotification.plannerTitleUserInfoKey: task.title,
+                AppNotification.plannerNotesUserInfoKey: task.detail,
+                AppNotification.plannerIconUserInfoKey: task.category.iconName,
+                AppNotification.plannerTintHexUserInfoKey: plannerTintHex(for: task.category),
+                AppNotification.plannerAllDayUserInfoKey: false
+            ]
+        )
+        NotificationCenter.default.post(
+            name: .tabSelectionChanged,
+            object: nil,
+            userInfo: [AppNotification.selectedTabUserInfoKey: 2]
+        )
+    }
+
+    private func plannerTintHex(for category: DisciplineCategory) -> String {
+        switch category {
+        case .mind:
+            return EventTintPalette.options.count > 2 ? EventTintPalette.options[2].hex : EventTintPalette.defaultHex
+        case .body:
+            return EventTintPalette.options.count > 1 ? EventTintPalette.options[1].hex : EventTintPalette.defaultHex
+        case .focus:
+            return EventTintPalette.defaultHex
+        }
     }
 
     private func overviewMetricPill(
@@ -945,7 +1398,11 @@ struct WeeklySnapshotFocusCard: View {
 
     private var statusText: String {
         if day.isFullyCompleted {
-            return "All three tasks completed."
+            return "Perfect day. All three tasks completed."
+        }
+
+        if day.isConsistencyDay {
+            return "Consistency secured for the day."
         }
 
         if day.completedTaskCount == 0 {
@@ -958,6 +1415,10 @@ struct WeeklySnapshotFocusCard: View {
     private var statusTint: Color {
         if day.isFullyCompleted {
             return Color.themeSuccess
+        }
+
+        if day.isConsistencyDay {
+            return Color.themePrimary
         }
 
         if day.completedTaskCount == 0 {
@@ -996,7 +1457,7 @@ struct DailyTaskSelectionView: View {
                                     .fontWeight(.bold)
                                     .foregroundColor(Color.themeText)
 
-                                Text("Pick one simple task from each category. Finish all three to earn a streak day.")
+                                Text("Pick one simple task from each category. Finish 2 of 3 to protect the streak, or all 3 for a perfect day.")
                                     .font(.subheadline)
                                     .foregroundColor(Color.themeSecondaryText)
                             }

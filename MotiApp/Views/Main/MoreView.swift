@@ -2,9 +2,11 @@ import SwiftUI
 import WidgetKit
 
 struct MoreView: View {
+    @Environment(\.openURL) private var openURL
     @ObservedObject private var quoteService = QuoteService.shared
     @ObservedObject private var notificationManager = NotificationManager.shared
     @ObservedObject private var themeManager = ThemeManager.shared
+    @ObservedObject private var profileManager = ProfileManager.shared
 
     @State private var showingAbout = false
     @State private var showingFeedback = false
@@ -18,6 +20,7 @@ struct MoreView: View {
     @State private var showingFavorites = false
     @State private var showingCategories = false
     @State private var showingThemeSettings = false
+    @State private var showingProfileSettings = false
 
     var body: some View {
         ZStack {
@@ -35,10 +38,12 @@ struct MoreView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
                     overviewCard
-                    appearanceSection
-                    quotesSection
-                    appSection
+                    dailySetupSection
+                    librarySection
+                    experienceSection
                     supportSection
+                    legalSection
+                    housekeepingSection
                     appInfoView
                 }
                 .padding(.horizontal, 18)
@@ -53,7 +58,7 @@ struct MoreView: View {
             FeedbackView()
         }
         .sheet(isPresented: $showingShare) {
-            ShareSheet(activityItems: ["Check out Motii, my favorite motivational quotes app!"])
+            ShareSheet(activityItems: [AppMetadata.appStoreShareText])
         }
         .sheet(isPresented: $showingPrivacyPolicy) {
             PrivacyPolicyView()
@@ -67,13 +72,14 @@ struct MoreView: View {
         .sheet(isPresented: $showingThemeSettings) {
             ThemeSettingsView()
         }
+        .sheet(isPresented: $showingProfileSettings) {
+            ProfileSettingsView()
+        }
         .sheet(isPresented: $showingFavorites) {
-            NavigationView {
+            NavigationStack {
                 FavoritesView()
-                    .navigationTitle("Favorites")
-                    .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
-                        ToolbarItem(placement: .navigationBarLeading) {
+                        ToolbarItem(placement: .topBarLeading) {
                             Button("Done") {
                                 showingFavorites = false
                             }
@@ -82,12 +88,10 @@ struct MoreView: View {
             }
         }
         .sheet(isPresented: $showingCategories) {
-            NavigationView {
+            NavigationStack {
                 CategoriesView()
-                    .navigationTitle("Categories")
-                    .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
-                        ToolbarItem(placement: .navigationBarLeading) {
+                        ToolbarItem(placement: .topBarLeading) {
                             Button("Done") {
                                 showingCategories = false
                             }
@@ -130,16 +134,16 @@ struct MoreView: View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("SETTINGS")
+                    Text("MORE")
                         .font(.caption.weight(.semibold))
                         .tracking(2)
                         .foregroundColor(Color.themeSecondaryText)
 
-                    Text("Keep it clean")
+                    Text("Keep the system aligned")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundColor(Color.themeText)
 
-                    Text("Adjust the app, revisit saved ideas, and manage the essentials.")
+                    Text("The essentials for reminders, saved quotes, support, and app setup.")
                         .font(.subheadline)
                         .foregroundColor(Color.themeSecondaryText)
                 }
@@ -147,6 +151,23 @@ struct MoreView: View {
                 Spacer()
             }
 
+            HStack(spacing: 12) {
+                utilitySnapshotCard(
+                    title: "Reminder",
+                    value: notificationManager.remindersStatusText,
+                    subtitle: "Daily prompt",
+                    icon: "bell.fill",
+                    tint: Color.themePrimary
+                )
+
+                utilitySnapshotCard(
+                    title: "Favorites",
+                    value: "\(quoteService.favorites.count)",
+                    subtitle: "Saved quotes",
+                    icon: "heart.fill",
+                    tint: Color.themeError
+                )
+            }
         }
         .padding(22)
         .background(
@@ -163,85 +184,27 @@ struct MoreView: View {
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 
-    private var appearanceSection: some View {
+    private var dailySetupSection: some View {
         settingsGroup(
-            title: "Appearance",
-            subtitle: "Keep the app aligned with the way you want it to feel."
+            title: "Daily Setup",
+            subtitle: "The settings that shape your day-to-day experience."
         ) {
             settingsButtonRow(
-                icon: "paintpalette.fill",
+                icon: "scope",
                 iconColor: Color.themePrimary,
-                title: "App Theme",
-                subtitle: themeManager.currentTheme.name
+                title: profileManager.focus.title,
+                subtitle: "\(profileManager.sevenDayGoal.title) weekly target • \(formattedHour(profileManager.preferredStartHour)) reminder"
             ) {
-                showingThemeSettings = true
-            }
-        }
-    }
-
-    private var quotesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Quotes")
-                        .font(.headline.weight(.semibold))
-                        .foregroundColor(Color.themeText)
-
-                    Text("Keep the ideas worth returning to.")
-                        .font(.caption)
-                        .foregroundColor(Color.themeSecondaryText)
-                }
-
-                Spacer()
+                showingProfileSettings = true
             }
 
-            HStack(spacing: 12) {
-                Button(action: {
-                    showingFavorites = true
-                }) {
-                    utilityCard(
-                        title: "Favorites",
-                        subtitle: quoteService.favorites.isEmpty ? "Nothing saved yet" : "\(quoteService.favorites.count) saved",
-                        value: "\(quoteService.favorites.count)",
-                        icon: "heart.fill",
-                        tint: Color.themeError
-                    )
-                }
-                .buttonStyle(.plain)
+            sectionDivider
 
-                Button(action: {
-                    showingCategories = true
-                }) {
-                    utilityCard(
-                        title: "Categories",
-                        subtitle: "Browse by theme",
-                        value: "\(quoteService.getAllCategories().count)",
-                        icon: "square.grid.2x2.fill",
-                        tint: Color.themeSecondary
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(20)
-        .background(Color.themeCardBackground.opacity(0.92))
-        .overlay(
-            RoundedRectangle(cornerRadius: 24)
-                .stroke(Color.themeDivider.opacity(0.14), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-    }
-
-    private var appSection: some View {
-        settingsGroup(
-            title: "App",
-            subtitle: "Notifications and widget help in one place."
-        ) {
             settingsToggleRow(
                 icon: "bell.fill",
                 iconColor: Color.themePrimary,
-                title: "Daily Quote Reminder",
-                subtitle: notificationManager.isNotificationsEnabled ? "On" : "Off",
+                title: "Daily Reminder",
+                subtitle: notificationManager.remindersStatusText,
                 isOn: Binding(
                     get: { notificationManager.isNotificationsEnabled },
                     set: { newValue in
@@ -254,10 +217,24 @@ struct MoreView: View {
                 )
             )
 
-            if notificationManager.isNotificationsEnabled {
-                Divider()
-                    .background(Color.themeDivider.opacity(0.3))
-                    .padding(.horizontal, 16)
+            sectionDivider
+
+            settingsButtonRow(
+                icon: notificationManager.authorizationStatus == .denied ? "gearshape.fill" : "info.circle",
+                iconColor: notificationManager.authorizationStatus == .denied ? Color.themeWarning : Color.themeSecondaryText,
+                title: notificationManager.authorizationStatus == .denied ? "Enable in Settings" : "Reminder Status",
+                subtitle: notificationManager.remindersDetailText
+            ) {
+                if notificationManager.authorizationStatus == .denied,
+                   let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+
+            if notificationManager.authorizationStatus == .authorized
+                || notificationManager.authorizationStatus == .provisional
+                || notificationManager.authorizationStatus == .ephemeral {
+                sectionDivider
 
                 HStack {
                     settingsLeading(icon: "clock.fill", color: Color.themePrimary)
@@ -267,7 +244,7 @@ struct MoreView: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundColor(Color.themeText)
 
-                        Text("Choose when the daily prompt appears.")
+                        Text(notificationManager.isNotificationsEnabled ? "Choose when the daily prompt appears." : "Turn reminders on whenever you want a daily prompt.")
                             .font(.caption)
                             .foregroundColor(Color.themeSecondaryText)
                     }
@@ -278,6 +255,8 @@ struct MoreView: View {
                         .labelsHidden()
                         .frame(width: 100)
                         .colorScheme(themeManager.currentTheme.isDark ? .dark : .light)
+                        .disabled(!notificationManager.isNotificationsEnabled)
+                        .opacity(notificationManager.isNotificationsEnabled ? 1 : 0.5)
                         .onChange(of: notificationManager.reminderTime) { oldValue, newValue in
                             notificationManager.updateReminderTime(newValue)
                         }
@@ -285,16 +264,57 @@ struct MoreView: View {
                 .padding(.vertical, 14)
                 .padding(.horizontal, 16)
             }
+        }
+    }
 
-            Divider()
-                .background(Color.themeDivider.opacity(0.3))
-                .padding(.horizontal, 16)
+    private var librarySection: some View {
+        settingsGroup(
+            title: "Quote Library",
+            subtitle: "Saved lines and categories worth returning to."
+        ) {
+            settingsButtonRow(
+                icon: "heart.fill",
+                iconColor: Color.themeError,
+                title: "Favorites",
+                subtitle: quoteService.favorites.isEmpty ? "Nothing saved yet" : "\(quoteService.favorites.count) saved quotes"
+            ) {
+                showingFavorites = true
+            }
+
+            sectionDivider
+
+            settingsButtonRow(
+                icon: "square.grid.2x2.fill",
+                iconColor: Color.themeSecondary,
+                title: "Categories",
+                subtitle: "\(quoteService.getAllCategories().count) ways to browse the quote library"
+            ) {
+                showingCategories = true
+            }
+        }
+    }
+
+    private var experienceSection: some View {
+        settingsGroup(
+            title: "App Experience",
+            subtitle: "Appearance and companion surfaces around the main app."
+        ) {
+            settingsButtonRow(
+                icon: "paintpalette.fill",
+                iconColor: Color.themePrimary,
+                title: "App Theme",
+                subtitle: themeManager.currentTheme.name
+            ) {
+                showingThemeSettings = true
+            }
+
+            sectionDivider
 
             settingsButtonRow(
                 icon: "square.grid.2x2.fill",
                 iconColor: Color.themeSecondary,
                 title: "Widget Guide",
-                subtitle: "See what works best on your Home Screen."
+                subtitle: "See the widget layouts that work best on your Home Screen."
             ) {
                 showingWidgetGuide = true
             }
@@ -304,7 +324,45 @@ struct MoreView: View {
     private var supportSection: some View {
         settingsGroup(
             title: "Support",
-            subtitle: "Help, policies, and app housekeeping."
+            subtitle: "Reach out when something is unclear, broken, or missing."
+        ) {
+            settingsButtonRow(
+                icon: "envelope",
+                iconColor: Color.themeSuccess,
+                title: "Send Feedback",
+                subtitle: "Tell me what should improve next."
+            ) {
+                showingFeedback = true
+            }
+
+            sectionDivider
+
+            settingsButtonRow(
+                icon: "questionmark.circle",
+                iconColor: Color.themeSecondary,
+                title: "Support Site",
+                subtitle: "Open setup help, FAQ, and contact details."
+            ) {
+                openURL(AppMetadata.supportURL)
+            }
+
+            sectionDivider
+
+            settingsButtonRow(
+                icon: "square.and.arrow.up",
+                iconColor: Color.themePrimary,
+                title: "Share App",
+                subtitle: "Send Motii to someone else."
+            ) {
+                showingShare = true
+            }
+        }
+    }
+
+    private var legalSection: some View {
+        settingsGroup(
+            title: "About and Legal",
+            subtitle: "What the app is for and the policies behind it."
         ) {
             settingsButtonRow(
                 icon: "info.circle",
@@ -336,31 +394,14 @@ struct MoreView: View {
             ) {
                 showingTerms = true
             }
+        }
+    }
 
-            sectionDivider
-
-            settingsButtonRow(
-                icon: "envelope",
-                iconColor: Color.themeSuccess,
-                title: "Send Feedback",
-                subtitle: "Tell me what should improve next."
-            ) {
-                showingFeedback = true
-            }
-
-            sectionDivider
-
-            settingsButtonRow(
-                icon: "square.and.arrow.up",
-                iconColor: Color.themePrimary,
-                title: "Share App",
-                subtitle: "Send Motii to someone else."
-            ) {
-                showingShare = true
-            }
-
-            sectionDivider
-
+    private var housekeepingSection: some View {
+        settingsGroup(
+            title: "Housekeeping",
+            subtitle: "Low-frequency maintenance tasks for the app."
+        ) {
             Button(action: {
                 showingCacheAlert = true
             }) {
@@ -397,11 +438,11 @@ struct MoreView: View {
                 .font(.headline)
                 .foregroundColor(Color.themeText)
 
-            Text("Version 1.1.1")
+            Text("Version \(AppMetadata.versionString)")
                 .font(.caption)
                 .foregroundColor(Color.themeText.opacity(0.5))
 
-            Text("© 2025 Motii Team")
+            Text(AppMetadata.copyrightNotice)
                 .font(.caption2)
                 .foregroundColor(Color.themeText.opacity(0.3))
                 .padding(.top, 2)
@@ -556,6 +597,45 @@ struct MoreView: View {
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
+    private func utilitySnapshotCard(
+        title: String,
+        value: String,
+        subtitle: String,
+        icon: String,
+        tint: Color
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(tint)
+                    .font(.system(size: 15, weight: .semibold))
+                    .frame(width: 18, height: 18)
+                    .padding(8)
+                    .background(tint.opacity(0.15))
+                    .clipShape(Circle())
+
+                Spacer(minLength: 0)
+            }
+
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundColor(Color.themeSecondaryText)
+
+            Text(value)
+                .font(.subheadline.weight(.semibold))
+                .foregroundColor(Color.themeText)
+                .lineLimit(2)
+
+            Text(subtitle)
+                .font(.caption2)
+                .foregroundColor(Color.themeSecondaryText)
+        }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .padding(16)
+        .background(Color.themeBackground.opacity(0.24))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
     private func checkAndRequestNotificationPermission() {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             DispatchQueue.main.async {
@@ -611,5 +691,11 @@ struct MoreView: View {
         } catch {
             print("Error clearing cache: \(error)")
         }
+    }
+
+    private func formattedHour(_ hour: Int) -> String {
+        let period = hour >= 12 ? "PM" : "AM"
+        let displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour)
+        return "\(displayHour):00 \(period)"
     }
 }

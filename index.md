@@ -70,6 +70,10 @@ Visit our [Support Page](https://alex-morrisonn.github.io/motivation/support) or
 - Most data stored locally  
 - Full policy available in-app under **More > Privacy Policy**
 
+Legal links:
+- [Privacy Policy](https://alex-morrisonn.github.io/motivation/privacy-policy)
+- [Terms of Service](https://alex-morrisonn.github.io/motivation/terms-of-service)
+
 ---
 
 ## 🧘 Ready to Get Motivated?
@@ -81,4 +85,3 @@ Join thousands already using Motii to boost their mindset and stay on track.
 > 🌟 **Feel inspired.**
 
 **Download Motii now and fuel your journey—one quote at a time.**
-

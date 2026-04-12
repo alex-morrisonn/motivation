@@ -21,27 +21,6 @@ class QuoteService: ObservableObject {
     private let backupFavoritesKey = "savedFavorites_backup"
     private let corruptedDataKey = "savedFavorites_corrupted"
     
-    // MARK: - Error Types
-    
-    /// Error type for QuoteService operations
-    enum QuoteServiceError: Error, LocalizedError {
-        case failedToLoadFavorites
-        case failedToSaveFavorites
-        case invalidQuote
-        case quotesUnavailable
-        case categoryNotFound
-        
-        var errorDescription: String? {
-            switch self {
-            case .failedToLoadFavorites: return "Failed to load favorites"
-            case .failedToSaveFavorites: return "Failed to save favorites"
-            case .invalidQuote: return "Invalid quote data"
-            case .quotesUnavailable: return "Quotes are unavailable"
-            case .categoryNotFound: return "Category not found"
-            }
-        }
-    }
-    
     // MARK: - Initialization
     
     init() {
@@ -92,7 +71,7 @@ class QuoteService: ObservableObject {
         }
         
         // Only add if not already in favorites
-        if !favorites.contains(where: { $0.text == quote.text && $0.author == quote.author }) {
+        if !favorites.contains(where: { $0.id == quote.id }) {
             favorites.append(quote)
             saveFavorites()
         }
@@ -102,7 +81,7 @@ class QuoteService: ObservableObject {
     /// - Parameter quote: The quote to remove from favorites
     func removeFromFavorites(_ quote: Quote) {
         let initialCount = favorites.count
-        favorites.removeAll(where: { $0.text == quote.text && $0.author == quote.author })
+        favorites.removeAll(where: { $0.id == quote.id })
         
         if favorites.count < initialCount {
             // Quote was found and removed
@@ -116,7 +95,7 @@ class QuoteService: ObservableObject {
     /// - Parameter quote: The quote to check
     /// - Returns: Boolean indicating if the quote is in favorites
     func isFavorite(_ quote: Quote) -> Bool {
-        return favorites.contains(where: { $0.text == quote.text && $0.author == quote.author })
+        favorites.contains(where: { $0.id == quote.id })
     }
     
     /// Get the quote for today based on date
@@ -151,6 +130,29 @@ class QuoteService: ObservableObject {
         
         let randomIndex = Int.random(in: 0..<quotes.count)
         return quotes[randomIndex]
+    }
+
+    func suggestedTaskOption(for quote: Quote, focus: MotivationFocus) -> DisciplineTaskOption {
+        let loweredCategory = quote.category.lowercased()
+
+        if loweredCategory.contains("focus") || loweredCategory.contains("discipline") || loweredCategory.contains("action") {
+            return DisciplineTaskLibrary.option(id: "focus_priority", category: .focus)
+                ?? DisciplineTaskLibrary.defaultOption(for: .focus)
+        }
+
+        if loweredCategory.contains("confidence") || loweredCategory.contains("courage") || loweredCategory.contains("resilience") {
+            return DisciplineTaskLibrary.option(id: "body_workout", category: .body)
+                ?? DisciplineTaskLibrary.defaultOption(for: .body)
+        }
+
+        if loweredCategory.contains("mindset") || loweredCategory.contains("perspective") || loweredCategory.contains("growth") {
+            return DisciplineTaskLibrary.option(id: "mind_journal", category: .mind)
+                ?? DisciplineTaskLibrary.defaultOption(for: .mind)
+        }
+
+        let fallbackCategory = focus.recommendedCategory
+        return DisciplineTaskLibrary.option(id: focus.defaultTaskOptionID, category: fallbackCategory)
+            ?? DisciplineTaskLibrary.defaultOption(for: fallbackCategory)
     }
     
     /// Get all available quotes
@@ -187,15 +189,13 @@ class QuoteService: ObservableObject {
         }
         
         // Try to encode only the valid favorites
-        var encodableFavorites: [Quote] = []
-        
-        for favorite in favorites {
-            // Test if each favorite can be encoded individually
-            if let _ = try? JSONEncoder().encode(favorite) {
-                encodableFavorites.append(favorite)
-            } else {
-                print("Skipping non-encodable favorite: \(favorite.text)")
+        let encodableFavorites = favorites.filter { favorite in
+            if (try? JSONEncoder().encode(favorite)) != nil {
+                return true
             }
+
+            print("Skipping non-encodable favorite: \(favorite.text)")
+            return false
         }
         
         // Save the backup if we have any valid favorites

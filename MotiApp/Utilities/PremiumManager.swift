@@ -105,7 +105,7 @@ class PremiumManager: ObservableObject {
             updateAvailableThemes()
             
             // Post notification
-            NotificationCenter.default.post(name: Notification.Name("PremiumStatusChanged"), object: nil)
+            NotificationCenter.default.post(name: .premiumStatusChanged, object: nil)
         }
     }
     
@@ -126,7 +126,7 @@ class PremiumManager: ObservableObject {
         updateAvailableThemes()
         
         // Post notification
-        NotificationCenter.default.post(name: Notification.Name("PremiumStatusChanged"), object: nil)
+        NotificationCenter.default.post(name: .premiumStatusChanged, object: nil)
     }
     
     /// Set premium status (after successful purchase verification)
@@ -148,7 +148,7 @@ class PremiumManager: ObservableObject {
         updateAvailableThemes()
         
         // Post notification
-        NotificationCenter.default.post(name: Notification.Name("PremiumStatusChanged"), object: nil)
+        NotificationCenter.default.post(name: .premiumStatusChanged, object: nil)
     }
     
     // MARK: - Feature Access Methods
@@ -260,7 +260,7 @@ struct StandardPremiumLockOverlay: View {
             
             Button(action: {
                 // Present premium view
-                NotificationCenter.default.post(name: Notification.Name("ShowPremiumView"), object: nil)
+                NotificationCenter.default.post(name: .showPremiumView, object: nil)
             }) {
                 Text("Upgrade")
                     .font(.caption)

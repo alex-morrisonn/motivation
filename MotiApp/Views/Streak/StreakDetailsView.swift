@@ -84,18 +84,18 @@ struct StreakDetailsView: View {
             
             // Streak description
             if let startDate = streakManager.getStreakStartDate(), streakManager.currentStreak > 1 {
-                Text("You've completed your discipline plan every day since \(dateFormatter.string(from: startDate))")
+                Text("You've logged a consistency day every day since \(dateFormatter.string(from: startDate))")
                     .font(.headline)
                     .foregroundColor(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
                     .padding(.top, 4)
             } else if streakManager.currentStreak == 1 {
-                Text("You completed your first full discipline day.")
+                Text("You completed your first consistency day.")
                     .font(.headline)
                     .foregroundColor(.white.opacity(0.7))
                     .padding(.top, 4)
             } else {
-                Text("Complete all 3 daily tasks to build your streak")
+                Text("Complete at least 2 of your 3 daily tasks to build your streak")
                     .font(.headline)
                     .foregroundColor(.white.opacity(0.7))
                     .padding(.top, 4)

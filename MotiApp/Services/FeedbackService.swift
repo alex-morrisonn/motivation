@@ -90,9 +90,6 @@ class FeedbackService {
     private static let rateLimitWindow: TimeInterval = 60 * 10 // 10 minutes
     private static var recentSubmissions: [Date] = []
     
-    /// Key for UserDefaults to store cached feedback
-    private static let cachedFeedbackKey = "com.alexmorrison.moti.cachedFeedback"
-    
     // MARK: - Initialization & Setup
     
     /// Start network monitoring
@@ -101,12 +98,6 @@ class FeedbackService {
         
         networkMonitor.pathUpdateHandler = { path in
             isNetworkAvailable = path.status == .satisfied
-            
-            if isNetworkAvailable {
-                Task {
-                    await uploadCachedFeedback()
-                }
-            }
         }
         
         let queue = DispatchQueue(label: "NetworkMonitor")
@@ -172,8 +163,6 @@ class FeedbackService {
         
         // Network connectivity check
         if !isNetworkAvailable {
-            // Cache the feedback for later submission when online
-            cacheFeedback(feedbackData)
             return .failure(error: .networkOffline)
         }
         
@@ -197,8 +186,6 @@ class FeedbackService {
                 if nsError.domain == FirestoreErrorDomain {
                     switch nsError.code {
                     case FirestoreErrorCode.unavailable.rawValue:
-                        // Store for later submission
-                        cacheFeedback(feedbackData)
                         return .failure(error: .networkOffline)
                         
                     case FirestoreErrorCode.cancelled.rawValue,
@@ -220,50 +207,9 @@ class FeedbackService {
         }
     }
     
-    /// For testing purposes - get all feedback (in real app, this would be admin-only)
-    static func getAllFeedback() async throws -> [Feedback] {
-        if !isNetworkAvailable {
-            throw FeedbackError.networkOffline
-        }
-        
-        do {
-            let snapshot = try await withTimeout(seconds: 10) {
-                try await db.collection("feedback")
-                    .order(by: "timestamp", descending: true)
-                    .getDocuments()
-            }
-            
-            return snapshot.documents.compactMap { document -> Feedback? in
-                let data = document.data()
-                
-                guard let text = data["text"] as? String,
-                      let type = data["type"] as? String else {
-                    return nil
-                }
-                
-                let email = data["email"] as? String ?? ""
-                let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
-                
-                return Feedback(
-                    id: document.documentID,
-                    text: text,
-                    type: type,
-                    email: email,
-                    timestamp: timestamp
-                )
-            }
-        } catch {
-            if let nsError = error as NSError?, nsError.domain == FirestoreErrorDomain {
-                throw FeedbackError.firebaseError(nsError.localizedDescription)
-            } else {
-                throw FeedbackError.unknownError(error)
-            }
-        }
-    }
-    
-    /// Clear all cached feedback (e.g., for privacy purposes)
+    /// Clear any legacy cached feedback from earlier builds.
     static func clearCachedFeedback() {
-        UserDefaults.standard.removeObject(forKey: cachedFeedbackKey)
+        UserDefaults.standard.removeObject(forKey: "com.alexmorrison.moti.cachedFeedback")
     }
     
     // MARK: - Private Helper Methods
@@ -348,62 +294,6 @@ class FeedbackService {
         recentSubmissions.append(Date())
     }
     
-    // MARK: - Offline Caching Methods
-    
-    /// Cache feedback for later submission when online
-    private static func cacheFeedback(_ feedbackData: [String: Any]) {
-        let defaults = UserDefaults.standard
-        
-        // Get existing cached feedback
-        var cachedFeedback = defaults.array(forKey: cachedFeedbackKey) as? [[String: Any]] ?? []
-        
-        // Add this feedback to the cache
-        var feedbackCopy = feedbackData
-        // Convert Firestore FieldValue to regular timestamp because it can't be serialized
-        feedbackCopy["timestamp"] = Date().timeIntervalSince1970
-        
-        cachedFeedback.append(feedbackCopy)
-        
-        // Save back to UserDefaults
-        defaults.set(cachedFeedback, forKey: cachedFeedbackKey)
-    }
-    
-    /// Upload cached feedback when coming back online
-    private static func uploadCachedFeedback() async {
-        let defaults = UserDefaults.standard
-        
-        guard let cachedFeedback = defaults.array(forKey: cachedFeedbackKey) as? [[String: Any]],
-              !cachedFeedback.isEmpty else {
-            return
-        }
-        
-        var remainingFeedback: [[String: Any]] = []
-        
-        for feedback in cachedFeedback {
-            var feedbackCopy = feedback
-            
-            // Convert timestamp back to FieldValue
-            if let timestamp = feedbackCopy["timestamp"] as? TimeInterval {
-                feedbackCopy.removeValue(forKey: "timestamp")
-                feedbackCopy["timestamp"] = FieldValue.serverTimestamp()
-                feedbackCopy["cached"] = true
-                feedbackCopy["originalTimestamp"] = timestamp
-            }
-            
-            do {
-                _ = try await db.collection("feedback").addDocument(data: feedbackCopy)
-                
-                // Track this submission for rate limiting
-                trackSubmission()
-            } catch {
-                // If we couldn't upload this feedback, keep it for later
-                remainingFeedback.append(feedback)
-            }
-        }
-        
-        // Update the cache with any feedback that couldn't be uploaded
-        defaults.set(remainingFeedback, forKey: cachedFeedbackKey)
-    }
 }
 
 // MARK: - Error Types
